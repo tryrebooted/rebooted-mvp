@@ -1,4 +1,16 @@
+'use client';
+
+import { useRouter } from 'next/navigation';
+
 export default function LoginPage() {
+  const router = useRouter();
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    // For now, just redirect without actual authentication
+    router.push('/management-dashboard');
+  };
+
   return (
     <div style={{ 
       display: 'flex', 
@@ -6,7 +18,7 @@ export default function LoginPage() {
       alignItems: 'center', 
       minHeight: '100vh' 
     }}>
-      <form style={{ 
+      <form onSubmit={handleLogin} style={{ 
         padding: '20px',
         border: '1px solid #ccc',
         borderRadius: '4px'
