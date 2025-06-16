@@ -20,6 +20,10 @@ export default function CreateCoursePage() {
     router.push('/management-dashboard');
   };
 
+  const handlePreview = () => {
+    router.push('/preview-course');
+  };
+
   return (
     <div style={{ 
       padding: '20px',
@@ -103,7 +107,7 @@ export default function CreateCoursePage() {
           />
         </div>
 
-        <div style={{ display: 'flex', gap: '10px' }}>
+        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
           <button 
             type="submit"
             style={{
@@ -116,6 +120,20 @@ export default function CreateCoursePage() {
             }}
           >
             Create Course
+          </button>
+          <button 
+            type="button"
+            onClick={handlePreview}
+            style={{
+              padding: '10px 20px',
+              backgroundColor: '#28a745',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer'
+            }}
+          >
+            Preview Course
           </button>
           <button 
             type="button"
