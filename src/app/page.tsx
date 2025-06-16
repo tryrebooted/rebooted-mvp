@@ -7,9 +7,11 @@ export default function Home() {
       justifyContent: 'center', 
       alignItems: 'center', 
       minHeight: '100vh',
-      flexDirection: 'column'
+      flexDirection: 'column',
+      backgroundColor: '#ffffff',
+      color: '#171717'
     }}>
-      <h1 style={{ marginBottom: '20px' }}>L&D Course Platform</h1>
+      <h1 style={{ marginBottom: '20px', color: '#171717' }}>L&D Course Platform</h1>
       <p style={{ marginBottom: '20px', color: '#666' }}>
         Create and manage courses for your organization
       </p>

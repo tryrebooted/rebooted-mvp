@@ -1,11 +1,24 @@
+'use client';
+
+import { useRouter } from 'next/navigation';
+
 export default function DashboardPage() {
+  const router = useRouter();
+
+  const handleCreateCourse = () => {
+    router.push('/create-course');
+  };
+
   return (
     <div style={{ 
       padding: '20px',
       maxWidth: '800px',
-      margin: '0 auto'
+      margin: '0 auto',
+      backgroundColor: '#ffffff',
+      minHeight: '100vh',
+      color: '#171717'
     }}>
-      <h1 style={{ marginBottom: '20px' }}>Your Courses</h1>
+      <h1 style={{ marginBottom: '20px', color: '#171717' }}>Your Courses</h1>
       
       <div style={{
         border: '1px solid #ccc',
@@ -22,6 +35,7 @@ export default function DashboardPage() {
           No courses yet
         </p>
         <button
+          onClick={handleCreateCourse}
           style={{
             padding: '10px 20px',
             backgroundColor: '#007cba',
