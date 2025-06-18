@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 interface ContentBlock {
   id: string;
@@ -11,6 +12,7 @@ interface ContentBlock {
 }
 
 export default function CoursePage() {
+  const router = useRouter();
   const [contentBlocks, setContentBlocks] = useState<ContentBlock[]>([
     {
       id: '1',
@@ -28,13 +30,6 @@ export default function CoursePage() {
     },
   ]);
 
-  const [isAddingBlock, setIsAddingBlock] = useState(false);
-  const [newBlock, setNewBlock] = useState<Partial<ContentBlock>>({
-    type: 'article',
-    title: '',
-    content: '',
-  });
-
   const toggleCompletion = (id: string) => {
     setContentBlocks(blocks =>
       blocks.map(block =>
@@ -43,89 +38,26 @@ export default function CoursePage() {
     );
   };
 
-  const handleAddBlock = () => {
-    if (!newBlock.title || !newBlock.content) return;
-
-    const block: ContentBlock = {
-      id: Date.now().toString(),
-      type: newBlock.type as 'article' | 'quiz',
-      title: newBlock.title,
-      content: newBlock.content,
-      completed: false,
-    };
-
-    setContentBlocks(prev => [...prev, block]);
-    setNewBlock({ type: 'article', title: '', content: '' });
-    setIsAddingBlock(false);
-  };
-
   return (
     <div className="min-h-screen bg-white p-8">
       <div className="max-w-4xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Course Content</h1>
-          <button
-            onClick={() => setIsAddingBlock(true)}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-          >
-            Add Content Block
-          </button>
-        </div>
-
-        {isAddingBlock && (
-          <div className="mb-8 p-6 bg-gray-50 rounded-lg border border-gray-200">
-            <h2 className="text-xl font-semibold mb-4">Add New Content Block</h2>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
-                <select
-                  value={newBlock.type}
-                  onChange={(e) => setNewBlock(prev => ({ ...prev, type: e.target.value as 'article' | 'quiz' }))}
-                  className="w-full p-2 border border-gray-300 rounded-md"
-                >
-                  <option value="article">Article</option>
-                  <option value="quiz">Quiz</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
-                <input
-                  type="text"
-                  value={newBlock.title}
-                  onChange={(e) => setNewBlock(prev => ({ ...prev, title: e.target.value }))}
-                  className="w-full p-2 border border-gray-300 rounded-md"
-                  placeholder="Enter title"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Content</label>
-                <textarea
-                  value={newBlock.content}
-                  onChange={(e) => setNewBlock(prev => ({ ...prev, content: e.target.value }))}
-                  className="w-full p-2 border border-gray-300 rounded-md h-32"
-                  placeholder="Enter content"
-                />
-              </div>
-
-              <div className="flex justify-end space-x-3">
-                <button
-                  onClick={() => setIsAddingBlock(false)}
-                  className="px-4 py-2 bg-gray-100 text-gray-800 rounded-md hover:bg-gray-200"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleAddBlock}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                >
-                  Add Block
-                </button>
-              </div>
-            </div>
+          <div className="flex space-x-3">
+            <button
+              onClick={() => {}}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+            >
+              Add Content Block
+            </button>
+            <button
+              onClick={() => router.push('/preview-course')}
+              className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+            >
+              Preview Course
+            </button>
           </div>
-        )}
+        </div>
 
         <div className="space-y-6">
           {contentBlocks.map((block) => (

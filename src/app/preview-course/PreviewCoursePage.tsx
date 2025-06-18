@@ -6,7 +6,7 @@ export default function PreviewCoursePage() {
   const router = useRouter();
 
   const handleBackToEdit = () => {
-    router.push('/create-course');
+    router.push('/modify-course');
   };
 
   const handlePublishCourse = () => {

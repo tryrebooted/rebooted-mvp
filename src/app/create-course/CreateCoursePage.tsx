@@ -11,9 +11,9 @@ export default function CreateCoursePage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // For now, just show an alert and redirect back to dashboard
+    // For now, just show an alert and redirect to modify course
     alert('Course created! (This is just a placeholder)');
-    router.push('/management-dashboard');
+    router.push('/modify-course');
   };
 
   const handleCancel = () => {
