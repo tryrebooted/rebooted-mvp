@@ -1,15 +1,22 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { createClient } from '@/utils/supabase/client'
 
 export default function LoginPage() {
-  const router = useRouter();
+  const supabase = createClient()
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    // For now, just redirect without actual authentication
-    router.push('/management-dashboard');
-  };
+  const handleGoogleLogin = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/management-dashboard`
+      }
+    })
+    
+    if (error) {
+      alert('Error signing in: ' + error.message)
+    }
+  }
 
   return (
     <div style={{ 
@@ -20,61 +27,38 @@ export default function LoginPage() {
       backgroundColor: '#ffffff',
       color: '#171717'
     }}>
-      <form onSubmit={handleLogin} style={{ 
-        padding: '20px',
+      <div style={{ 
+        padding: '40px',
         border: '1px solid #ccc',
-        borderRadius: '4px',
-        backgroundColor: '#ffffff'
+        borderRadius: '8px',
+        backgroundColor: '#ffffff',
+        textAlign: 'center',
+        minWidth: '300px'
       }}>
-        <h1 style={{ color: '#171717' }}>Login</h1>
-        <div style={{ marginBottom: '10px' }}>
-          <label htmlFor="email" style={{ color: '#171717' }}>Email:</label>
-          <input 
-            type="email" 
-            id="email" 
-            name="email" 
-            style={{ 
-              display: 'block',
-              marginTop: '5px',
-              padding: '5px',
-              width: '200px',
-              backgroundColor: '#ffffff',
-              color: '#171717',
-              border: '1px solid #ccc'
-            }}
-          />
-        </div>
-        <div style={{ marginBottom: '10px' }}>
-          <label htmlFor="password" style={{ color: '#171717' }}>Password:</label>
-          <input 
-            type="password" 
-            id="password" 
-            name="password" 
-            style={{ 
-              display: 'block',
-              marginTop: '5px',
-              padding: '5px',
-              width: '200px',
-              backgroundColor: '#ffffff',
-              color: '#171717',
-              border: '1px solid #ccc'
-            }}
-          />
-        </div>
+        <h1 style={{ marginBottom: '20px' }}>Sign in to L&D Platform</h1>
+        <p style={{ color: '#666', marginBottom: '30px' }}>
+          Access your courses and learning materials
+        </p>
         <button 
-          type="submit"
+          onClick={handleGoogleLogin}
           style={{
-            padding: '5px 10px',
-            cursor: 'pointer',
-            backgroundColor: '#007cba',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '10px',
+            width: '100%',
+            padding: '12px 20px',
+            backgroundColor: '#4285f4',
             color: 'white',
             border: 'none',
-            borderRadius: '4px'
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontSize: '16px'
           }}
         >
-          Login
+          Continue with Google
         </button>
-      </form>
+      </div>
     </div>
-  );
+  )
 } 
