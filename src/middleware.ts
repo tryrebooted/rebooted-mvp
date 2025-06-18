@@ -1,15 +1,13 @@
-import { NextResponse } from 'next/server'
+import { updateSession } from '@/utils/supabase/middleware'
 import type { NextRequest } from 'next/server'
 
-export function middleware(request: NextRequest) {
-  // If the request is for the root path
-  if (request.nextUrl.pathname === '/') {
-    // Redirect to /login
-    return NextResponse.redirect(new URL('/login', request.url))
-  }
+export async function middleware(request: NextRequest) {
+  return await updateSession(request)
 }
 
 // Configure which paths the middleware should run on
 export const config = {
-  matcher: '/',
+  matcher: [
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+  ],
 } 
