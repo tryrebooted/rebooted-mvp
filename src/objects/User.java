@@ -1,86 +1,73 @@
 package objects;
 
+import java.util.List;
 /**
  * an abstract interface to represent a user
  */
-public abstract class User {
+public abstract class  User {
 
-    /**
-     * The name of the user
-     */
     protected String name;
 
-    protected final UserType userCategory;
+    protected UserType userCategory;
 
-
-
-    User(String name, UserType userCategory){
-        this.name = name;
-        this.userCategory = userCategory;
-    }
  
     /**
      * An enumeration to represent either a learning & development user or an employee
      */
     public enum UserType {
-    LD,
-    Employee
+    LDUser,
+    EmployeeUser
     }
 
 
-//     /**
-//      * Returns the username of the user
-//      */
-//     String getUsername(){
-//         return name;
-//     }
+    /**
+     * Returns the username of the user
+     */
+    public String getUsername(){
+        return name;
+    }
 
-//     /*
-//     * Returns a user given a username
-//     * Throws UnknownUserException if 'username' is not a valid user
-//     */
-//     abstract User getUser(String username) throws UnknownUserException;
+    /*
+    * Returns a user given a username
+    * Throws UnknownUserException if 'username' is not a valid user
+    */
+    public abstract User getUser(String username) throws UnknownUserException;
 
-//     /**
-//      * Returns the type of the user
-//      */
-//     UserType getUserType(){
-//         return userCategory;
-//     }
+    /**
+     * Returns the type of the user
+     */
+    public  UserType getUserType(){
+        return userCategory;
+    }
 
-//     /**
-//      * Returns the names of the courses that the user has access to
-//      */
-//     abstract List<String> getCourseNames();
-
-
-//     /**
-//      * Returns true iff the user has access to the course named 'course'
-//      * Note: If 'course' does not exist, hasAccess(course) must return false
-//      */
-//     abstract boolean hasAccess(String course);
+    /**
+     * Returns the names of the courses that the user has access to
+     */
+    public abstract List<String> getCourseNames();
 
 
-//     /**
-//      * Returns the names of the courses that user 'name' is allowed to access
-//      * Throws: UnknownUserException if 'name' cannot be found
-//      */
-//     static List<String> getCourseNames(User user) throws UnknownUserException{
-//         try{
-//             return user.getCourseNames();
-//         }
-//         catch(Exception e)
-//         {
-//             throw new UnknownUserException(user.getUsername());
-//         }
-//     }
+    /**
+     * Returns true iff the user has access to the course named 'course'
+     * Note: If 'course' does not exist, hasAccess(course) must return false
+     */
+    public abstract boolean hasAccess(String course);
 
-//     /**
-//      * Return the course entitled 'courseName' if the user has permission to access it
-//      * Throws: InaccessibleCourseException if 'courseName' doesn't exist or if the user
-//      * doesn't have permission to accesss it
-//      */
-//     abstract Course getCourse(String courseName);
 
-// }
+
+    /**
+     * Return the course entitled 'courseName' if the user has permission to access it
+     * Throws: InaccessibleCourseException if 'courseName' doesn't exist or if the user
+     * doesn't have permission to accesss it
+     */
+    public abstract Course getCourse(String courseName);
+
+
+    /**
+     * Returns the progress of the user through course entitled 'courseName'. 
+     * Throws: InaccessibleCourseException if the user does not have access to the course.
+     */
+    public double getProgress(String courseName) throws InaccessibleCourseException{
+        return getCourse(courseName).getProgress(this);
+    }
+
 }
