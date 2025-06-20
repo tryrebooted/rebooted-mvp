@@ -42,6 +42,9 @@ export default function ModifyCoursePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [editingContentId, setEditingContentId] = useState<string | null>(null);
+  const [editContentType, setEditContentType] = useState<'Text' | 'Question'>('Text');
+  const [editContentText, setEditContentText] = useState('');
 
   useEffect(() => {
     if (!courseId) {
@@ -296,6 +299,61 @@ export default function ModifyCoursePage() {
     }
   };
 
+  const startEditingContent = (contentId: string, currentType: 'Text' | 'Question', currentText: string) => {
+    setEditingContentId(contentId);
+    setEditContentType(currentType);
+    setEditContentText(currentText);
+  };
+
+  const cancelEditingContent = () => {
+    setEditingContentId(null);
+    setEditContentType('Text');
+    setEditContentText('');
+  };
+
+  const updateContentBlock = async () => {
+    if (!editingContentId || !editContentText.trim()) return;
+
+    try {
+      setSaving(true);
+
+      // Update in database
+      const { error } = await supabase
+        .from('content')
+        .update({
+          content_type: editContentType,
+          content_text: editContentText.trim()
+        })
+        .eq('id', editingContentId);
+
+      if (error) throw error;
+
+      // Update local state
+      setModules(modules.map(module => ({
+        ...module,
+        contentBlocks: module.contentBlocks.map(content =>
+          content.id === editingContentId
+            ? {
+                ...content,
+                type: editContentType,
+                title: `${editContentType} Content`,
+                content: editContentText.trim()
+              }
+            : content
+        )
+      })));
+
+      // Clear editing state
+      cancelEditingContent();
+
+    } catch (err) {
+      console.error('Error updating content:', err);
+      setError('Failed to update content block');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const calculateModuleProgress = (module: Module): number => {
     if (module.contentBlocks.length === 0) return 0;
     const completedCount = module.contentBlocks.filter(content => content.isComplete).length;
@@ -420,47 +478,104 @@ export default function ModifyCoursePage() {
                         content.isComplete ? 'bg-green-50 border-green-200' : 'bg-white border-gray-200'
                       } shadow-sm`}
                     >
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center space-x-3">
-                          <span
-                            className={`px-3 py-1 rounded-full text-sm ${
-                              content.type === 'Text'
-                                ? 'bg-blue-100 text-blue-800'
-                                : 'bg-purple-100 text-purple-800'
-                            }`}
-                          >
-                            {content.type}
-                          </span>
-                          <h4 className="font-semibold text-gray-900">{content.title}</h4>
+                      {editingContentId === content.id ? (
+                        // Inline Edit Form
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <h4 className="font-semibold text-gray-900">Editing Content Block</h4>
+                            <div className="flex space-x-2">
+                              <button
+                                onClick={updateContentBlock}
+                                disabled={saving || !editContentText.trim()}
+                                className="px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm disabled:bg-gray-400"
+                              >
+                                {saving ? 'Saving...' : 'Save'}
+                              </button>
+                              <button
+                                onClick={cancelEditingContent}
+                                className="px-3 py-1 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 text-sm"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Content Type</label>
+                            <select
+                              value={editContentType}
+                              onChange={(e) => setEditContentType(e.target.value as 'Text' | 'Question')}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            >
+                              <option value="Text">Text</option>
+                              <option value="Question">Question</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Content</label>
+                            <textarea
+                              value={editContentText}
+                              onChange={(e) => setEditContentText(e.target.value)}
+                              rows={4}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              placeholder={editContentType === 'Text' ? 'Enter text content' : 'Enter question content'}
+                            />
+                          </div>
                         </div>
-                        <div className="flex space-x-2">
-                          <button
-                            onClick={() => toggleContentCompletion(module.id, content.id)}
-                            className={`px-3 py-1 rounded-md text-sm font-medium ${
-                              content.isComplete
-                                ? 'bg-green-100 text-green-800 hover:bg-green-200'
-                                : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
-                            }`}
-                          >
-                            {content.isComplete ? 'Completed' : 'Mark Complete'}
-                          </button>
-                          <button
-                            onClick={() => removeContentFromModule(module.id, content.id)}
-                            className="px-3 py-1 bg-red-100 text-red-800 hover:bg-red-200 rounded-md text-sm"
-                          >
-                            Remove
-                          </button>
-                        </div>
-                      </div>
+                      ) : (
+                        // Normal Display
+                        <>
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center space-x-3">
+                              <span
+                                className={`px-3 py-1 rounded-full text-sm ${
+                                  content.type === 'Text'
+                                    ? 'bg-blue-100 text-blue-800'
+                                    : 'bg-purple-100 text-purple-800'
+                                }`}
+                              >
+                                {content.type}
+                              </span>
+                              <h4 className="font-semibold text-gray-900">{content.title}</h4>
+                            </div>
+                            <div className="flex space-x-2">
+                              <button
+                                onClick={() => toggleContentCompletion(module.id, content.id)}
+                                className={`px-3 py-1 rounded-md text-sm font-medium ${
+                                  content.isComplete
+                                    ? 'bg-green-100 text-green-800 hover:bg-green-200'
+                                    : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                                }`}
+                              >
+                                {content.isComplete ? 'Completed' : 'Mark Complete'}
+                              </button>
+                              <button
+                                onClick={() => startEditingContent(content.id, content.type, content.content)}
+                                className="px-3 py-1 bg-yellow-100 text-yellow-800 hover:bg-yellow-200 rounded-md text-sm"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => removeContentFromModule(module.id, content.id)}
+                                className="px-3 py-1 bg-red-100 text-red-800 hover:bg-red-200 rounded-md text-sm"
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          </div>
 
-                      <div className="text-gray-700">{content.content}</div>
+                          <div className="text-gray-700 whitespace-pre-wrap">{content.content}</div>
 
-                      {content.type === 'Question' && (
-                        <div className="mt-3">
-                          <button className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm">
-                            Edit Question
-                          </button>
-                        </div>
+                          {content.type === 'Question' && !editingContentId && (
+                            <div className="mt-3">
+                              <button 
+                                onClick={() => startEditingContent(content.id, content.type, content.content)}
+                                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm"
+                              >
+                                Edit Question
+                              </button>
+                            </div>
+                          )}
+                        </>
                       )}
                     </div>
                   ))}
