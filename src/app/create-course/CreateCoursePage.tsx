@@ -3,11 +3,35 @@
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
+interface ContentBlock {
+  id: string;
+  type: 'Text' | 'Question';
+  title: string;
+  content: string;
+  isComplete: boolean;
+}
+
+interface Module {
+  id: string;
+  title: string;
+  contentBlocks: ContentBlock[];
+}
+
+interface LDUser {
+  username: string;
+  userType: 'LDUser' | 'EmployeeUser';
+}
+
 export default function CreateCoursePage() {
   const router = useRouter();
   const [courseTitle, setCourseTitle] = useState('');
   const [courseDescription, setCourseDescription] = useState('');
-  const [courseContent, setCourseContent] = useState('');
+  const [teachers, setTeachers] = useState<LDUser[]>([]);
+  const [students, setStudents] = useState<LDUser[]>([]);
+  const [modules, setModules] = useState<Module[]>([]);
+  const [newTeacherUsername, setNewTeacherUsername] = useState('');
+  const [newStudentUsername, setNewStudentUsername] = useState('');
+  const [newModuleTitle, setNewModuleTitle] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,10 +48,48 @@ export default function CreateCoursePage() {
     router.push('/preview-course');
   };
 
+  const addTeacher = () => {
+    if (newTeacherUsername.trim()) {
+      setTeachers([...teachers, { username: newTeacherUsername.trim(), userType: 'LDUser' }]);
+      setNewTeacherUsername('');
+    }
+  };
+
+  const addStudent = () => {
+    if (newStudentUsername.trim()) {
+      setStudents([...students, { username: newStudentUsername.trim(), userType: 'EmployeeUser' }]);
+      setNewStudentUsername('');
+    }
+  };
+
+  const removeTeacher = (index: number) => {
+    setTeachers(teachers.filter((_, i) => i !== index));
+  };
+
+  const removeStudent = (index: number) => {
+    setStudents(students.filter((_, i) => i !== index));
+  };
+
+  const addModule = () => {
+    if (newModuleTitle.trim()) {
+      const newModule: Module = {
+        id: `module-${Date.now()}`,
+        title: newModuleTitle.trim(),
+        contentBlocks: []
+      };
+      setModules([...modules, newModule]);
+      setNewModuleTitle('');
+    }
+  };
+
+  const removeModule = (index: number) => {
+    setModules(modules.filter((_, i) => i !== index));
+  };
+
   return (
     <div style={{ 
       padding: '20px',
-      maxWidth: '600px',
+      maxWidth: '800px',
       margin: '0 auto',
       backgroundColor: '#ffffff',
       minHeight: '100vh',
@@ -41,6 +103,7 @@ export default function CreateCoursePage() {
         padding: '20px',
         backgroundColor: '#fafafa'
       }}>
+        {/* Basic Course Information */}
         <div style={{ marginBottom: '15px' }}>
           <label htmlFor="title" style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', color: '#171717' }}>
             Course Title:
@@ -62,7 +125,7 @@ export default function CreateCoursePage() {
           />
         </div>
 
-        <div style={{ marginBottom: '15px' }}>
+        <div style={{ marginBottom: '20px' }}>
           <label htmlFor="description" style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', color: '#171717' }}>
             Course Description:
           </label>
@@ -84,27 +147,167 @@ export default function CreateCoursePage() {
           />
         </div>
 
+        {/* Teachers Section */}
         <div style={{ marginBottom: '20px' }}>
-          <label htmlFor="content" style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', color: '#171717' }}>
-            Course Content:
+          <label style={{ display: 'block', marginBottom: '10px', fontWeight: 'bold', color: '#171717' }}>
+            Teachers (L&D Users):
           </label>
-          <textarea 
-            id="content" 
-            value={courseContent}
-            onChange={(e) => setCourseContent(e.target.value)}
-            required
-            rows={8}
-            placeholder="Enter your course content, lessons, or learning materials here..."
-            style={{ 
-              width: '100%',
-              padding: '8px',
-              border: '1px solid #ccc',
-              borderRadius: '4px',
-              resize: 'vertical',
-              backgroundColor: '#ffffff',
-              color: '#171717'
-            }}
-          />
+          <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
+            <input 
+              type="text" 
+              value={newTeacherUsername}
+              onChange={(e) => setNewTeacherUsername(e.target.value)}
+              placeholder="Enter teacher username"
+              style={{ 
+                flex: 1,
+                padding: '8px',
+                border: '1px solid #ccc',
+                borderRadius: '4px',
+                backgroundColor: '#ffffff',
+                color: '#171717'
+              }}
+            />
+            <button 
+              type="button"
+              onClick={addTeacher}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: '#007cba',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer'
+              }}
+            >
+              Add Teacher
+            </button>
+          </div>
+          <div style={{ maxHeight: '100px', overflowY: 'auto', border: '1px solid #ddd', borderRadius: '4px', padding: '5px' }}>
+            {teachers.map((teacher, index) => (
+              <div key={index} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '5px', backgroundColor: '#e3f2fd', margin: '2px 0', borderRadius: '3px' }}>
+                <span>{teacher.username} ({teacher.userType})</span>
+                <button 
+                  type="button"
+                  onClick={() => removeTeacher(index)}
+                  style={{ backgroundColor: '#dc3545', color: 'white', border: 'none', borderRadius: '3px', padding: '2px 8px', cursor: 'pointer' }}
+                >
+                  Remove
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Students Section */}
+        <div style={{ marginBottom: '20px' }}>
+          <label style={{ display: 'block', marginBottom: '10px', fontWeight: 'bold', color: '#171717' }}>
+            Students (Employee Users):
+          </label>
+          <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
+            <input 
+              type="text" 
+              value={newStudentUsername}
+              onChange={(e) => setNewStudentUsername(e.target.value)}
+              placeholder="Enter student username"
+              style={{ 
+                flex: 1,
+                padding: '8px',
+                border: '1px solid #ccc',
+                borderRadius: '4px',
+                backgroundColor: '#ffffff',
+                color: '#171717'
+              }}
+            />
+            <button 
+              type="button"
+              onClick={addStudent}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: '#28a745',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer'
+              }}
+            >
+              Add Student
+            </button>
+          </div>
+          <div style={{ maxHeight: '100px', overflowY: 'auto', border: '1px solid #ddd', borderRadius: '4px', padding: '5px' }}>
+            {students.map((student, index) => (
+              <div key={index} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '5px', backgroundColor: '#e8f5e8', margin: '2px 0', borderRadius: '3px' }}>
+                <span>{student.username} ({student.userType})</span>
+                <button 
+                  type="button"
+                  onClick={() => removeStudent(index)}
+                  style={{ backgroundColor: '#dc3545', color: 'white', border: 'none', borderRadius: '3px', padding: '2px 8px', cursor: 'pointer' }}
+                >
+                  Remove
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Modules Section */}
+        <div style={{ marginBottom: '20px' }}>
+          <label style={{ display: 'block', marginBottom: '10px', fontWeight: 'bold', color: '#171717' }}>
+            Course Modules:
+          </label>
+          <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
+            <input 
+              type="text" 
+              value={newModuleTitle}
+              onChange={(e) => setNewModuleTitle(e.target.value)}
+              placeholder="Enter module title"
+              style={{ 
+                flex: 1,
+                padding: '8px',
+                border: '1px solid #ccc',
+                borderRadius: '4px',
+                backgroundColor: '#ffffff',
+                color: '#171717'
+              }}
+            />
+            <button 
+              type="button"
+              onClick={addModule}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: '#6f42c1',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer'
+              }}
+            >
+              Add Module
+            </button>
+          </div>
+          <div style={{ maxHeight: '150px', overflowY: 'auto', border: '1px solid #ddd', borderRadius: '4px', padding: '5px' }}>
+            {modules.map((module, index) => (
+              <div key={module.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px', backgroundColor: '#f8f9fa', margin: '2px 0', borderRadius: '3px', border: '1px solid #dee2e6' }}>
+                <div>
+                  <span style={{ fontWeight: 'bold' }}>{module.title}</span>
+                  <span style={{ color: '#6c757d', fontSize: '12px', marginLeft: '10px' }}>
+                    ({module.contentBlocks.length} content blocks)
+                  </span>
+                </div>
+                <button 
+                  type="button"
+                  onClick={() => removeModule(index)}
+                  style={{ backgroundColor: '#dc3545', color: 'white', border: 'none', borderRadius: '3px', padding: '4px 8px', cursor: 'pointer' }}
+                >
+                  Remove
+                </button>
+              </div>
+            ))}
+            {modules.length === 0 && (
+              <div style={{ textAlign: 'center', color: '#6c757d', padding: '20px' }}>
+                No modules added yet. Modules will contain content blocks (Text and Questions).
+              </div>
+            )}
+          </div>
         </div>
 
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
