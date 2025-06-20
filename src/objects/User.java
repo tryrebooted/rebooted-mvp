@@ -27,12 +27,6 @@ public abstract class  User {
         return name;
     }
 
-    /*
-    * Returns a user given a username
-    * Throws UnknownUserException if 'username' is not a valid user
-    */
-    public abstract User getUser(String username) throws UnknownUserException;
-
     /**
      * Returns the type of the user
      */

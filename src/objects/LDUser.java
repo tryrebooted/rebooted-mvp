@@ -1,29 +1,33 @@
 package objects;
 
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
+/**
+ * This User represents a learning and development professional.
+ * They will have the permissions to build/edit courses
+ */
 public class LDUser extends User{
 
-    //The name of the user
+    protected Set<String> courses;
    
     public LDUser(String name, User.UserType userCategory){
         this.name = name;
         this.userCategory = userCategory;
+        courses = new TreeSet<>();
     }
 
-    @Override
-    public User getUser(String username) throws UnknownUserException {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
+  
     @Override
     public List<String> getCourseNames() {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return new LinkedList<>(courses);
     }
 
     @Override
     public boolean hasAccess(String course) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return courses.contains(course);
     }
 
     @Override
