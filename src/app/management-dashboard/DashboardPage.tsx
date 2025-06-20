@@ -19,6 +19,7 @@ export default function DashboardPage() {
   const [courses, setCourses] = useState<Course[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState<string | null>(null)
 
   useEffect(() => {
     let mounted = true
@@ -122,6 +123,49 @@ export default function DashboardPage() {
       mounted = false
     }
   }, [router, supabase])
+
+  const deleteCourse = async (courseId: string) => {
+    if (!confirm('Are you sure you want to delete this course? This action cannot be undone.')) {
+      return
+    }
+
+    setDeleting(courseId)
+    
+    try {
+      // First, delete all course_users entries for this course
+      const { error: courseUsersError } = await supabase
+        .from('course_users')
+        .delete()
+        .eq('course_id', courseId)
+
+      if (courseUsersError) {
+        console.error('Error deleting course users:', courseUsersError)
+        setError('Error deleting course. Please try again.')
+        return
+      }
+
+      // Then delete the course itself
+      const { error: courseError } = await supabase
+        .from('courses')
+        .delete()
+        .eq('id', courseId)
+
+      if (courseError) {
+        console.error('Error deleting course:', courseError)
+        setError('Error deleting course. Please try again.')
+        return
+      }
+
+      // Remove the course from local state
+      setCourses(prev => prev.filter(course => course.id !== courseId))
+      
+    } catch (error) {
+      console.error('Unexpected error deleting course:', error)
+      setError('An unexpected error occurred while deleting the course.')
+    } finally {
+      setDeleting(null)
+    }
+  }
 
   if (loading) {
     return (
@@ -299,19 +343,36 @@ export default function DashboardPage() {
               
               <div style={{ display: 'flex', gap: '10px' }}>
                 {course.role === 'teacher' && (
-                  <a
-                    href={`/modify-course?id=${course.id}`}
-                    style={{
-                      padding: '8px 16px',
-                      backgroundColor: '#007cba',
-                      color: 'white',
-                      textDecoration: 'none',
-                      borderRadius: '4px',
-                      fontSize: '14px'
-                    }}
-                  >
-                    Edit Course
-                  </a>
+                  <>
+                    <a
+                      href={`/modify-course?id=${course.id}`}
+                      style={{
+                        padding: '8px 16px',
+                        backgroundColor: '#007cba',
+                        color: 'white',
+                        textDecoration: 'none',
+                        borderRadius: '4px',
+                        fontSize: '14px'
+                      }}
+                    >
+                      Edit Course
+                    </a>
+                    <button
+                      onClick={() => deleteCourse(course.id)}
+                      disabled={deleting === course.id}
+                      style={{
+                        padding: '8px 16px',
+                        backgroundColor: deleting === course.id ? '#ccc' : '#dc3545',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        fontSize: '14px',
+                        cursor: deleting === course.id ? 'not-allowed' : 'pointer'
+                      }}
+                    >
+                      {deleting === course.id ? 'Deleting...' : 'Delete'}
+                    </button>
+                  </>
                 )}
                 <a
                   href={`/preview-course?id=${course.id}`}
@@ -331,6 +392,27 @@ export default function DashboardPage() {
           ))}
         </div>
       )}
+      
+      <div style={{ 
+        marginTop: '30px',
+        textAlign: 'center'
+      }}>
+        <a 
+          href="/create-course"
+          style={{
+            display: 'inline-block',
+            padding: '12px 24px',
+            backgroundColor: '#007cba',
+            color: 'white',
+            textDecoration: 'none',
+            borderRadius: '4px',
+            fontSize: '16px',
+            fontWeight: 'bold'
+          }}
+        >
+          Create New Course
+        </a>
+      </div>
     </div>
   )
 } 

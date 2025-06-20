@@ -45,6 +45,8 @@ export default function ModifyCoursePage() {
   const [editingContentId, setEditingContentId] = useState<string | null>(null);
   const [editContentType, setEditContentType] = useState<'Text' | 'Question'>('Text');
   const [editContentText, setEditContentText] = useState('');
+  const [showNewModuleForm, setShowNewModuleForm] = useState(false);
+  const [newModuleTitle, setNewModuleTitle] = useState('');
 
   useEffect(() => {
     if (!courseId) {
@@ -354,6 +356,83 @@ export default function ModifyCoursePage() {
     }
   };
 
+  const addNewModule = async () => {
+    if (!newModuleTitle.trim()) return;
+
+    try {
+      setSaving(true);
+
+      // Get the next position
+      const nextPosition = modules.length + 1;
+
+      // Add module to database
+      const { data: newModule, error } = await supabase
+        .from('modules')
+        .insert({
+          course_id: courseId,
+          title: newModuleTitle.trim(),
+          position: nextPosition
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Update local state
+      const newModuleData: Module = {
+        id: newModule.id,
+        title: newModuleTitle.trim(),
+        position: nextPosition,
+        contentBlocks: []
+      };
+
+      setModules([...modules, newModuleData]);
+      setNewModuleTitle('');
+      setShowNewModuleForm(false);
+
+    } catch (err) {
+      console.error('Error adding module:', err);
+      setError('Failed to add new module');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const deleteModule = async (moduleId: string) => {
+    if (!confirm('Are you sure you want to delete this module? This will also delete all content blocks within it. This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      setSaving(true);
+
+      // Delete all content blocks in the module first
+      const { error: contentError } = await supabase
+        .from('content')
+        .delete()
+        .eq('module_id', moduleId);
+
+      if (contentError) throw contentError;
+
+      // Delete the module
+      const { error: moduleError } = await supabase
+        .from('modules')
+        .delete()
+        .eq('id', moduleId);
+
+      if (moduleError) throw moduleError;
+
+      // Update local state
+      setModules(modules.filter(module => module.id !== moduleId));
+
+    } catch (err) {
+      console.error('Error deleting module:', err);
+      setError('Failed to delete module');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const calculateModuleProgress = (module: Module): number => {
     if (module.contentBlocks.length === 0) return 0;
     const completedCount = module.contentBlocks.filter(content => content.isComplete).length;
@@ -442,7 +521,52 @@ export default function ModifyCoursePage() {
         </div>
 
         {/* Modules Section */}
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">Course Modules</h2>
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold text-gray-900">Course Modules</h2>
+          <button
+            onClick={() => setShowNewModuleForm(!showNewModuleForm)}
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+          >
+            {showNewModuleForm ? 'Cancel' : 'Add New Module'}
+          </button>
+        </div>
+
+        {/* New Module Form */}
+        {showNewModuleForm && (
+          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <h3 className="text-lg font-semibold text-blue-900 mb-3">Add New Module</h3>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Module Title</label>
+                <input
+                  type="text"
+                  value={newModuleTitle}
+                  onChange={(e) => setNewModuleTitle(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Enter module title"
+                />
+              </div>
+              <div className="flex space-x-2">
+                <button
+                  onClick={addNewModule}
+                  disabled={saving || !newModuleTitle.trim()}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:bg-gray-400"
+                >
+                  {saving ? 'Creating...' : 'Create Module'}
+                </button>
+                <button
+                  onClick={() => {
+                    setShowNewModuleForm(false);
+                    setNewModuleTitle('');
+                  }}
+                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         <div className="space-y-6">
           {modules.map((module) => {
             const progress = calculateModuleProgress(module);
@@ -461,12 +585,21 @@ export default function ModifyCoursePage() {
                       <span className="text-sm text-gray-600">{Math.round(progress * 100)}%</span>
                     </div>
                   </div>
-                  <button
-                    onClick={() => setSelectedModuleId(selectedModuleId === module.id ? null : module.id)}
-                    className="px-3 py-1 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors text-sm"
-                  >
-                    {selectedModuleId === module.id ? 'Cancel' : 'Add Content'}
-                  </button>
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => setSelectedModuleId(selectedModuleId === module.id ? null : module.id)}
+                      className="px-3 py-1 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors text-sm"
+                    >
+                      {selectedModuleId === module.id ? 'Cancel' : 'Add Content'}
+                    </button>
+                    <button
+                      onClick={() => deleteModule(module.id)}
+                      disabled={saving}
+                      className="px-3 py-1 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors text-sm disabled:bg-gray-400"
+                    >
+                      Delete Module
+                    </button>
+                  </div>
                 </div>
 
                 {/* Content Blocks */}
