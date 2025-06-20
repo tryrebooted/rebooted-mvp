@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { createClient } from '@/utils/supabase/client';
 
 interface ContentBlock {
   id: string;
@@ -9,13 +10,14 @@ interface ContentBlock {
   title: string;
   content: string;
   isComplete: boolean;
+  position: number;
 }
 
 interface Module {
   id: string;
   title: string;
   contentBlocks: ContentBlock[];
-  progress: number; // 0-1 representing completion percentage
+  position: number;
 }
 
 interface LDUser {
@@ -25,112 +27,273 @@ interface LDUser {
 
 export default function ModifyCoursePage() {
   const router = useRouter();
-  const [courseTitle, setCourseTitle] = useState('Workplace Safety Fundamentals');
-  const [courseDescription, setCourseDescription] = useState('Essential safety protocols and procedures for all employees');
-  const [teachers, setTeachers] = useState<LDUser[]>([
-    { username: 'sarah.jones', userType: 'LDUser' },
-    { username: 'mike.wilson', userType: 'LDUser' }
-  ]);
-  const [students, setStudents] = useState<LDUser[]>([
-    { username: 'john.doe', userType: 'EmployeeUser' },
-    { username: 'jane.smith', userType: 'EmployeeUser' }
-  ]);
-  const [modules, setModules] = useState<Module[]>([
-    {
-      id: 'module-1',
-      title: 'Introduction to Workplace Safety',
-      progress: 0.5,
-      contentBlocks: [
-        {
-          id: 'content-1',
-          type: 'Text',
-          title: 'Safety Overview',
-          content: 'Welcome to our comprehensive workplace safety training. This course will cover the essential knowledge and procedures every employee needs to maintain a safe working environment.',
-          isComplete: false,
-        },
-        {
-          id: 'content-2',
-          type: 'Question',
-          title: 'Safety Basics Quiz',
-          content: 'What is the first step when encountering a workplace hazard?',
-          isComplete: false,
-        },
-      ]
-    },
-    {
-      id: 'module-2',
-      title: 'Emergency Procedures',
-      progress: 0.0,
-      contentBlocks: [
-        {
-          id: 'content-3',
-          type: 'Text',
-          title: 'Emergency Response Steps',
-          content: 'In case of emergency, follow these critical steps: 1) Remain calm and assess the situation, 2) Alert nearby colleagues if safe to do so, 3) Contact emergency services (911) if required, 4) Follow evacuation procedures to designated meeting points.',
-          isComplete: false,
-        },
-        {
-          id: 'content-4',
-          type: 'Question',
-          title: 'Emergency Response Quiz',
-          content: 'What number should you call for emergency services?',
-          isComplete: false,
-        },
-      ]
-    }
-  ]);
+  const searchParams = useSearchParams();
+  const supabase = createClient();
+  const courseId = searchParams.get('id');
 
+  const [courseTitle, setCourseTitle] = useState('');
+  const [courseDescription, setCourseDescription] = useState('');
+  const [teachers, setTeachers] = useState<LDUser[]>([]);
+  const [students, setStudents] = useState<LDUser[]>([]);
+  const [modules, setModules] = useState<Module[]>([]);
   const [selectedModuleId, setSelectedModuleId] = useState<string | null>(null);
-  const [newContentTitle, setNewContentTitle] = useState('');
   const [newContentType, setNewContentType] = useState<'Text' | 'Question'>('Text');
   const [newContentContent, setNewContentContent] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
-  const toggleContentCompletion = (moduleId: string, contentId: string) => {
-    setModules(modules.map(module => 
-      module.id === moduleId 
-        ? {
-            ...module,
-            contentBlocks: module.contentBlocks.map(content =>
-              content.id === contentId 
-                ? { ...content, isComplete: !content.isComplete }
-                : content
-            )
-          }
-        : module
-    ));
+  useEffect(() => {
+    if (!courseId) {
+      setError('No course ID provided');
+      setLoading(false);
+      return;
+    }
+
+    loadCourseData();
+  }, [courseId]);
+
+  const loadCourseData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Get current user to check permissions
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
+        router.push('/login');
+        return;
+      }
+
+      // Check if user has teacher access to this course
+      const { data: userAccess, error: accessError } = await supabase
+        .from('course_users')
+        .select('role')
+        .eq('course_id', courseId)
+        .eq('user_id', user.id)
+        .single();
+
+      if (accessError || userAccess?.role !== 'teacher') {
+        setError('You do not have permission to edit this course');
+        setLoading(false);
+        return;
+      }
+
+      // Fetch course basic info
+      const { data: courseData, error: courseError } = await supabase
+        .from('courses')
+        .select('name, description')
+        .eq('id', courseId)
+        .single();
+
+      if (courseError) throw new Error('Failed to load course');
+
+      setCourseTitle(courseData.name);
+      setCourseDescription(courseData.description || '');
+
+      // Fetch course users (teachers and students)
+      const { data: courseUsers, error: usersError } = await supabase
+        .from('course_users')
+        .select(`
+          role,
+          profiles (
+            username,
+            user_type
+          )
+        `)
+        .eq('course_id', courseId);
+
+      if (usersError) throw new Error('Failed to load course users');
+
+      const teachersList: LDUser[] = [];
+      const studentsList: LDUser[] = [];
+
+      courseUsers?.forEach((item: any) => {
+        const user = {
+          username: item.profiles.username,
+          userType: item.profiles.user_type as 'LDUser' | 'EmployeeUser'
+        };
+        
+        if (item.role === 'teacher') {
+          teachersList.push(user);
+        } else {
+          studentsList.push(user);
+        }
+      });
+
+      setTeachers(teachersList);
+      setStudents(studentsList);
+
+      // Fetch modules and content
+      const { data: modulesData, error: modulesError } = await supabase
+        .from('modules')
+        .select(`
+          id,
+          title,
+          position,
+          content (
+            id,
+            content_type,
+            content_text,
+            is_complete,
+            position
+          )
+        `)
+        .eq('course_id', courseId)
+        .order('position');
+
+      if (modulesError) throw new Error('Failed to load modules');
+
+      const formattedModules: Module[] = modulesData?.map(module => ({
+        id: module.id,
+        title: module.title || '',
+        position: module.position,
+        contentBlocks: module.content
+          ?.sort((a, b) => a.position - b.position)
+          .map(content => ({
+            id: content.id,
+            type: content.content_type as 'Text' | 'Question',
+            title: `${content.content_type} Content`, // Since DB doesn't have title field
+            content: content.content_text || '',
+            isComplete: content.is_complete,
+            position: content.position
+          })) || []
+      })) || [];
+
+      setModules(formattedModules);
+
+    } catch (err) {
+      console.error('Error loading course data:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load course');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const addContentToModule = (moduleId: string) => {
-    if (newContentTitle.trim() && newContentContent.trim()) {
-      const newContent: ContentBlock = {
-        id: `content-${Date.now()}`,
+  const toggleContentCompletion = async (moduleId: string, contentId: string) => {
+    try {
+      // Update in local state first for immediate UI feedback
+      setModules(modules.map(module => 
+        module.id === moduleId 
+          ? {
+              ...module,
+              contentBlocks: module.contentBlocks.map(content =>
+                content.id === contentId 
+                  ? { ...content, isComplete: !content.isComplete }
+                  : content
+              )
+            }
+          : module
+      ));
+
+      // Update in database
+      const currentContent = modules
+        .find(m => m.id === moduleId)
+        ?.contentBlocks.find(c => c.id === contentId);
+
+      if (currentContent) {
+        const { error } = await supabase
+          .from('content')
+          .update({ is_complete: !currentContent.isComplete })
+          .eq('id', contentId);
+
+        if (error) {
+          console.error('Error updating completion status:', error);
+          // Revert the local state change if database update failed
+          setModules(modules.map(module => 
+            module.id === moduleId 
+              ? {
+                  ...module,
+                  contentBlocks: module.contentBlocks.map(content =>
+                    content.id === contentId 
+                      ? { ...content, isComplete: currentContent.isComplete }
+                      : content
+                  )
+                }
+              : module
+          ));
+        }
+      }
+    } catch (err) {
+      console.error('Error toggling completion:', err);
+    }
+  };
+
+  const addContentToModule = async (moduleId: string) => {
+    if (!newContentContent.trim()) return;
+
+    try {
+      setSaving(true);
+
+      // Get the next position for this module
+      const module = modules.find(m => m.id === moduleId);
+      const nextPosition = module ? module.contentBlocks.length + 1 : 1;
+
+      // Add to database
+      const { data: newContent, error } = await supabase
+        .from('content')
+        .insert({
+          module_id: moduleId,
+          content_type: newContentType,
+          content_text: newContentContent.trim(),
+          position: nextPosition
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Update local state
+      const newContentBlock: ContentBlock = {
+        id: newContent.id,
         type: newContentType,
-        title: newContentTitle.trim(),
+        title: `${newContentType} Content`,
         content: newContentContent.trim(),
-        isComplete: false
+        isComplete: false,
+        position: nextPosition
       };
 
       setModules(modules.map(module =>
         module.id === moduleId
-          ? { ...module, contentBlocks: [...module.contentBlocks, newContent] }
+          ? { ...module, contentBlocks: [...module.contentBlocks, newContentBlock] }
           : module
       ));
 
-      setNewContentTitle('');
       setNewContentContent('');
       setSelectedModuleId(null);
+
+    } catch (err) {
+      console.error('Error adding content:', err);
+      setError('Failed to add content block');
+    } finally {
+      setSaving(false);
     }
   };
 
-  const removeContentFromModule = (moduleId: string, contentId: string) => {
-    setModules(modules.map(module =>
-      module.id === moduleId
-        ? { 
-            ...module, 
-            contentBlocks: module.contentBlocks.filter(content => content.id !== contentId)
-          }
-        : module
-    ));
+  const removeContentFromModule = async (moduleId: string, contentId: string) => {
+    try {
+      // Remove from database
+      const { error } = await supabase
+        .from('content')
+        .delete()
+        .eq('id', contentId);
+
+      if (error) throw error;
+
+      // Update local state
+      setModules(modules.map(module =>
+        module.id === moduleId
+          ? { 
+              ...module, 
+              contentBlocks: module.contentBlocks.filter(content => content.id !== contentId)
+            }
+          : module
+      ));
+
+    } catch (err) {
+      console.error('Error removing content:', err);
+      setError('Failed to remove content block');
+    }
   };
 
   const calculateModuleProgress = (module: Module): number => {
@@ -138,6 +301,36 @@ export default function ModifyCoursePage() {
     const completedCount = module.contentBlocks.filter(content => content.isComplete).length;
     return completedCount / module.contentBlocks.length;
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white p-8 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading course...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-white p-8 flex items-center justify-center">
+        <div className="text-center">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md">
+            <h2 className="text-lg font-semibold text-red-800 mb-2">Error</h2>
+            <p className="text-red-600 mb-4">{error}</p>
+            <button
+              onClick={() => router.push('/management-dashboard')}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            >
+              Back to Dashboard
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white p-8">
@@ -149,7 +342,7 @@ export default function ModifyCoursePage() {
           </div>
           <div className="flex space-x-3">
             <button
-              onClick={() => router.push('/preview-course')}
+              onClick={() => router.push(`/preview-course?id=${courseId}`)}
               className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
             >
               Preview Course
@@ -290,16 +483,6 @@ export default function ModifyCoursePage() {
                         </select>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
-                        <input
-                          type="text"
-                          value={newContentTitle}
-                          onChange={(e) => setNewContentTitle(e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          placeholder="Enter content title"
-                        />
-                      </div>
-                      <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Content</label>
                         <textarea
                           value={newContentContent}
@@ -312,9 +495,10 @@ export default function ModifyCoursePage() {
                       <div className="flex space-x-2">
                         <button
                           onClick={() => addContentToModule(module.id)}
-                          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                          disabled={saving || !newContentContent.trim()}
+                          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:bg-gray-400"
                         >
-                          Add Content
+                          {saving ? 'Adding...' : 'Add Content'}
                         </button>
                         <button
                           onClick={() => setSelectedModuleId(null)}

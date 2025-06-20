@@ -1,7 +1,8 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { createClient } from '@/utils/supabase/client';
 
 interface ContentBlock {
   id: string;
@@ -9,13 +10,14 @@ interface ContentBlock {
   title: string;
   content: string;
   isComplete: boolean;
+  position: number;
 }
 
 interface Module {
   id: string;
   title: string;
   contentBlocks: ContentBlock[];
-  progress: number;
+  position: number;
 }
 
 interface LDUser {
@@ -25,87 +27,153 @@ interface LDUser {
 
 export default function PreviewCoursePage() {
   const router = useRouter();
-  
-  // Sample course data following the domain model structure
-  const courseTitle = 'Workplace Safety Fundamentals';
-  const courseDescription = 'Essential safety protocols and procedures for all employees';
-  const teachers: LDUser[] = [
-    { username: 'sarah.jones', userType: 'LDUser' },
-    { username: 'mike.wilson', userType: 'LDUser' }
-  ];
-  const students: LDUser[] = [
-    { username: 'john.doe', userType: 'EmployeeUser' },
-    { username: 'jane.smith', userType: 'EmployeeUser' }
-  ];
+  const searchParams = useSearchParams();
+  const supabase = createClient();
+  const courseId = searchParams.get('id');
 
-  const [modules, setModules] = useState<Module[]>([
-    {
-      id: 'module-1',
-      title: 'Introduction to Workplace Safety',
-      progress: 0.5,
-      contentBlocks: [
-        {
-          id: 'content-1',
-          type: 'Text',
-          title: 'Safety Overview',
-          content: 'Welcome to our comprehensive workplace safety training. This course will cover the essential knowledge and procedures every employee needs to maintain a safe working environment. By the end of this course, you will understand how to identify potential hazards, follow proper safety protocols, and respond appropriately to emergency situations.',
-          isComplete: false,
-        },
-        {
-          id: 'content-2',
-          type: 'Question',
-          title: 'Safety Basics Quiz',
-          content: 'What is the first step when encountering a workplace hazard?',
-          isComplete: false,
-        },
-      ]
-    },
-    {
-      id: 'module-2',
-      title: 'Emergency Procedures',
-      progress: 0.0,
-      contentBlocks: [
-        {
-          id: 'content-3',
-          type: 'Text',
-          title: 'Emergency Response Steps',
-          content: 'In case of emergency, follow these critical steps: 1) Remain calm and assess the situation, 2) Alert nearby colleagues if safe to do so, 3) Contact emergency services (911) if required, 4) Follow evacuation procedures to designated meeting points.',
-          isComplete: false,
-        },
-        {
-          id: 'content-4',
-          type: 'Question',
-          title: 'Emergency Response Quiz',
-          content: 'What number should you call for emergency services?',
-          isComplete: false,
-        },
-      ]
-    },
-    {
-      id: 'module-3',
-      title: 'Equipment Safety Guidelines',
-      progress: 0.0,
-      contentBlocks: [
-        {
-          id: 'content-5',
-          type: 'Text',
-          title: 'PPE Requirements',
-          content: 'Proper equipment usage is crucial for maintaining workplace safety. Always inspect equipment before use and report any damage or malfunctions immediately. Personal protective equipment (PPE) must be worn at all times in designated areas. This includes safety goggles, hard hats, gloves, and appropriate footwear.',
-          isComplete: false,
-        },
-        {
-          id: 'content-6',
-          type: 'Question',
-          title: 'Equipment Safety Quiz',
-          content: 'What should you do before using any equipment?',
-          isComplete: false,
-        },
-      ]
+  const [courseTitle, setCourseTitle] = useState('');
+  const [courseDescription, setCourseDescription] = useState('');
+  const [teachers, setTeachers] = useState<LDUser[]>([]);
+  const [students, setStudents] = useState<LDUser[]>([]);
+  const [modules, setModules] = useState<Module[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [userRole, setUserRole] = useState<'teacher' | 'student' | null>(null);
+
+  useEffect(() => {
+    if (!courseId) {
+      setError('No course ID provided');
+      setLoading(false);
+      return;
     }
-  ]);
+
+    loadCourseData();
+  }, [courseId]);
+
+  const loadCourseData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Get current user
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
+        router.push('/login');
+        return;
+      }
+
+      setCurrentUser(user);
+
+      // Check user's role in this course
+      const { data: userAccess, error: accessError } = await supabase
+        .from('course_users')
+        .select('role')
+        .eq('course_id', courseId)
+        .eq('user_id', user.id)
+        .single();
+
+      if (accessError) {
+        setError('You do not have access to this course');
+        setLoading(false);
+        return;
+      }
+
+      setUserRole(userAccess.role);
+
+      // Fetch course basic info
+      const { data: courseData, error: courseError } = await supabase
+        .from('courses')
+        .select('name, description')
+        .eq('id', courseId)
+        .single();
+
+      if (courseError) throw new Error('Failed to load course');
+
+      setCourseTitle(courseData.name);
+      setCourseDescription(courseData.description || '');
+
+      // Fetch course users (teachers and students)
+      const { data: courseUsers, error: usersError } = await supabase
+        .from('course_users')
+        .select(`
+          role,
+          profiles (
+            username,
+            user_type
+          )
+        `)
+        .eq('course_id', courseId);
+
+      if (usersError) throw new Error('Failed to load course users');
+
+      const teachersList: LDUser[] = [];
+      const studentsList: LDUser[] = [];
+
+      courseUsers?.forEach((item: any) => {
+        const user = {
+          username: item.profiles.username,
+          userType: item.profiles.user_type as 'LDUser' | 'EmployeeUser'
+        };
+        
+        if (item.role === 'teacher') {
+          teachersList.push(user);
+        } else {
+          studentsList.push(user);
+        }
+      });
+
+      setTeachers(teachersList);
+      setStudents(studentsList);
+
+      // Fetch modules and content
+      const { data: modulesData, error: modulesError } = await supabase
+        .from('modules')
+        .select(`
+          id,
+          title,
+          position,
+          content (
+            id,
+            content_type,
+            content_text,
+            is_complete,
+            position
+          )
+        `)
+        .eq('course_id', courseId)
+        .order('position');
+
+      if (modulesError) throw new Error('Failed to load modules');
+
+      const formattedModules: Module[] = modulesData?.map(module => ({
+        id: module.id,
+        title: module.title || '',
+        position: module.position,
+        contentBlocks: module.content
+          ?.sort((a, b) => a.position - b.position)
+          .map(content => ({
+            id: content.id,
+            type: content.content_type as 'Text' | 'Question',
+            title: `${content.content_type} Content`,
+            content: content.content_text || '',
+            isComplete: content.is_complete,
+            position: content.position
+          })) || []
+      })) || [];
+
+      setModules(formattedModules);
+
+    } catch (err) {
+      console.error('Error loading course data:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load course');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleBackToEdit = () => {
-    router.push('/modify-course');
+    router.push(`/modify-course?id=${courseId}`);
   };
 
   const handlePublishCourse = () => {
@@ -117,19 +185,53 @@ export default function PreviewCoursePage() {
     router.push('/management-dashboard');
   };
 
-  const toggleContentCompletion = (moduleId: string, contentId: string) => {
-    setModules(modules.map(module => 
-      module.id === moduleId 
-        ? {
-            ...module,
-            contentBlocks: module.contentBlocks.map(content =>
-              content.id === contentId 
-                ? { ...content, isComplete: !content.isComplete }
-                : content
-            )
-          }
-        : module
-    ));
+  const toggleContentCompletion = async (moduleId: string, contentId: string) => {
+    try {
+      // Update in local state first for immediate UI feedback
+      setModules(modules.map(module => 
+        module.id === moduleId 
+          ? {
+              ...module,
+              contentBlocks: module.contentBlocks.map(content =>
+                content.id === contentId 
+                  ? { ...content, isComplete: !content.isComplete }
+                  : content
+              )
+            }
+          : module
+      ));
+
+      // Update in database (only for students or if completion tracking is enabled)
+      const currentContent = modules
+        .find(m => m.id === moduleId)
+        ?.contentBlocks.find(c => c.id === contentId);
+
+      if (currentContent) {
+        const { error } = await supabase
+          .from('content')
+          .update({ is_complete: !currentContent.isComplete })
+          .eq('id', contentId);
+
+        if (error) {
+          console.error('Error updating completion status:', error);
+          // Revert the local state change if database update failed
+          setModules(modules.map(module => 
+            module.id === moduleId 
+              ? {
+                  ...module,
+                  contentBlocks: module.contentBlocks.map(content =>
+                    content.id === contentId 
+                      ? { ...content, isComplete: currentContent.isComplete }
+                      : content
+                  )
+                }
+              : module
+          ));
+        }
+      }
+    } catch (err) {
+      console.error('Error toggling completion:', err);
+    }
   };
 
   const calculateModuleProgress = (module: Module): number => {
@@ -144,53 +246,145 @@ export default function PreviewCoursePage() {
     return totalProgress / modules.length;
   };
 
+  if (loading) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        minHeight: '100vh',
+        backgroundColor: '#ffffff'
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ 
+            border: '3px solid #f3f3f3',
+            borderTop: '3px solid #4285f4',
+            borderRadius: '50%',
+            width: '40px',
+            height: '40px',
+            animation: 'spin 1s linear infinite',
+            margin: '0 auto 20px'
+          }} />
+          <p style={{ color: '#666' }}>Loading course...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        minHeight: '100vh',
+        backgroundColor: '#ffffff'
+      }}>
+        <div style={{ textAlign: 'center', maxWidth: '400px', padding: '20px' }}>
+          <div style={{
+            backgroundColor: '#fff5f5',
+            border: '1px solid #ff6b6b',
+            borderRadius: '8px',
+            padding: '20px',
+            marginBottom: '20px'
+          }}>
+            <h2 style={{ color: '#dc3545', marginBottom: '10px' }}>Error</h2>
+            <p style={{ color: '#dc3545', marginBottom: '20px' }}>{error}</p>
+            <button
+              onClick={handleBackToDashboard}
+              style={{
+                padding: '10px 20px',
+                backgroundColor: '#007cba',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer'
+              }}
+            >
+              Back to Dashboard
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={{ 
       backgroundColor: '#ffffff',
       minHeight: '100vh',
       color: '#171717'
     }}>
-      {/* L&D Preview Controls Header */}
-      <div style={{
-        backgroundColor: '#f8f9fa',
-        borderBottom: '1px solid #ccc',
-        padding: '10px 20px',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center'
-      }}>
-        <span style={{ fontWeight: 'bold', color: '#666' }}>
-          🔍 Preview Mode - Employee View
-        </span>
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <button
-            onClick={handleBackToEdit}
-            style={{
-              padding: '6px 12px',
-              backgroundColor: '#6c757d',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '14px'
-            }}
-          >
-            Back to Edit
-          </button>
-          <button
-            onClick={handlePublishCourse}
-            style={{
-              padding: '6px 12px',
-              backgroundColor: '#28a745',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '14px'
-            }}
-          >
-            Publish Course
-          </button>
+      {/* Header - Different based on user role */}
+      {userRole === 'teacher' ? (
+        <div style={{
+          backgroundColor: '#f8f9fa',
+          borderBottom: '1px solid #ccc',
+          padding: '10px 20px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
+        }}>
+          <span style={{ fontWeight: 'bold', color: '#666' }}>
+            🔍 Preview Mode - Teacher View
+          </span>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button
+              onClick={handleBackToEdit}
+              style={{
+                padding: '6px 12px',
+                backgroundColor: '#6c757d',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '14px'
+              }}
+            >
+              Back to Edit
+            </button>
+            <button
+              onClick={handlePublishCourse}
+              style={{
+                padding: '6px 12px',
+                backgroundColor: '#28a745',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '14px'
+              }}
+            >
+              Publish Course
+            </button>
+            <button
+              onClick={handleBackToDashboard}
+              style={{
+                padding: '6px 12px',
+                backgroundColor: '#007cba',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '14px'
+              }}
+            >
+              Dashboard
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div style={{
+          backgroundColor: '#e8f5e8',
+          borderBottom: '1px solid #ccc',
+          padding: '10px 20px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
+        }}>
+          <span style={{ fontWeight: 'bold', color: '#2e7d32' }}>
+            📚 Course Learning Mode
+          </span>
           <button
             onClick={handleBackToDashboard}
             style={{
@@ -203,12 +397,12 @@ export default function PreviewCoursePage() {
               fontSize: '14px'
             }}
           >
-            Dashboard
+            My Courses
           </button>
         </div>
-      </div>
+      )}
 
-      {/* Employee Course View */}
+      {/* Course Content */}
       <div style={{
         maxWidth: '800px',
         margin: '0 auto',
@@ -448,6 +642,13 @@ export default function PreviewCoursePage() {
           )}
         </div>
       </div>
+
+      <style jsx>{`
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 } 

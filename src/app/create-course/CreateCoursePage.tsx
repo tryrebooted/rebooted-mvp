@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { createClient } from '@/utils/supabase/client';
 
 interface ContentBlock {
   id: string;
@@ -24,6 +25,7 @@ interface LDUser {
 
 export default function CreateCoursePage() {
   const router = useRouter();
+  const supabase = createClient();
   const [courseTitle, setCourseTitle] = useState('');
   const [courseDescription, setCourseDescription] = useState('');
   const [teachers, setTeachers] = useState<LDUser[]>([]);
@@ -32,12 +34,154 @@ export default function CreateCoursePage() {
   const [newTeacherUsername, setNewTeacherUsername] = useState('');
   const [newStudentUsername, setNewStudentUsername] = useState('');
   const [newModuleTitle, setNewModuleTitle] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // For now, just show an alert and redirect to modify course
-    alert('Course created! (This is just a placeholder)');
-    router.push('/modify-course');
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      // Validate required fields
+      if (!courseTitle.trim() || !courseDescription.trim()) {
+        throw new Error('Course title and description are required');
+      }
+
+      // Get current user
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
+        throw new Error('You must be logged in to create a course');
+      }
+
+      // Validate that all teacher/student usernames exist
+      const allUsernames = [...teachers.map(t => t.username), ...students.map(s => s.username)];
+      if (allUsernames.length > 0) {
+        const { data: existingUsers, error: usersError } = await supabase
+          .from('profiles')
+          .select('username')
+          .in('username', allUsernames);
+
+        if (usersError) throw new Error('Error validating users');
+
+        const existingUsernames = existingUsers?.map(u => u.username) || [];
+        const missingUsers = allUsernames.filter(username => !existingUsernames.includes(username));
+        
+        if (missingUsers.length > 0) {
+          throw new Error(`These users don't exist: ${missingUsers.join(', ')}`);
+        }
+      }
+
+      // Create the course
+      const { data: courseData, error: courseError } = await supabase
+        .from('courses')
+        .insert({
+          name: courseTitle.trim(),
+          description: courseDescription.trim()
+        })
+        .select()
+        .single();
+
+      if (courseError) {
+        if (courseError.code === '23505' && courseError.message.includes('courses_name_key')) {
+          throw new Error('A course with this title already exists. Please choose a different title.');
+        }
+        throw new Error(`Failed to create course: ${courseError.message}`);
+      }
+
+      const courseId = courseData.id;
+
+      // Create modules if any
+      if (modules.length > 0) {
+        const moduleInserts = modules.map((module, index) => ({
+          course_id: courseId,
+          title: module.title,
+          position: index + 1
+        }));
+
+        const { error: modulesError } = await supabase
+          .from('modules')
+          .insert(moduleInserts);
+
+        if (modulesError) throw new Error('Failed to create modules');
+      }
+
+      // Link teachers and students to the course
+      const courseUserInserts = [];
+
+      // Add teachers
+      if (teachers.length > 0) {
+        const { data: teacherProfiles, error: teacherError } = await supabase
+          .from('profiles')
+          .select('id, username')
+          .in('username', teachers.map(t => t.username));
+
+        if (teacherError) throw new Error('Failed to find teacher profiles');
+
+        teacherProfiles?.forEach(profile => {
+          courseUserInserts.push({
+            course_id: courseId,
+            user_id: profile.id,
+            role: 'teacher'
+          });
+        });
+      }
+
+      // Add students
+      if (students.length > 0) {
+        const { data: studentProfiles, error: studentError } = await supabase
+          .from('profiles')
+          .select('id, username')
+          .in('username', students.map(s => s.username));
+
+        if (studentError) throw new Error('Failed to find student profiles');
+
+        studentProfiles?.forEach(profile => {
+          courseUserInserts.push({
+            course_id: courseId,
+            user_id: profile.id,
+            role: 'student'
+          });
+        });
+      }
+
+      // Add current user as teacher if not already added
+      const currentUserIsTeacher = teachers.some(t => t.username === user.user_metadata?.preferred_username || t.username === user.email?.split('@')[0]);
+      if (!currentUserIsTeacher) {
+        // Get the current user's profile ID
+        const { data: currentUserProfile, error: profileError } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('id', user.id)
+          .single();
+
+        if (profileError) throw new Error('Failed to find current user profile');
+
+        courseUserInserts.push({
+          course_id: courseId,
+          user_id: currentUserProfile.id,
+          role: 'teacher'
+        });
+      }
+
+      // Insert all course-user relationships
+      if (courseUserInserts.length > 0) {
+        const { error: courseUsersError } = await supabase
+          .from('course_users')
+          .insert(courseUserInserts);
+
+        if (courseUsersError) throw new Error('Failed to assign users to course');
+      }
+
+      // Success! Redirect to the new course
+      router.push(`/modify-course?id=${courseId}`);
+
+    } catch (err) {
+      console.error('Error creating course:', err);
+      setError(err instanceof Error ? err.message : 'An unexpected error occurred');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleCancel = () => {
@@ -310,19 +454,34 @@ export default function CreateCoursePage() {
           </div>
         </div>
 
+        {/* Error Display */}
+        {error && (
+          <div style={{
+            marginBottom: '15px',
+            padding: '10px',
+            backgroundColor: '#f8d7da',
+            color: '#721c24',
+            border: '1px solid #f5c6cb',
+            borderRadius: '4px'
+          }}>
+            {error}
+          </div>
+        )}
+
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
           <button 
             type="submit"
+            disabled={isSubmitting}
             style={{
               padding: '10px 20px',
-              backgroundColor: '#007cba',
+              backgroundColor: isSubmitting ? '#6c757d' : '#007cba',
               color: 'white',
               border: 'none',
               borderRadius: '4px',
-              cursor: 'pointer'
+              cursor: isSubmitting ? 'not-allowed' : 'pointer'
             }}
           >
-            Create Course
+            {isSubmitting ? 'Creating...' : 'Create Course'}
           </button>
           <button 
             type="button"

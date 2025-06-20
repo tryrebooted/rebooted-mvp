@@ -35,14 +35,58 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  if (
-    !user &&
-    !request.nextUrl.pathname.startsWith('/login') &&
-    !request.nextUrl.pathname.startsWith('/auth')
-  ) {
-    // no user, potentially respond by redirecting the user to the login page
+  const pathname = request.nextUrl.pathname
+  
+  // Public routes that don't require authentication
+  const publicRoutes = ['/login', '/signup', '/auth/callback']
+  const isPublicRoute = publicRoutes.some(route => pathname.startsWith(route))
+
+  // Don't redirect if user is on public routes
+  if (isPublicRoute) {
+    return supabaseResponse
+  }
+
+  // If user is not authenticated, redirect to login
+  if (!user) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
+    url.searchParams.set('error', 'auth_required')
+    return NextResponse.redirect(url)
+  }
+
+  // For authenticated users, verify profile exists
+  if (user && !isPublicRoute) {
+    try {
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('id, username, user_type')
+        .eq('id', user.id)
+        .maybeSingle()
+      
+      // If profile doesn't exist but user is authenticated, 
+      // redirect to callback to trigger profile creation
+      if (!profile && !error) {
+        console.log('User authenticated but no profile found, redirecting to callback')
+        const url = request.nextUrl.clone()
+        url.pathname = '/auth/callback'
+        url.searchParams.set('next', pathname)
+        return NextResponse.redirect(url)
+      }
+      
+      if (error) {
+        console.error('Error checking user profile:', error)
+        // Continue with the request but log the error
+      }
+    } catch (error) {
+      console.error('Unexpected error in middleware profile check:', error)
+      // Continue with the request but log the error
+    }
+  }
+
+  // If user is authenticated and on login page, redirect to dashboard
+  if (user && pathname.startsWith('/login')) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/management-dashboard'
     return NextResponse.redirect(url)
   }
 
