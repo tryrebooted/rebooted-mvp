@@ -61,6 +61,11 @@ export default function ModifyCoursePage() {
       const modulesData = await apiService.getModulesByCourseId(parseInt(courseId!));
       setModules(modulesData);
 
+      // Auto-select the first module if available
+      if (modulesData.length > 0) {
+        setSelectedModuleId(modulesData[0].id);
+      }
+
     } catch (err) {
       console.error('Error loading course data:', err);
       setError(err instanceof Error ? err.message : 'Failed to load course');

@@ -61,8 +61,22 @@ public class ContentService {
             content = new TextContentImpl(id, newContentDTO.getTitle().trim(), 
                                         newContentDTO.getBody(), newContentDTO.getModuleId());
         } else if ("Question".equals(newContentDTO.getType())) {
+            List<String> options = newContentDTO.getOptions() != null ? newContentDTO.getOptions() : List.of();
+            String correctAnswer = newContentDTO.getCorrectAnswer() != null ? newContentDTO.getCorrectAnswer() : "";
+            
+            // Validate question data
+            if (options.size() < 2) {
+                throw new IllegalArgumentException("Question must have at least 2 options");
+            }
+            if (correctAnswer.isEmpty()) {
+                throw new IllegalArgumentException("Question must have a correct answer");
+            }
+            if (!options.contains(correctAnswer)) {
+                throw new IllegalArgumentException("Correct answer must be one of the provided options");
+            }
+            
             content = new QuestionContentImpl(id, newContentDTO.getTitle().trim(), 
-                                            newContentDTO.getBody(), List.of(), "", newContentDTO.getModuleId());
+                                            newContentDTO.getBody(), options, correctAnswer, newContentDTO.getModuleId());
         } else {
             throw new IllegalArgumentException("Unsupported content type: " + newContentDTO.getType());
         }
