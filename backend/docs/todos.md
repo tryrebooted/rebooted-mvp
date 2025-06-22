@@ -1,0 +1,25 @@
+# Production Readiness TODOs
+
+- Replace in-memory storage (`ConcurrentHashMap`) with Supabase database integration - `CourseService.java`
+- Replace `AtomicLong` ID generation with database auto-increment or UUID strategy - `CourseService.java`
+- Fix `getProgress()` method that always returns `0.0` instead of calculating real progress - `CourseImpl.java`
+- Add validation for `UnknownUserException` in `getProgress()` method (currently never thrown) - `CourseImpl.java`
+- Implement actual teacher assignment logic instead of empty collections - `CourseImpl.java`, `CourseService.java`
+- Implement actual student assignment logic instead of empty collections - `CourseImpl.java`, `CourseService.java`
+- Implement actual module assignment logic instead of empty collections - `CourseImpl.java`, `CourseService.java`
+- Add JPA annotations to CourseImpl for database persistence - `CourseImpl.java`
+- Create repository layer to replace direct map operations - `CourseService.java`, new `CourseRepository.java`
+- Add proper validation annotations to NewCourseDTO beyond just non-empty name check - `NewCourseDTO.java`
+- Fix teacherCount, studentCount, moduleCount in CourseDTO that are always 0 due to empty collections - `CourseService.java`
+- Add endpoints for managing course teachers (add/remove) - `CourseController.java`
+- Add endpoints for managing course students (add/remove) - `CourseController.java`
+- Add endpoints for managing course modules (add/remove) - `CourseController.java`
+- Replace null returns with proper Optional handling in service methods - `CourseService.java`
+- Replace in-memory storage (`ConcurrentHashMap`) with Supabase database integration - `ContentService.java`
+- Replace `AtomicLong` ID generation with database auto-increment or UUID strategy - `ContentService.java`
+- Add JPA annotations to TextContentImpl and QuestionContentImpl for database persistence - `TextContentImpl.java`, `QuestionContentImpl.java`
+- Create repository layer to replace direct map operations - `ContentService.java`, new `ContentRepository.java`
+- Add proper validation annotations to NewContentDTO beyond just non-empty title check - `NewContentDTO.java`
+- Replace null returns with proper Optional handling in content service methods - `ContentService.java`
+- Add validation for question options and correct answers in QuestionContentImpl - `QuestionContentImpl.java`
+- Fix `getContent()` method in Content interface - currently returns self instead of meaningful content data - `Content.java`, implementations

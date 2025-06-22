@@ -2,7 +2,8 @@
 
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { createClient } from '@/utils/supabase/client';
+import { apiService } from '@/services/api';
+import { mockAuth } from '@/contexts/UserContext';
 
 interface ContentBlock {
   id: string;
@@ -25,7 +26,6 @@ interface LDUser {
 
 export default function CreateCoursePage() {
   const router = useRouter();
-  const supabase = createClient();
   const [courseTitle, setCourseTitle] = useState('');
   const [courseDescription, setCourseDescription] = useState('');
   const [teachers, setTeachers] = useState<LDUser[]>([]);
@@ -49,7 +49,7 @@ export default function CreateCoursePage() {
       }
 
       // Get current user
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      const { data: { user }, error: userError } = await mockAuth.getUser();
       if (userError || !user) {
         throw new Error('You must be logged in to create a course');
       }
@@ -57,15 +57,8 @@ export default function CreateCoursePage() {
       // Validate that all teacher/student usernames exist
       const allUsernames = [...teachers.map(t => t.username), ...students.map(s => s.username)];
       if (allUsernames.length > 0) {
-        const { data: existingUsers, error: usersError } = await supabase
-          .from('profiles')
-          .select('username')
-          .in('username', allUsernames);
-
-        if (usersError) throw new Error('Error validating users');
-
-        const existingUsernames = existingUsers?.map(u => u.username) || [];
-        const missingUsers = allUsernames.filter(username => !existingUsernames.includes(username));
+        const validationResult = await apiService.validateUsernames(allUsernames);
+        const missingUsers = allUsernames.filter(username => !validationResult[username]);
         
         if (missingUsers.length > 0) {
           throw new Error(`These users don't exist: ${missingUsers.join(', ')}`);
@@ -73,104 +66,41 @@ export default function CreateCoursePage() {
       }
 
       // Create the course
-      const { data: courseData, error: courseError } = await supabase
-        .from('courses')
-        .insert({
-          name: courseTitle.trim(),
-          description: courseDescription.trim()
-        })
-        .select()
-        .single();
-
-      if (courseError) {
-        if (courseError.code === '23505' && courseError.message.includes('courses_name_key')) {
-          throw new Error('A course with this title already exists. Please choose a different title.');
-        }
-        throw new Error(`Failed to create course: ${courseError.message}`);
-      }
+      const courseData = await apiService.createCourse({
+        name: courseTitle.trim(),
+        description: courseDescription.trim()
+      });
 
       const courseId = courseData.id;
 
       // Create modules if any
       if (modules.length > 0) {
-        const moduleInserts = modules.map((module, index) => ({
-          course_id: courseId,
-          title: module.title,
-          position: index + 1
-        }));
-
-        const { error: modulesError } = await supabase
-          .from('modules')
-          .insert(moduleInserts);
-
-        if (modulesError) throw new Error('Failed to create modules');
+        for (const module of modules) {
+          await apiService.createModule({
+            name: module.title,
+            description: '',
+            courseId: courseId
+          });
+        }
       }
 
-      // Link teachers and students to the course
-      const courseUserInserts = [];
-
-      // Add teachers
+      // Add teachers to the course
       if (teachers.length > 0) {
-        const { data: teacherProfiles, error: teacherError } = await supabase
-          .from('profiles')
-          .select('id, username')
-          .in('username', teachers.map(t => t.username));
-
-        if (teacherError) throw new Error('Failed to find teacher profiles');
-
-        teacherProfiles?.forEach(profile => {
-          courseUserInserts.push({
-            course_id: courseId,
-            user_id: profile.id,
-            role: 'teacher'
-          });
-        });
+        const teacherUsernames = teachers.map(t => t.username);
+        await apiService.addTeachersToCourse(courseId, teacherUsernames);
       }
 
-      // Add students
+      // Add students to the course
       if (students.length > 0) {
-        const { data: studentProfiles, error: studentError } = await supabase
-          .from('profiles')
-          .select('id, username')
-          .in('username', students.map(s => s.username));
-
-        if (studentError) throw new Error('Failed to find student profiles');
-
-        studentProfiles?.forEach(profile => {
-          courseUserInserts.push({
-            course_id: courseId,
-            user_id: profile.id,
-            role: 'student'
-          });
-        });
+        const studentUsernames = students.map(s => s.username);
+        await apiService.addStudentsToCourse(courseId, studentUsernames);
       }
 
       // Add current user as teacher if not already added
-      const currentUserIsTeacher = teachers.some(t => t.username === user.user_metadata?.preferred_username || t.username === user.email?.split('@')[0]);
-      if (!currentUserIsTeacher) {
-        // Get the current user's profile ID
-        const { data: currentUserProfile, error: profileError } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('id', user.id)
-          .single();
-
-        if (profileError) throw new Error('Failed to find current user profile');
-
-        courseUserInserts.push({
-          course_id: courseId,
-          user_id: currentUserProfile.id,
-          role: 'teacher'
-        });
-      }
-
-      // Insert all course-user relationships
-      if (courseUserInserts.length > 0) {
-        const { error: courseUsersError } = await supabase
-          .from('course_users')
-          .insert(courseUserInserts);
-
-        if (courseUsersError) throw new Error('Failed to assign users to course');
+      const currentUsername = user.user_metadata?.preferred_username;
+      const currentUserIsTeacher = teachers.some(t => t.username === currentUsername);
+      if (!currentUserIsTeacher && currentUsername) {
+        await apiService.addTeachersToCourse(courseId, [currentUsername]);
       }
 
       // Success! Redirect to the new course

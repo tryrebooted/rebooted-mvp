@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/utils/supabase/client'
+import { apiService } from '@/services/api'
+import { mockAuth } from '@/contexts/UserContext'
 import SignOutButton from './SignOutButton'
 
 interface Course {
-  id: string
+  id: number
   name: string
   description: string | null
   role: 'teacher' | 'student'
@@ -14,94 +15,52 @@ interface Course {
 
 export default function DashboardPage() {
   const router = useRouter()
-  const supabase = createClient()
   const [user, setUser] = useState<any>(null)
   const [courses, setCourses] = useState<Course[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [deleting, setDeleting] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState<number | null>(null)
 
   useEffect(() => {
     let mounted = true
 
     async function loadUserAndCourses() {
       try {
-        // Get current user with retry logic for session timing issues
-        let user = null
-        let userError = null
+        // Get current user from mock auth
+        const { data: { user: currentUser }, error: userError } = await mockAuth.getUser()
         
-        // Retry up to 5 times with increasing delays
-        for (let attempt = 1; attempt <= 5; attempt++) {
-          const { data: { user: currentUser }, error: currentError } = await supabase.auth.getUser()
-          user = currentUser
-          userError = currentError
-          
-          if (user && !userError) {
-            break
-          }
-          
-          if (attempt < 5) {
-            // Wait with exponential backoff: 500ms, 1s, 2s, 4s
-            await new Promise(resolve => setTimeout(resolve, 500 * Math.pow(2, attempt - 1)))
-          }
-        }
-        
-        if (userError || !user) {
-          console.error('Authentication error after retries:', userError)
+        if (userError || !currentUser) {
+          console.error('Authentication error:', userError)
           router.push('/login?error=auth_required')
           return
         }
 
         if (!mounted) return
 
-        setUser(user)
+        setUser(currentUser)
 
-        // Check if user has a profile
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('id, username, full_name, user_type')
-          .eq('id', user.id)
-          .maybeSingle()
+        // Get the user ID (username from metadata or ID)
+        const userId = currentUser.user_metadata?.preferred_username || currentUser.id
 
-        if (profileError) {
-          console.error('Error fetching user profile:', profileError)
-          setError('Error loading user profile. Please try refreshing the page.')
-          return
-        }
-
-        if (!profile) {
-          console.error('User profile not found for user ID:', user.id)
-          setError('User profile not found. Please sign out and sign in again.')
-          return
-        }
-
-        // Fetch courses for this user
-        const { data: coursesData, error: coursesError } = await supabase
-          .from('course_users')
-          .select(`
-            role,
-            courses (
-              id,
-              name,
-              description
-            )
-          `)
-          .eq('user_id', user.id)
-
-        if (coursesError) {
-          console.error('Error fetching courses:', coursesError)
-          setError('Error loading courses. Please try refreshing the page.')
-        } else {
-          // Transform the data to flatten the structure
-          const transformedCourses = coursesData?.map((item: any) => ({
-            id: item.courses.id,
-            name: item.courses.name,
-            description: item.courses.description,
-            role: item.role
-          })) || []
+        // Fetch courses for this user using backend API
+        try {
+          const coursesData = await apiService.getUserCourses(userId)
+          
+          // Transform backend UserCourseDTO to frontend Course interface
+          const transformedCourses: Course[] = coursesData.map(course => ({
+            id: course.id,
+            name: course.name,
+            description: course.description,
+            role: course.role as 'teacher' | 'student'
+          }))
           
           if (mounted) {
             setCourses(transformedCourses)
+          }
+        } catch (coursesError) {
+          console.error('Error fetching courses:', coursesError)
+          if (mounted) {
+            setError('Error loading courses. Please try refreshing the page.')
           }
         }
       } catch (error) {
@@ -122,9 +81,9 @@ export default function DashboardPage() {
     return () => {
       mounted = false
     }
-  }, [router, supabase])
+  }, [router])
 
-  const deleteCourse = async (courseId: string) => {
+  const deleteCourse = async (courseId: number) => {
     if (!confirm('Are you sure you want to delete this course? This action cannot be undone.')) {
       return
     }
@@ -132,29 +91,8 @@ export default function DashboardPage() {
     setDeleting(courseId)
     
     try {
-      // First, delete all course_users entries for this course
-      const { error: courseUsersError } = await supabase
-        .from('course_users')
-        .delete()
-        .eq('course_id', courseId)
-
-      if (courseUsersError) {
-        console.error('Error deleting course users:', courseUsersError)
-        setError('Error deleting course. Please try again.')
-        return
-      }
-
-      // Then delete the course itself
-      const { error: courseError } = await supabase
-        .from('courses')
-        .delete()
-        .eq('id', courseId)
-
-      if (courseError) {
-        console.error('Error deleting course:', courseError)
-        setError('Error deleting course. Please try again.')
-        return
-      }
+      // Delete the course using backend API (backend handles course-user relationship cleanup)
+      await apiService.deleteCourse(courseId)
 
       // Remove the course from local state
       setCourses(prev => prev.filter(course => course.id !== courseId))
