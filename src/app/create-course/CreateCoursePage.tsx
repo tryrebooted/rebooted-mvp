@@ -378,7 +378,7 @@ export default function CreateCoursePage() {
             ))}
             {modules.length === 0 && (
               <div style={{ textAlign: 'center', color: '#6c757d', padding: '20px' }}>
-                No modules added yet. Modules will contain content blocks (Text and Questions).
+                No modules added yet. After creating the course, you can add content blocks (Text and Questions) to each module.
               </div>
             )}
           </div>

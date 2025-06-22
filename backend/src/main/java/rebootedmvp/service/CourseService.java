@@ -1,5 +1,6 @@
 package rebootedmvp.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import rebootedmvp.domain.impl.CourseImpl;
 import rebootedmvp.dto.CourseDTO;
@@ -15,6 +16,9 @@ import java.util.concurrent.atomic.AtomicLong;
 public class CourseService {
     private final Map<Long, CourseImpl> courses = new ConcurrentHashMap<>();
     private final AtomicLong idGenerator = new AtomicLong(1);
+    
+    @Autowired
+    private CourseMembershipService membershipService;
 
     public List<CourseDTO> findAll() {
         return courses.values().stream()
@@ -67,8 +71,8 @@ public class CourseService {
                 course.getId(),
                 course.getName(),
                 course.getDescription(),
-                course.get_teachers().size(),
-                course.get_students().size(),
+                membershipService.getTeacherCount(course.getId()),
+                membershipService.getStudentCount(course.getId()),
                 course.get_modules().size()
         );
     }

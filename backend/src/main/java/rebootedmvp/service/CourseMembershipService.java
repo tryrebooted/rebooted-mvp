@@ -1,11 +1,12 @@
 package rebootedmvp.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import rebootedmvp.dto.CourseDTO;
 import rebootedmvp.dto.CourseUserDTO;
 import rebootedmvp.dto.UserCourseDTO;
 import rebootedmvp.dto.UserProfileDTO;
-import rebootedmvp.domain.impl.CourseImpl;
 
 import java.util.List;
 import java.util.Map;
@@ -19,15 +20,13 @@ public class CourseMembershipService {
     private final Map<Long, Map<String, String>> courseMemberships = new ConcurrentHashMap<>();
     
     @Autowired
-    private CourseService courseService;
+    private UserProfileService userProfileService;
     
     @Autowired
-    private UserProfileService userProfileService;
+    @Lazy
+    private CourseService courseService;
 
     public boolean addUserToCourse(Long courseId, String userId, String role) {
-        if (courseService.findById(courseId) == null) {
-            return false;
-        }
         if (userProfileService.findById(userId) == null) {
             return false;
         }
@@ -64,12 +63,23 @@ public class CourseMembershipService {
     }
 
     public List<UserCourseDTO> getUserCourses(String userId) {
+        // Handle both username and UUID-based lookups
+        final String actualUserId;
+        
+        // Check if the provided userId is actually a username
+        UserProfileDTO userByUsername = userProfileService.findByUsername(userId);
+        if (userByUsername != null) {
+            actualUserId = userByUsername.getId();
+        } else {
+            actualUserId = userId;
+        }
+        
         return courseMemberships.entrySet().stream()
-                .filter(entry -> entry.getValue().containsKey(userId))
+                .filter(entry -> entry.getValue().containsKey(actualUserId))
                 .map(entry -> {
                     Long courseId = entry.getKey();
-                    String role = entry.getValue().get(userId);
-                    var course = courseService.findById(courseId);
+                    String role = entry.getValue().get(actualUserId);
+                    CourseDTO course = courseService.findById(courseId);
                     return course != null ? 
                            new UserCourseDTO(courseId, course.getName(), course.getDescription(), role) : 
                            null;
@@ -79,10 +89,6 @@ public class CourseMembershipService {
     }
 
     public boolean addUsersByCourse(Long courseId, List<String> usernames, String role) {
-        if (courseService.findById(courseId) == null) {
-            return false;
-        }
-
         List<UserProfileDTO> users = userProfileService.findByUsernames(usernames);
         if (users.size() != usernames.size()) {
             return false; // Some users don't exist
@@ -92,5 +98,25 @@ public class CourseMembershipService {
         users.forEach(user -> courseUsers.put(user.getId(), role));
         
         return true;
+    }
+    
+    public int getTeacherCount(Long courseId) {
+        Map<String, String> courseUsers = courseMemberships.get(courseId);
+        if (courseUsers == null) {
+            return 0;
+        }
+        return (int) courseUsers.values().stream()
+                .filter(role -> "teacher".equals(role))
+                .count();
+    }
+    
+    public int getStudentCount(Long courseId) {
+        Map<String, String> courseUsers = courseMemberships.get(courseId);
+        if (courseUsers == null) {
+            return 0;
+        }
+        return (int) courseUsers.values().stream()
+                .filter(role -> "student".equals(role))
+                .count();
     }
 }
