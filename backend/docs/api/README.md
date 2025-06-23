@@ -42,8 +42,14 @@ The API uses standard HTTP status codes:
 ### Courses API
 - [Course Management](./courses.md) - CRUD operations for courses
 
+### Modules API
+- [Module Management](./modules.md) - CRUD operations for modules within courses
+
 ### Content API
 - [Content Management](./content.md) - CRUD operations for content blocks (text and questions)
+
+### Users API
+- [User Profile Management](./users.md) - User profile operations and validation
 
 ## Data Models
 - [Schema Definitions](./schemas.md) - DTO and data structure definitions
