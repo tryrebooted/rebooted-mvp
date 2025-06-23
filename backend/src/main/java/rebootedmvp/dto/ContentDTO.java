@@ -1,8 +1,7 @@
 package rebootedmvp.dto;
 
-import rebootedmvp.Content;
-
 public class ContentDTO {
+
     private Long id;
     private String type;
     private String title;
@@ -10,7 +9,8 @@ public class ContentDTO {
     private boolean isComplete;
     private Long moduleId;
 
-    public ContentDTO() {}
+    public ContentDTO() {
+    }
 
     public ContentDTO(Long id, String type, String title, String body, boolean isComplete, Long moduleId) {
         this.id = id;

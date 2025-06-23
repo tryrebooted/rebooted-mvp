@@ -4,7 +4,7 @@ import java.util.List;
 /**
  * an abstract interface to represent a user
  */
-public abstract class  User {
+public abstract class User {
 
     protected String name;
 

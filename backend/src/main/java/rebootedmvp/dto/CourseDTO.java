@@ -1,6 +1,9 @@
 package rebootedmvp.dto;
 
+import rebootedmvp.*;
+
 public class CourseDTO {
+
     private Long id;
     private String name;
     private String description;
@@ -8,14 +11,21 @@ public class CourseDTO {
     private int studentCount;
     private int moduleCount;
 
-    public CourseDTO() {}
+    public CourseDTO(Course c) {
+        id = c.getId();
+        name = c.getName();
+        description = c.getDescription();
+        teacherCount = c.get_teachers().size();
+        studentCount = c.get_students().size();
+        moduleCount = c.get_modules().size();
+    }
 
-    public CourseDTO(Long id, String name, String description, int teacherCount, int studentCount, int moduleCount) {
+    public CourseDTO(Long id, String name, String description, int moduleCount) {
         this.id = id;
         this.name = name;
         this.description = description;
-        this.teacherCount = teacherCount;
-        this.studentCount = studentCount;
+        this.teacherCount = 0;
+        this.studentCount = 0;
         this.moduleCount = moduleCount;
     }
 

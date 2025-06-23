@@ -14,12 +14,15 @@ cd /path/to/rebooted-MVP/backend
 
 ### 2. Build the Project
 ```bash
-./mvnw clean compile
+./mvnw clean compile #if maven is installed locally
+mvn clean compile #if maven is installed globally
+
 ```
 
 ### 3. Run the Application
 ```bash
-./mvnw spring-boot:run
+./mvnw spring-boot:run #if maven is installed locally
+mvn spring-boot:run #if maven is installed globally
 ```
 
 The application will start on `http://localhost:8080`
