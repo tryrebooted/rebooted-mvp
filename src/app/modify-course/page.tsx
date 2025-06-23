@@ -29,6 +29,13 @@ export default function ModifyCoursePage() {
   // Content creation state
   const [showContentCreator, setShowContentCreator] = useState(false);
 
+  // Module creation state
+  const [showModuleCreator, setShowModuleCreator] = useState(false);
+  const [newModuleName, setNewModuleName] = useState('');
+  const [newModuleDescription, setNewModuleDescription] = useState('');
+  const [creatingModule, setCreatingModule] = useState(false);
+  const [moduleCreationError, setModuleCreationError] = useState<string | null>(null);
+
   useEffect(() => {
     if (!courseId) {
       setError('No course ID provided');
@@ -114,6 +121,44 @@ export default function ModifyCoursePage() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleCreateModule = async () => {
+    if (!courseId || !newModuleName.trim()) {
+      setModuleCreationError('Module name is required');
+      return;
+    }
+
+    try {
+      setCreatingModule(true);
+      setModuleCreationError(null);
+
+      await apiService.createModule({
+        name: newModuleName.trim(),
+        description: newModuleDescription.trim(),
+        courseId: parseInt(courseId)
+      });
+
+      // Reset form
+      setNewModuleName('');
+      setNewModuleDescription('');
+      setShowModuleCreator(false);
+      
+      // Refresh data
+      loadCourseData();
+    } catch (err) {
+      console.error('Error creating module:', err);
+      setModuleCreationError(err instanceof Error ? err.message : 'Failed to create module');
+    } finally {
+      setCreatingModule(false);
+    }
+  };
+
+  const handleCancelModuleCreation = () => {
+    setShowModuleCreator(false);
+    setNewModuleName('');
+    setNewModuleDescription('');
+    setModuleCreationError(null);
   };
 
   const handleBackToDashboard = () => {
@@ -378,7 +423,128 @@ export default function ModifyCoursePage() {
               
               {/* Modules Section */}
               <div style={{ marginTop: '30px', paddingTop: '20px', borderTop: '1px solid #dee2e6' }}>
-                <h3 style={{ marginBottom: '10px' }}>Modules ({modules.length})</h3>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                  <h3>Modules ({modules.length})</h3>
+                  <button
+                    onClick={() => setShowModuleCreator(true)}
+                    style={{
+                      padding: '8px 12px',
+                      backgroundColor: '#28a745',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      fontWeight: '500'
+                    }}
+                  >
+                    + Add Module
+                  </button>
+                </div>
+
+                {/* Module Creation Form */}
+                {showModuleCreator && (
+                  <div style={{
+                    border: '1px solid #007cba',
+                    borderRadius: '8px',
+                    padding: '15px',
+                    marginBottom: '15px',
+                    backgroundColor: '#f0f8ff'
+                  }}>
+                    <h4 style={{ marginBottom: '15px', color: '#171717' }}>Create New Module</h4>
+                    
+                    {moduleCreationError && (
+                      <div style={{
+                        marginBottom: '15px',
+                        padding: '10px',
+                        backgroundColor: '#f8d7da',
+                        color: '#721c24',
+                        border: '1px solid #f5c6cb',
+                        borderRadius: '4px'
+                      }}>
+                        {moduleCreationError}
+                      </div>
+                    )}
+
+                    <input
+                      type="text"
+                      placeholder="Module name"
+                      value={newModuleName}
+                      onChange={(e) => setNewModuleName(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && newModuleName.trim()) {
+                          handleCreateModule();
+                        } else if (e.key === 'Escape') {
+                          handleCancelModuleCreation();
+                        }
+                      }}
+                      style={{
+                        width: '100%',
+                        padding: '8px',
+                        marginBottom: '10px',
+                        border: '1px solid #ccc',
+                        borderRadius: '4px',
+                        backgroundColor: '#ffffff',
+                        color: '#171717'
+                      }}
+                      autoFocus
+                    />
+                    
+                    <textarea
+                      placeholder="Module description (optional)"
+                      value={newModuleDescription}
+                      onChange={(e) => setNewModuleDescription(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Escape') {
+                          handleCancelModuleCreation();
+                        }
+                      }}
+                      rows={3}
+                      style={{
+                        width: '100%',
+                        padding: '8px',
+                        marginBottom: '15px',
+                        border: '1px solid #ccc',
+                        borderRadius: '4px',
+                        resize: 'vertical',
+                        backgroundColor: '#ffffff',
+                        color: '#171717'
+                      }}
+                    />
+                    
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                      <button
+                        onClick={handleCreateModule}
+                        disabled={creatingModule || !newModuleName.trim()}
+                        style={{
+                          padding: '8px 16px',
+                          backgroundColor: creatingModule || !newModuleName.trim() ? '#6c757d' : '#007cba',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '4px',
+                          cursor: creatingModule || !newModuleName.trim() ? 'not-allowed' : 'pointer'
+                        }}
+                      >
+                        {creatingModule ? 'Creating...' : 'Create Module'}
+                      </button>
+                      <button
+                        onClick={handleCancelModuleCreation}
+                        disabled={creatingModule}
+                        style={{
+                          padding: '8px 16px',
+                          backgroundColor: '#6c757d',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '4px',
+                          cursor: creatingModule ? 'not-allowed' : 'pointer'
+                        }}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 {modules.length > 0 ? (
                   <div style={{ listStyle: 'none', padding: 0 }}>
                     {modules.map((module, index) => (
