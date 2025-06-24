@@ -1,12 +1,14 @@
 package rebootedmvp.domain.impl;
 
-import rebootedmvp.Content;
-import rebootedmvp.Module;
-
 import java.util.ArrayList;
 import java.util.List;
 
+import rebootedmvp.Content;
+import rebootedmvp.Module;
+import rebootedmvp.UnknownUserException;
+
 public class ModuleImpl implements Module {
+
     private Long id;
     private String name;
     private String description;
@@ -23,19 +25,6 @@ public class ModuleImpl implements Module {
         this.name = name;
         this.description = description;
         this.courseId = courseId;
-    }
-
-    @Override
-    public double checkProgress() {
-        if (content.isEmpty()) {
-            return 0.0;
-        }
-        
-        long completedCount = content.stream()
-                .mapToLong(contentItem -> contentItem.isComplete() ? 1 : 0)
-                .sum();
-        
-        return (double) completedCount / content.size();
     }
 
     @Override
@@ -87,5 +76,10 @@ public class ModuleImpl implements Module {
 
     public void setCourseId(Long courseId) {
         this.courseId = courseId;
+    }
+
+    @Override
+    public double getWeight() throws UnknownUserException {
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 }

@@ -1,8 +1,10 @@
 package rebootedmvp;
 
 import java.util.List;
+
 /**
- * an abstract interface to represent a user
+ * An abstract interface to represent a user, which can be either a learning and
+ * development professional or a different employee.
  */
 public abstract class User {
 
@@ -10,27 +12,26 @@ public abstract class User {
 
     protected UserType userCategory;
 
- 
     /**
-     * An enumeration to represent either a learning & development user or an employee
+     * An enumeration to represent either a learning & development user or an
+     * employee
      */
     public enum UserType {
-    LDUser,
-    EmployeeUser
+        LDUser,
+        EmployeeUser
     }
-
 
     /**
      * Returns the username of the user
      */
-    public String getUsername(){
+    public String getUsername() {
         return name;
     }
 
     /**
      * Returns the type of the user
      */
-    public  UserType getUserType(){
+    public UserType getUserType() {
         return userCategory;
     }
 
@@ -39,28 +40,25 @@ public abstract class User {
      */
     public abstract List<String> getCourseNames();
 
-
     /**
-     * Returns true iff the user has access to the course named 'course'
-     * Note: If 'course' does not exist, hasAccess(course) must return false
+     * Returns true iff the user has access to the course named 'course' Note:
+     * If 'course' does not exist, hasAccess(course) must return false
      */
     public abstract boolean hasAccess(String course);
 
-
+    /**
+     * Return the course entitled 'courseName' if the user has permission to
+     * access it Throws: InaccessibleCourseException if 'courseName' doesn't
+     * exist or if the user doesn't have permission to accesss it
+     */
+    public abstract Course getCourse(String courseName) throws InaccessibleCourseException;
 
     /**
-     * Return the course entitled 'courseName' if the user has permission to access it
-     * Throws: InaccessibleCourseException if 'courseName' doesn't exist or if the user
-     * doesn't have permission to accesss it
+     * Returns the progress of the user through course entitled 'courseName'.
+     * Throws: InaccessibleCourseException if the user does not have access to
+     * the course.
      */
-    public abstract Course getCourse(String courseName);
-
-
-    /**
-     * Returns the progress of the user through course entitled 'courseName'. 
-     * Throws: InaccessibleCourseException if the user does not have access to the course.
-     */
-    public double getProgress(String courseName) throws InaccessibleCourseException{
+    public double getProgress(String courseName) throws InaccessibleCourseException {
         return getCourse(courseName).getProgress(this);
     }
 
