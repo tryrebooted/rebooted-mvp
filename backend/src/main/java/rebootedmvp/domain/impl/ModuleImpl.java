@@ -14,6 +14,7 @@ public class ModuleImpl implements Module {
     private String description;
     private Long courseId;
     private List<Content> content;
+    private double weight;
 
     public ModuleImpl() {
         this.content = new ArrayList<>();
@@ -25,6 +26,16 @@ public class ModuleImpl implements Module {
         this.name = name;
         this.description = description;
         this.courseId = courseId;
+        this.weight = 1.;
+    }
+
+    public ModuleImpl(Long id, String name, String description, Long courseId, double weight) {
+        this();
+        this.id = id;
+        this.name = name;
+        this.description = description;
+        this.courseId = courseId;
+        this.weight = weight;
     }
 
     @Override
@@ -80,6 +91,6 @@ public class ModuleImpl implements Module {
 
     @Override
     public double getWeight() throws UnknownUserException {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return weight;
     }
 }
