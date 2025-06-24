@@ -1,17 +1,19 @@
 package rebootedmvp.service;
 
-import org.springframework.stereotype.Service;
-import rebootedmvp.domain.impl.ModuleImpl;
-import rebootedmvp.dto.ModuleDTO;
-import rebootedmvp.dto.NewModuleDTO;
-
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.springframework.stereotype.Service;
+
+import rebootedmvp.domain.impl.ModuleImpl;
+import rebootedmvp.dto.ModuleDTO;
+import rebootedmvp.dto.NewModuleDTO;
+
 @Service
 public class ModuleService {
+
     private final Map<Long, ModuleImpl> modules = new ConcurrentHashMap<>();
     private final AtomicLong idGenerator = new AtomicLong(1);
 
@@ -45,10 +47,10 @@ public class ModuleService {
         }
 
         Long id = idGenerator.getAndIncrement();
-        ModuleImpl module = new ModuleImpl(id, newModuleDTO.getName().trim(), 
-                                         newModuleDTO.getDescription(), newModuleDTO.getCourseId());
+        ModuleImpl module = new ModuleImpl(id, newModuleDTO.getName().trim(),
+                newModuleDTO.getDescription(), newModuleDTO.getCourseId());
         modules.put(id, module);
-        
+
         return convertToDTO(module);
     }
 
@@ -80,7 +82,6 @@ public class ModuleService {
                 module.getId(),
                 module.getName(),
                 module.getDescription(),
-                module.checkProgress(),
                 module.getCourseId(),
                 module.getContent().size()
         );

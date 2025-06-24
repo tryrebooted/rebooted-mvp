@@ -1,6 +1,7 @@
 package rebootedmvp.dto;
 
 public class ModuleDTO {
+
     private Long id;
     private String name;
     private String description;
@@ -8,13 +9,13 @@ public class ModuleDTO {
     private Long courseId;
     private int contentCount;
 
-    public ModuleDTO() {}
+    public ModuleDTO() {
+    }
 
-    public ModuleDTO(Long id, String name, String description, double progress, Long courseId, int contentCount) {
+    public ModuleDTO(Long id, String name, String description, Long courseId, int contentCount) {
         this.id = id;
         this.name = name;
         this.description = description;
-        this.progress = progress;
         this.courseId = courseId;
         this.contentCount = contentCount;
     }
@@ -41,14 +42,6 @@ public class ModuleDTO {
 
     public void setDescription(String description) {
         this.description = description;
-    }
-
-    public double getProgress() {
-        return progress;
-    }
-
-    public void setProgress(double progress) {
-        this.progress = progress;
     }
 
     public Long getCourseId() {

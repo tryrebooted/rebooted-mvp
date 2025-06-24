@@ -4,8 +4,11 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import rebootedmvp.*;
+
+import rebootedmvp.Course;
 import rebootedmvp.Module;
+import rebootedmvp.UnknownUserException;
+import rebootedmvp.User;
 
 public class CourseImpl implements Course {
 
@@ -15,6 +18,7 @@ public class CourseImpl implements Course {
     private Set<User> teachers;
     private Set<User> students;
     private List<Module> modules;
+    private double progress;
 
     public CourseImpl() {
         this.teachers = new HashSet<>();
@@ -29,6 +33,7 @@ public class CourseImpl implements Course {
         this.teachers = new HashSet<>();
         this.students = new HashSet<>();
         this.modules = new ArrayList<>();
+        this.progress = 0;
     }
 
     @Override
@@ -53,14 +58,7 @@ public class CourseImpl implements Course {
 
     @Override
     public double getProgress(User user) throws UnknownUserException {
-        double total = 0;
-        double partial = 0.;
-        for (Module module : modules) {
-            double weight = module.getWeight(user);
-            total += weight;
-            partial += weight * module.getProgress(user);
-        }
-        return partial / total;
+        return progress;
     }
 
     @Override
@@ -141,5 +139,10 @@ public class CourseImpl implements Course {
     @Override
     public boolean isTeacher(User user) {
         return teachers.contains(user);
+    }
+
+    @Override
+    public ArrayList<ArrayList<Boolean>> getCompletion(User user) throws UnknownUserException {
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 }
