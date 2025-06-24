@@ -37,6 +37,7 @@ public class ModuleImpl implements Module {
         this.courseId = courseId;
         this.weight = weight;
     }
+    
 
     @Override
     public List<Content> getContent() {
@@ -93,4 +94,5 @@ public class ModuleImpl implements Module {
     public double getWeight() throws UnknownUserException {
         return weight;
     }
+
 }
