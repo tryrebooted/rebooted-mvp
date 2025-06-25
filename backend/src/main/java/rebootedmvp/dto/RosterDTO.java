@@ -4,10 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * This is the data transfer object for the roster. It should only ever send
- * back information in relation to a specific user. That is, the names of the
- * courses returned are only the courses that a specifc user has access to, not
- * all courses.
+ * This is the data transfer object for the roster.
  */
 public class RosterDTO {
 

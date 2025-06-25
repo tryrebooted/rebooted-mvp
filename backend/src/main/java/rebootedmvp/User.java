@@ -48,10 +48,11 @@ public abstract class User {
 
     /**
      * Return the course entitled 'courseName' if the user has permission to
-     * access it Throws: InaccessibleCourseException if 'courseName' doesn't
-     * exist or if the user doesn't have permission to accesss it
+     * access it Throws: InaccessibleCourseException if the user doesn't have
+     * permission to access it. Throws: CourseDoesNotExistException if
+     * 'courseName' doesn't exist
      */
-    public abstract Course getCourse(String courseName) throws InaccessibleCourseException;
+    public abstract Course getCourse(String courseName) throws InaccessibleCourseException, CourseDoesNotExistException;
 
     /**
      * Returns the progress of the user through course entitled 'courseName'.

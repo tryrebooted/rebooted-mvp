@@ -1,7 +1,7 @@
 package rebootedmvp;
 
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.HashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * This class is meant to represent a collection of courses. It's primary
@@ -11,10 +11,10 @@ import java.util.TreeSet;
  */
 public class Roster {
 
-    Set<Course> allCourses;
+    HashMap<Long, Course> allCourses;
 
     Roster() {
-        allCourses = new TreeSet<>();
+        allCourses = new HashMap<>();
 
     }
 
@@ -22,14 +22,31 @@ public class Roster {
      * Returns whether or not user 'user' has access to the course entitled
      * 'course'. If multiple courses named 'course' exist, this will return
      * whether or not 'user' has access to a random one Throws:
-     * InaccessibleCourseException if no course named 'course' exists.
+     * CourseDoesNotExistException if no course named 'course' exists.
      */
-    public boolean userCanAccess(User user, String course) throws InaccessibleCourseException {
-        for (Course curCourse : allCourses) {
-            if (curCourse.getName().equals(course)) {
-                return (curCourse.isStudent(user) || curCourse.isTeacher(user));
+    public boolean userCanAccess(User user, Long course) throws CourseDoesNotExistException {
+        Course curCourse = allCourses.get(course);
+        try {
+            return (curCourse.isStudent(user) || curCourse.isTeacher(user));
+        } catch (Exception e) {
+            throw new CourseDoesNotExistException(course);
+        }
+    }
+
+    public Long generateKey() {
+        final AtomicLong idGenerator = new AtomicLong(1);
+        return idGenerator.getAndIncrement();
+    }
+
+    public Long addCourse(Course c) {
+        Long newKey;
+        while (true) {
+            newKey = generateKey();
+            if (!allCourses.containsKey(newKey)) {
+                allCourses.put(generateKey(), c);
+                break;
             }
         }
-        throw new InaccessibleCourseException(user.getUsername(), course);
+        return newKey;
     }
 }

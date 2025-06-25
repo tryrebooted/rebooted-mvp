@@ -5,7 +5,6 @@ import java.util.List;
 
 import rebootedmvp.Content;
 import rebootedmvp.Module;
-import rebootedmvp.UnknownUserException;
 
 public class ModuleImpl implements Module {
 
@@ -37,7 +36,6 @@ public class ModuleImpl implements Module {
         this.courseId = courseId;
         this.weight = weight;
     }
-    
 
     @Override
     public List<Content> getContent() {
@@ -91,7 +89,7 @@ public class ModuleImpl implements Module {
     }
 
     @Override
-    public double getWeight() throws UnknownUserException {
+    public double getWeight() {
         return weight;
     }
 

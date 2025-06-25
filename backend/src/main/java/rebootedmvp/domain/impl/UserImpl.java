@@ -6,6 +6,7 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import rebootedmvp.Course;
+import rebootedmvp.CourseDoesNotExistException;
 import rebootedmvp.InaccessibleCourseException;
 import rebootedmvp.User;
 
@@ -30,7 +31,7 @@ public class UserImpl extends User {
     }
 
     @Override
-    public Course getCourse(String courseName) throws InaccessibleCourseException {
+    public Course getCourse(String courseName) throws InaccessibleCourseException, CourseDoesNotExistException {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
