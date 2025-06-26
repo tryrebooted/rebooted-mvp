@@ -13,8 +13,8 @@ import rebootedmvp.User;
 public class CourseImpl implements Course {
 
     private Long id;
-    private String name;
-    private String description;
+    private String title;
+    private String body;
     private Set<User> teachers;
     private Set<User> students;
     private List<Module> modules;
@@ -26,14 +26,19 @@ public class CourseImpl implements Course {
         this.modules = new ArrayList<>();
     }
 
-    public CourseImpl(Long id, String name, String description) {
+    public CourseImpl(Long id, String title, String body) {
         this.id = id;
-        this.name = name;
-        this.description = description;
+        this.title = title;
+        this.body = body;
         this.teachers = new HashSet<>();
         this.students = new HashSet<>();
         this.modules = new ArrayList<>();
         this.progress = 0;
+    }
+
+    @Override
+    public CourseImpl create(Long id, String title, String body) {
+        return new CourseImpl(id, title, body);
     }
 
     @Override
@@ -52,35 +57,12 @@ public class CourseImpl implements Course {
     }
 
     @Override
-    public String getDescription() {
-        return description;
-    }
-
-    @Override
     public double getProgress(User user) throws UnknownUserException {
         return progress;
     }
 
-    @Override
-    public Long getId() {
-        return id;
-    }
-
     public void setId(Long id) {
         this.id = id;
-    }
-
-    @Override
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
     }
 
     public void setTeachers(Set<User> teachers) {
@@ -93,6 +75,11 @@ public class CourseImpl implements Course {
 
     public void setModules(List<Module> modules) {
         this.modules = new ArrayList<>(modules);
+    }
+
+    @Override
+    public void addSub(Module newMod) {
+        modules.add(newMod);
     }
 
     @Override
@@ -144,5 +131,39 @@ public class CourseImpl implements Course {
     @Override
     public ArrayList<ArrayList<Boolean>> getCompletion(User user) throws UnknownUserException {
         throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public List<Module> getAll() {
+        return new ArrayList(modules);
+    }
+
+    // @Override
+    // public ModuleDTO createDTO(Module original) {
+    //     throw new UnsupportedOperationException("Not supported yet.");
+    // }
+    @Override
+    public String getTitle() {
+        return title;
+    }
+
+    @Override
+    public void setTitle(String newTitle) {
+        title = newTitle;
+    }
+
+    @Override
+    public String getBody() {
+        return body;
+    }
+
+    @Override
+    public void setBody(String newBody) {
+        body = newBody;
+    }
+
+    @Override
+    public Long getId() {
+        return id;
     }
 }

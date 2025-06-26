@@ -1,5 +1,7 @@
 package rebootedmvp.dto;
 
+import rebootedmvp.Module;
+
 public class ModuleDTO {
 
     private Long id;
@@ -9,7 +11,12 @@ public class ModuleDTO {
     private Long courseId;
     private int contentCount;
 
-    public ModuleDTO() {
+    public ModuleDTO(Module mod) {
+        this.id = mod.getId();
+        this.name = mod.getTitle();
+        this.description = mod.getBody();
+        this.courseId = mod.getCourseId();
+        this.contentCount = mod.getContent().size();
     }
 
     public ModuleDTO(Long id, String name, String description, Long courseId, int contentCount) {

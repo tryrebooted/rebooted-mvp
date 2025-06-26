@@ -1,6 +1,6 @@
 package rebootedmvp;
 
-public interface Content {
+public interface Content extends HasID {
 
     /**
      * Different atomic units of content blocks. Each one is an implementation
@@ -24,6 +24,10 @@ public interface Content {
     /**
      * Returns the content type of the user
      */
-    public ContentType contentType();
+    public ContentType getType();
+
+    public String getTitle();
+
+    public String getBody();
 
 }

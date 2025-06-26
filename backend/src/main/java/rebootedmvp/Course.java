@@ -4,17 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-public interface Course {
-
-    /**
-     * Returns the id of this course
-     */
-    Long getId();
-
-    /**
-     * Returns the Name of this course
-     */
-    String getName();
+public interface Course extends GetAll<Module> {
 
     /**
      * Returns A set of all L&D users who have access to the course Note: the
@@ -34,11 +24,6 @@ public interface Course {
      * Returns an ordered array of the modules of the course
      */
     List<Module> get_modules();
-
-    /**
-     * Returns the description of a course
-     */
-    String getDescription();
 
     /**
      * Returns the progress of user 'user' through this course. It must take

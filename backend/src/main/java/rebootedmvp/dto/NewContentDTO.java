@@ -1,9 +1,9 @@
 package rebootedmvp.dto;
 
-import rebootedmvp.Content;
 import java.util.List;
 
-public class NewContentDTO {
+public class NewContentDTO implements NewDTO {
+
     private String type;
     private String title;
     private String body;
@@ -11,7 +11,8 @@ public class NewContentDTO {
     private List<String> options;
     private String correctAnswer;
 
-    public NewContentDTO() {}
+    public NewContentDTO() {
+    }
 
     public NewContentDTO(String type, String title, String body, Long moduleId) {
         this.type = type;
@@ -37,6 +38,7 @@ public class NewContentDTO {
         this.type = type;
     }
 
+    @Override
     public String getTitle() {
         return title;
     }
@@ -45,6 +47,7 @@ public class NewContentDTO {
         this.title = title;
     }
 
+    @Override
     public String getBody() {
         return body;
     }

@@ -1,6 +1,12 @@
 package rebootedmvp.service;
 
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
+
 import org.springframework.stereotype.Service;
+
 import rebootedmvp.Content;
 import rebootedmvp.domain.impl.QuestionContentImpl;
 import rebootedmvp.domain.impl.TextContentImpl;
@@ -8,13 +14,9 @@ import rebootedmvp.dto.ContentDTO;
 import rebootedmvp.dto.NewContentDTO;
 import rebootedmvp.dto.QuestionContentDTO;
 
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
-
 @Service
 public class ContentService {
+
     private final Map<Long, Content> contents = new ConcurrentHashMap<>();
     private final AtomicLong idGenerator = new AtomicLong(1);
 
@@ -58,12 +60,12 @@ public class ContentService {
         Content content;
 
         if ("Text".equals(newContentDTO.getType())) {
-            content = new TextContentImpl(id, newContentDTO.getTitle().trim(), 
-                                        newContentDTO.getBody(), newContentDTO.getModuleId());
+            content = new TextContentImpl(id, newContentDTO.getTitle().trim(),
+                    newContentDTO.getBody(), newContentDTO.getModuleId());
         } else if ("Question".equals(newContentDTO.getType())) {
             List<String> options = newContentDTO.getOptions() != null ? newContentDTO.getOptions() : List.of();
             String correctAnswer = newContentDTO.getCorrectAnswer() != null ? newContentDTO.getCorrectAnswer() : "";
-            
+
             // Validate question data
             if (options.size() < 2) {
                 throw new IllegalArgumentException("Question must have at least 2 options");
@@ -74,9 +76,9 @@ public class ContentService {
             if (!options.contains(correctAnswer)) {
                 throw new IllegalArgumentException("Correct answer must be one of the provided options");
             }
-            
-            content = new QuestionContentImpl(id, newContentDTO.getTitle().trim(), 
-                                            newContentDTO.getBody(), options, correctAnswer, newContentDTO.getModuleId());
+
+            content = new QuestionContentImpl(id, newContentDTO.getTitle().trim(),
+                    newContentDTO.getBody(), options, correctAnswer, newContentDTO.getModuleId());
         } else {
             throw new IllegalArgumentException("Unsupported content type: " + newContentDTO.getType());
         }
@@ -147,7 +149,7 @@ public class ContentService {
             TextContentImpl textContent = (TextContentImpl) content;
             return new ContentDTO(
                     textContent.getId(),
-                    "Text",
+                    Content.ContentType.Text,
                     textContent.getTitle(),
                     textContent.getBody(),
                     textContent.isComplete(),

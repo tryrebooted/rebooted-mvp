@@ -1,63 +1,68 @@
 package rebootedmvp.controller;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import rebootedmvp.dto.CourseDTO;
-import rebootedmvp.dto.NewCourseDTO;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import rebootedmvp.Module;
+import rebootedmvp.dto.ModuleDTO;
+import rebootedmvp.dto.NewModuleDTO;
 import rebootedmvp.service.CourseService;
 
-import java.util.List;
-
 @RestController
-@RequestMapping("/api/courses")
+@RequestMapping("/api/courses/{courseId}")
 public class CourseController {
-    
+
     @Autowired
     private CourseService courseService;
 
     @GetMapping
-    public ResponseEntity<List<CourseDTO>> getAllCourses() {
-        List<CourseDTO> courses = courseService.findAll();
-        return ResponseEntity.ok(courses);
+    public ResponseEntity<List<ModuleDTO>> getAllModules(@PathVariable Long courseId) {
+        List<Module> mod = courseService.getById(courseId);
+
+        return ResponseEntity.ok(mapToDTO(mod));
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<CourseDTO> getCourseById(@PathVariable Long id) {
-        CourseDTO course = courseService.findById(id);
-        if (course == null) {
+    @GetMapping("/module/{moduleId}")
+    public ResponseEntity<ModuleDTO> getModuleById(@PathVariable Long courseId, @PathVariable Long moduleId) {
+        Module mod;
+        try {
+            mod = courseService.getById(courseId, moduleId);
+        } catch (Exception e) {
             return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.ok(course);
+        return ResponseEntity.ok(new ModuleDTO(mod));
     }
 
-    @PostMapping
-    public ResponseEntity<CourseDTO> createCourse(@RequestBody NewCourseDTO newCourseDTO) {
+    @PostMapping("/add")
+    public ResponseEntity<Long> createModule(@PathVariable Long courseId, @RequestBody NewModuleDTO newModuleDTO) {
         try {
-            CourseDTO createdCourse = courseService.create(newCourseDTO);
-            return ResponseEntity.status(HttpStatus.CREATED).body(createdCourse);
+            Long moduleId = courseService.addNew(newModuleDTO);
+            return ResponseEntity.ok(moduleId);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().build();
         }
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<CourseDTO> updateCourse(@PathVariable Long id, @RequestBody NewCourseDTO updateCourseDTO) {
-        try {
-            CourseDTO updatedCourse = courseService.update(id, updateCourseDTO);
-            if (updatedCourse == null) {
-                return ResponseEntity.notFound().build();
-            }
-            return ResponseEntity.ok(updatedCourse);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().build();
-        }
+    @PutMapping("/delete/{id}")
+    public void updateModule(@PathVariable Long id, @RequestBody NewModuleDTO updateModuleDTO) {
+        courseService.update(id, updateModuleDTO);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteCourse(@PathVariable Long id) {
-        boolean deleted = courseService.delete(id);
+    public ResponseEntity<Void> deleteModule(@PathVariable Long id) {
+        boolean deleted = moduleService.delete(id);
         if (deleted) {
             return ResponseEntity.noContent().build();
         } else {
@@ -69,5 +74,10 @@ public class CourseController {
     public ResponseEntity<String> handleException(Exception e) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body("An error occurred: " + e.getMessage());
+    }
+
+    private static List<ModuleDTO> mapToDTO(List<Module> toMap) {
+        return toMap.stream().map(
+                elem -> new ModuleDTO(elem)).toList();
     }
 }

@@ -1,6 +1,6 @@
 package rebootedmvp.dto;
 
-import rebootedmvp.*;
+import rebootedmvp.Course;
 
 public class CourseDTO {
 
@@ -13,8 +13,8 @@ public class CourseDTO {
 
     public CourseDTO(Course c) {
         id = c.getId();
-        name = c.getName();
-        description = c.getDescription();
+        name = c.getTitle();
+        description = c.getBody();
         teacherCount = c.get_teachers().size();
         studentCount = c.get_students().size();
         moduleCount = c.get_modules().size();

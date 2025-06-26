@@ -1,29 +1,34 @@
 package rebootedmvp.dto;
 
-public class NewCourseDTO {
-    private String name;
-    private String description;
+public class NewCourseDTO implements NewDTO {
 
-    public NewCourseDTO() {}
+    private String title;
+    private String body;
 
-    public NewCourseDTO(String name, String description) {
-        this.name = name;
-        this.description = description;
+    // public NewCourseDTO() {}
+    public NewCourseDTO(String title, String body) {
+        this.title = title;
+        this.body = body;
     }
 
-    public String getName() {
-        return name;
+    @Override
+    public String getTitle() {
+        return title;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    @Override
+    public void setTitle(String name) {
+        this.title = name;
     }
 
-    public String getDescription() {
-        return description;
+    @Override
+    public String getBody() {
+        return body;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
+    @Override
+    public void setBody(String body) {
+        this.body = body;
     }
+
 }

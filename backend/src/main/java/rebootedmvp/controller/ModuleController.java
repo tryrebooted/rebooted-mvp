@@ -1,79 +1,50 @@
 package rebootedmvp.controller;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import rebootedmvp.dto.ModuleDTO;
-import rebootedmvp.dto.NewModuleDTO;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import rebootedmvp.Content;
+import rebootedmvp.dto.ContentDTO;
 import rebootedmvp.service.ModuleService;
 
-import java.util.List;
-
 @RestController
-@RequestMapping("/api/modules")
+@RequestMapping("/api/modules/{moduleId}")
 public class ModuleController {
-    
+
     @Autowired
     private ModuleService moduleService;
 
     @GetMapping
-    public ResponseEntity<List<ModuleDTO>> getAllModules() {
-        List<ModuleDTO> modules = moduleService.findAll();
-        return ResponseEntity.ok(modules);
+    public ResponseEntity<List<ContentDTO>> getAllContents(@PathVariable Long id) {
+        List<Content> contents = moduleService.findAll();
+        return ResponseEntity.ok(mapToDTO(contents));
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<ModuleDTO> getModuleById(@PathVariable Long id) {
-        ModuleDTO module = moduleService.findById(id);
-        if (module == null) {
+    @GetMapping("/content/{contentId}")
+    public ResponseEntity<ContentDTO> getContentById(@PathVariable Long moduleId, @PathVariable Long contentId) {
+        Content con = moduleService.getById(moduleId, contentId);
+        if (con == null) {
             return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.ok(module);
-    }
-
-    @GetMapping("/course/{courseId}")
-    public ResponseEntity<List<ModuleDTO>> getModulesByCourseId(@PathVariable Long courseId) {
-        List<ModuleDTO> modules = moduleService.findByCourseId(courseId);
-        return ResponseEntity.ok(modules);
-    }
-
-    @PostMapping
-    public ResponseEntity<ModuleDTO> createModule(@RequestBody NewModuleDTO newModuleDTO) {
-        try {
-            ModuleDTO createdModule = moduleService.create(newModuleDTO);
-            return ResponseEntity.status(HttpStatus.CREATED).body(createdModule);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().build();
-        }
-    }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<ModuleDTO> updateModule(@PathVariable Long id, @RequestBody NewModuleDTO updateModuleDTO) {
-        try {
-            ModuleDTO updatedModule = moduleService.update(id, updateModuleDTO);
-            if (updatedModule == null) {
-                return ResponseEntity.notFound().build();
-            }
-            return ResponseEntity.ok(updatedModule);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().build();
-        }
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteModule(@PathVariable Long id) {
-        boolean deleted = moduleService.delete(id);
-        if (deleted) {
-            return ResponseEntity.noContent().build();
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+        return ResponseEntity.ok(new ContentDTO(con));
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<String> handleException(Exception e) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body("An error occurred: " + e.getMessage());
+    }
+
+    private static List<ContentDTO> mapToDTO(List<Content> toMap) {
+        return toMap.stream().map(
+                elem -> new ContentDTO(elem)).toList();
     }
 }

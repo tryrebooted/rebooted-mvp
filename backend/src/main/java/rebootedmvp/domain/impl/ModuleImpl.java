@@ -9,32 +9,41 @@ import rebootedmvp.Module;
 public class ModuleImpl implements Module {
 
     private Long id;
-    private String name;
-    private String description;
+    private String title;
+    private String body;
     private Long courseId;
     private List<Content> content;
     private double weight;
 
-    public ModuleImpl() {
-        this.content = new ArrayList<>();
+    // public ModuleImpl() {
+    //     this.content = new ArrayList<>();
+    // }
+    public ModuleImpl(Long id, String title, String body) {
+        this.id = id;
+        this.title = title;
+        this.body = body;
+        this.weight = 1.;
     }
 
-    public ModuleImpl(Long id, String name, String description, Long courseId) {
-        this();
+    public ModuleImpl(Long id, String title, String body, Long courseId) {
         this.id = id;
-        this.name = name;
-        this.description = description;
+        this.title = title;
+        this.body = body;
         this.courseId = courseId;
         this.weight = 1.;
     }
 
-    public ModuleImpl(Long id, String name, String description, Long courseId, double weight) {
-        this();
+    public ModuleImpl(Long id, String title, String body, Long courseId, double weight) {
         this.id = id;
-        this.name = name;
-        this.description = description;
+        this.title = title;
+        this.body = body;
         this.courseId = courseId;
         this.weight = weight;
+    }
+
+    @Override
+    public ModuleImpl create(Long id, String title, String body) {
+        return new ModuleImpl(id, title, body);
     }
 
     @Override
@@ -42,7 +51,8 @@ public class ModuleImpl implements Module {
         return new ArrayList<>(content);
     }
 
-    public void addContent(Content contentItem) {
+    @Override
+    public void addSub(Content contentItem) {
         if (contentItem != null) {
             this.content.add(contentItem);
         }
@@ -56,6 +66,7 @@ public class ModuleImpl implements Module {
         this.content = new ArrayList<>(content != null ? content : new ArrayList<>());
     }
 
+    @Override
     public Long getId() {
         return id;
     }
@@ -64,22 +75,7 @@ public class ModuleImpl implements Module {
         this.id = id;
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
+    @Override
     public Long getCourseId() {
         return courseId;
     }
@@ -91,6 +87,31 @@ public class ModuleImpl implements Module {
     @Override
     public double getWeight() {
         return weight;
+    }
+
+    @Override
+    public List<Content> getAll() {
+        return new ArrayList<>(content);
+    }
+
+    @Override
+    public String getTitle() {
+        return title;
+    }
+
+    @Override
+    public void setTitle(String newTitle) {
+        title = newTitle;
+    }
+
+    @Override
+    public String getBody() {
+        return body;
+    }
+
+    @Override
+    public void setBody(String newBody) {
+        body = newBody;
     }
 
 }

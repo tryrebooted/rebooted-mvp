@@ -1,73 +1,18 @@
 package rebootedmvp.service;
 
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
-
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import rebootedmvp.Course;
+import rebootedmvp.Module;
 import rebootedmvp.domain.impl.CourseImpl;
-import rebootedmvp.dto.CourseDTO;
-import rebootedmvp.dto.NewCourseDTO;
+import rebootedmvp.dto.NewModuleDTO;
 
 @Service
-public class CourseService {
+public class CourseService extends ServiceType<Course, Module, NewModuleDTO> {
 
-    private final Map<Long, CourseImpl> courses = new ConcurrentHashMap<>();
-    private final AtomicLong idGenerator = new AtomicLong(1);
-
-    @Autowired
-    private CourseMembershipService membershipService;
-
-    public List<CourseDTO> findAll() {
-        return courses.values().stream()
-                .map(this::convertToDTO)
-                .toList();
+    @Override
+    public Course create(Long id, String title, String body) {
+        return new CourseImpl(id, title, body);
     }
 
-    public CourseDTO findById(Long id) {
-        CourseImpl course = courses.get(id);
-        if (course == null) {
-            return null;
-        }
-        return convertToDTO(course);
-    }
-
-    public CourseDTO create(NewCourseDTO newCourseDTO) {
-        if (newCourseDTO.getName() == null || newCourseDTO.getName().trim().isEmpty()) {
-            throw new IllegalArgumentException("Course name cannot be empty");
-        }
-
-        Long id = idGenerator.getAndIncrement();
-        CourseImpl course = new CourseImpl(id, newCourseDTO.getName().trim(), newCourseDTO.getDescription());
-        courses.put(id, course);
-
-        return convertToDTO(course);
-    }
-
-    public CourseDTO update(Long id, NewCourseDTO updateCourseDTO) {
-        CourseImpl course = courses.get(id);
-        if (course == null) {
-            return null;
-        }
-
-        if (updateCourseDTO.getName() != null && !updateCourseDTO.getName().trim().isEmpty()) {
-            course.setName(updateCourseDTO.getName().trim());
-        }
-        if (updateCourseDTO.getDescription() != null) {
-            course.setDescription(updateCourseDTO.getDescription());
-        }
-
-        return convertToDTO(course);
-    }
-
-    public boolean delete(Long id) {
-        return courses.remove(id) != null;
-    }
-
-    private CourseDTO convertToDTO(CourseImpl course) {
-        return new CourseDTO(course);
-    }
 }

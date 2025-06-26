@@ -1,21 +1,34 @@
 package rebootedmvp;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
+// import rebootedmvp.dto.CourseDTO;
 /**
  * This class is meant to represent a collection of courses. It's primary
  * purpose is to avoid exposure to the user class. That is, if a user needs
  * access to a Course object directly, it must make an API call to roster to
  * first check if it should have access
  */
-public class Roster {
+public class Roster implements GetAll<Course> {
 
     HashMap<Long, Course> allCourses;
+    String title;
+    String body;
+    Long id;
 
-    Roster() {
+    public Roster(Long id, String title, String body) {
         allCourses = new HashMap<>();
+        this.id = id;
+        this.title = title;
+        this.body = body;
+    }
 
+    @Override
+    public Roster create(Long id, String title, String body) {
+        return new Roster(id, title, body);
     }
 
     /**
@@ -38,7 +51,8 @@ public class Roster {
         return idGenerator.getAndIncrement();
     }
 
-    public Long addCourse(Course c) {
+    @Override
+    public void addSub(Course c) {
         Long newKey;
         while (true) {
             newKey = generateKey();
@@ -47,6 +61,40 @@ public class Roster {
                 break;
             }
         }
-        return newKey;
+        // return newKey;
+    }
+
+    @Override
+    public List<Course> getAll() {
+        return new ArrayList<>(allCourses.values());
+    }
+
+    // @Override
+    // public CourseDTO createDTO(Course c) {
+    //     return new CourseDTO(c);
+    // }
+    @Override
+    public String getTitle() {
+        return title;
+    }
+
+    @Override
+    public void setTitle(String newTitle) {
+        title = newTitle;
+    }
+
+    @Override
+    public String getBody() {
+        return body;
+    }
+
+    @Override
+    public void setBody(String newBody) {
+        body = newBody;
+    }
+
+    @Override
+    public Long getId() {
+        return id;
     }
 }

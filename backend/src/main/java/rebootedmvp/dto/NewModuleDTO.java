@@ -1,32 +1,38 @@
 package rebootedmvp.dto;
 
-public class NewModuleDTO {
-    private String name;
-    private String description;
+public class NewModuleDTO implements NewDTO {
+
+    private String title;
+    private String body;
     private Long courseId;
 
-    public NewModuleDTO() {}
+    public NewModuleDTO() {
+    }
 
-    public NewModuleDTO(String name, String description, Long courseId) {
-        this.name = name;
-        this.description = description;
+    public NewModuleDTO(String title, String body, Long courseId) {
+        this.title = title;
+        this.body = body;
         this.courseId = courseId;
     }
 
-    public String getName() {
-        return name;
+    @Override
+    public String getTitle() {
+        return title;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    @Override
+    public void setTitle(String title) {
+        this.title = title;
     }
 
-    public String getDescription() {
-        return description;
+    @Override
+    public String getBody() {
+        return body;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
+    @Override
+    public void setBody(String body) {
+        this.body = body;
     }
 
     public Long getCourseId() {
@@ -36,4 +42,5 @@ public class NewModuleDTO {
     public void setCourseId(Long courseId) {
         this.courseId = courseId;
     }
+
 }

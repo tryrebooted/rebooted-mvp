@@ -1,23 +1,32 @@
 package rebootedmvp.dto;
 
+import rebootedmvp.Content;
+
 public class ContentDTO {
 
     private Long id;
-    private String type;
+    private Content.ContentType type;
     private String title;
     private String body;
     private boolean isComplete;
     private Long moduleId;
 
-    public ContentDTO() {
+    public ContentDTO(Content c) {
+        this.id = c.getId();
+        this.type = c.getType();
+        this.title = c.getTitle();
+        this.body = c.getBody();
+        this.isComplete = c.isComplete();
+        this.moduleId = c.getId();
+
     }
 
-    public ContentDTO(Long id, String type, String title, String body, boolean isComplete, Long moduleId) {
+    public ContentDTO(Long id, Content.ContentType type, String title, String body, boolean isComplete, Long moduleId) {
         this.id = id;
         this.type = type;
         this.title = title;
         this.body = body;
-        this.isComplete = isComplete;
+        this.isComplete = false;
         this.moduleId = moduleId;
     }
 
@@ -29,11 +38,11 @@ public class ContentDTO {
         this.id = id;
     }
 
-    public String getType() {
+    public Content.ContentType getType() {
         return type;
     }
 
-    public void setType(String type) {
+    public void setType(Content.ContentType type) {
         this.type = type;
     }
 
