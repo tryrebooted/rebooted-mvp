@@ -16,8 +16,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import rebootedmvp.Course;
+import rebootedmvp.Roster;
 import rebootedmvp.dto.CourseDTO;
 import rebootedmvp.dto.NewCourseDTO;
+import rebootedmvp.dto.NewRosterDTO;
 import rebootedmvp.service.RosterService;
 
 @RestController
@@ -26,6 +28,12 @@ public class RosterController {
 
     @Autowired
     private RosterService rosterService;
+
+    @PostMapping
+    public ResponseEntity<Long> createRoster() {
+        Long rosterId = rosterService.addToHigh(new NewRosterDTO("Main Roster", "Description"), Roster::new);
+        return ResponseEntity.ok(rosterId);
+    }
 
     @GetMapping
     public ResponseEntity<List<CourseDTO>> getAllCourses() {
@@ -37,7 +45,7 @@ public class RosterController {
     @PostMapping("/add")
     public ResponseEntity<Long> createCourse(@RequestBody NewCourseDTO newCourseDTO) {
         try {
-            Long courseId = rosterService.addNew(newCourseDTO);
+            Long courseId = rosterService.addNew(Long.valueOf(0), newCourseDTO);
             return ResponseEntity.ok(courseId);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().build();
@@ -46,12 +54,12 @@ public class RosterController {
 
     @PutMapping("/update/{id}")
     public void updateCourse(@PathVariable Long id, @RequestBody NewCourseDTO updateCourseDTO) {
-        rosterService.update(id, updateCourseDTO);
+        rosterService.update(Long.valueOf(0), id, updateCourseDTO);
     }
 
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<Void> deleteCourse(@PathVariable Long id) {
-        boolean deleted = rosterService.delete(id);
+        boolean deleted = rosterService.delete(Long.valueOf(0), id);
         if (deleted) {
             return ResponseEntity.noContent().build();
         } else {

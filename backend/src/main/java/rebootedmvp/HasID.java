@@ -1,8 +1,15 @@
 package rebootedmvp;
 
-public interface HasID<T> {
+public interface HasID {
 
     public Long getId();
 
-    public T create(Long id, String title, String body);
+    public String getTitle();
+
+    public void setTitle(String newTitle);
+
+    public String getBody();
+
+    public void setBody(String newBody);
+
 }

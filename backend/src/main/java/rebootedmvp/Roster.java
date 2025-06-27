@@ -5,6 +5,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
+import rebootedmvp.domain.impl.CourseImpl;
+import rebootedmvp.dto.NewRosterDTO;
+
 // import rebootedmvp.dto.CourseDTO;
 /**
  * This class is meant to represent a collection of courses. It's primary
@@ -19,16 +22,17 @@ public class Roster implements GetAll<Course> {
     String body;
     Long id;
 
+    public Roster(NewRosterDTO newData) {
+        allCourses = new HashMap<>();
+        this.title = newData.getTitle();
+        this.body = newData.getBody();
+    }
+
     public Roster(Long id, String title, String body) {
         allCourses = new HashMap<>();
         this.id = id;
         this.title = title;
         this.body = body;
-    }
-
-    @Override
-    public Roster create(Long id, String title, String body) {
-        return new Roster(id, title, body);
     }
 
     /**
@@ -52,7 +56,7 @@ public class Roster implements GetAll<Course> {
     }
 
     @Override
-    public void addSub(Course c) {
+    public void addSub(Long id, Course c) {
         Long newKey;
         while (true) {
             newKey = generateKey();
@@ -96,5 +100,15 @@ public class Roster implements GetAll<Course> {
     @Override
     public Long getId() {
         return id;
+    }
+
+    @Override
+    public Course create(Long id, String title, String body) {
+        return new CourseImpl(id, title, body);
+    }
+
+    @Override
+    public boolean removeSub(Long removeId) {
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 }

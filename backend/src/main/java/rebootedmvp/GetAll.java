@@ -2,19 +2,13 @@ package rebootedmvp;
 
 import java.util.List;
 
-public interface GetAll<R> extends HasID<R> {
+public interface GetAll<R> extends HasID {
 
     public List<R> getAll();
 
-    // public K createDTO(R original);
-    public String getTitle();
+    public void addSub(Long id, R smallerGroup);
 
-    public void setTitle(String newTitle);
+    public boolean removeSub(Long removeId);
 
-    public String getBody();
-
-    public void setBody(String newBody);
-
-    public void addSub(R smallerGroup);
-
+    public R create(Long id, String title, String body);
 }

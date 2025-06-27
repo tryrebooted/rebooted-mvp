@@ -1,8 +1,10 @@
 package rebootedmvp.domain.impl;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import rebootedmvp.Course;
@@ -17,13 +19,13 @@ public class CourseImpl implements Course {
     private String body;
     private Set<User> teachers;
     private Set<User> students;
-    private List<Module> modules;
+    private final Map<Long, Module> modules;
     private double progress;
 
     public CourseImpl() {
         this.teachers = new HashSet<>();
         this.students = new HashSet<>();
-        this.modules = new ArrayList<>();
+        this.modules = new HashMap<>();
     }
 
     public CourseImpl(Long id, String title, String body) {
@@ -32,13 +34,13 @@ public class CourseImpl implements Course {
         this.body = body;
         this.teachers = new HashSet<>();
         this.students = new HashSet<>();
-        this.modules = new ArrayList<>();
+        this.modules = new HashMap<>();
         this.progress = 0;
     }
 
     @Override
-    public CourseImpl create(Long id, String title, String body) {
-        return new CourseImpl(id, title, body);
+    public Module create(Long id, String title, String body) {
+        return new ModuleImpl(id, title, body);
     }
 
     @Override
@@ -53,7 +55,7 @@ public class CourseImpl implements Course {
 
     @Override
     public List<Module> get_modules() {
-        return new ArrayList<>(modules);
+        return new ArrayList<>(modules.values());
     }
 
     @Override
@@ -73,13 +75,12 @@ public class CourseImpl implements Course {
         this.students = new HashSet<>(students);
     }
 
-    public void setModules(List<Module> modules) {
-        this.modules = new ArrayList<>(modules);
-    }
-
+    // public void setModules(List<Module> modules) {
+    //     this.modules = new ArrayList<>(modules);
+    // }
     @Override
-    public void addSub(Module newMod) {
-        modules.add(newMod);
+    public void addSub(Long id, Module newMod) {
+        modules.put(id, newMod);
     }
 
     @Override
@@ -135,13 +136,9 @@ public class CourseImpl implements Course {
 
     @Override
     public List<Module> getAll() {
-        return new ArrayList(modules);
+        return new ArrayList(modules.values());
     }
 
-    // @Override
-    // public ModuleDTO createDTO(Module original) {
-    //     throw new UnsupportedOperationException("Not supported yet.");
-    // }
     @Override
     public String getTitle() {
         return title;
@@ -165,5 +162,11 @@ public class CourseImpl implements Course {
     @Override
     public Long getId() {
         return id;
+    }
+
+    @Override
+    public boolean removeSub(Long moduleId) {
+        Module elem = modules.remove(moduleId);
+        return elem != null;
     }
 }

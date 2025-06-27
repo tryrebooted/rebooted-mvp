@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Function;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
@@ -22,12 +23,12 @@ import rebootedmvp.dto.NewDTO;
  * level lower than T. For example, if T is of type Course then 'R' should be of
  * type Module. Type 'Q' is the type of the new data DTO of type 'R'. For
  * example, if type 'T' is Course and R is 'Module', then 'Q' should be
- * 'NewModuleDTO'.
+ * 'NewModuleDTO'. R should be the new DTO type of type T.
  */
-public abstract class ServiceType<T extends GetAll<K>, K extends HasID<K>, Q extends NewDTO> {
+public abstract class ServiceType<T extends GetAll<K>, K extends HasID, Q extends NewDTO, R extends NewDTO> {
 
     private final Map<Long, T> datas = new ConcurrentHashMap<>();
-    private final AtomicLong idGenerator = new AtomicLong(1);
+    private final AtomicLong idGenerator = new AtomicLong(0);
 
     /**
      * Returns a list of all the elements within all of the T's. For example, in
@@ -80,27 +81,44 @@ public abstract class ServiceType<T extends GetAll<K>, K extends HasID<K>, Q ext
         T highLevel = datas.get(id);
 
         K smallerGroup = highLevel.create(newId, newData.getTitle(), newData.getBody());
-        highLevel.addSub(smallerGroup);
+        highLevel.addSub(newId, smallerGroup);
 
-        return id;
+        return newId;
     }
 
-    public void update(Long id, Q updateCourseDTO) {
-        T data = datas.get(id);
-        if (data == null) {
+    public Long addToHigh(R newData, Function<R, T> constructor) {
+        if (newData.getTitle() == null || newData.getTitle().trim().isEmpty()) {
+            throw new IllegalArgumentException("The title must be supplied in the DTO");
+        }
+
+        Long newId = idGenerator.getAndIncrement();
+        T newObject = constructor.apply(newData); // 👈 uses lambda to create the object
+        datas.put(newId, newObject);
+        return newId;
+    }
+
+    public void update(Long highId, Long lowId, Q updateDTO) {
+        T data = datas.get(highId);
+        K toUpdate = data.getAll()
+                .stream()
+                .filter(elem -> Objects.equals(elem.getId(), lowId))
+                .findAny()
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Nothing was found with that id"));
+        if (toUpdate == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Nothing was found with that id");
         }
 
-        if (updateCourseDTO.getTitle() != null && !updateCourseDTO.getTitle().trim().isEmpty()) {
-            data.setTitle(updateCourseDTO.getTitle().trim());
+        if (updateDTO.getTitle() != null && !updateDTO.getTitle().trim().isEmpty()) {
+            toUpdate.setTitle(updateDTO.getTitle().trim());
         }
-        if (updateCourseDTO.getBody() != null) {
-            data.setBody(updateCourseDTO.getBody());
+        if (updateDTO.getBody() != null) {
+            toUpdate.setBody(updateDTO.getBody());
         }
     }
 
-    public boolean delete(Long id) {
-        return datas.remove(id) != null;
+    public boolean delete(Long highId, Long lowId) {
+        T data = datas.get(highId);
+        return data.removeSub(lowId);
     }
 
     // /**

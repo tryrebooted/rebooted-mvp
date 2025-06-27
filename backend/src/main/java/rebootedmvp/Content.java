@@ -8,7 +8,7 @@ public interface Content extends HasID {
      */
     public enum ContentType {
         Text,
-        Question
+        Question,
     }
 
     /**
@@ -25,9 +25,5 @@ public interface Content extends HasID {
      * Returns the content type of the user
      */
     public ContentType getType();
-
-    public String getTitle();
-
-    public String getBody();
 
 }

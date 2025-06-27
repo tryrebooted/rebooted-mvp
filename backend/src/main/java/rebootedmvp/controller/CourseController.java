@@ -48,7 +48,7 @@ public class CourseController {
     @PostMapping("/add")
     public ResponseEntity<Long> createModule(@PathVariable Long courseId, @RequestBody NewModuleDTO newModuleDTO) {
         try {
-            Long moduleId = courseService.addNew(newModuleDTO);
+            Long moduleId = courseService.addNew(courseId, newModuleDTO);
             return ResponseEntity.ok(moduleId);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().build();
@@ -56,13 +56,13 @@ public class CourseController {
     }
 
     @PutMapping("/delete/{id}")
-    public void updateModule(@PathVariable Long id, @RequestBody NewModuleDTO updateModuleDTO) {
-        courseService.update(id, updateModuleDTO);
+    public void updateModule(@PathVariable Long courseId, @PathVariable Long id, @RequestBody NewModuleDTO updateModuleDTO) {
+        courseService.update(courseId, id, updateModuleDTO);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteModule(@PathVariable Long id) {
-        boolean deleted = moduleService.delete(id);
+    public ResponseEntity<Void> deleteModule(@PathVariable Long courseId, @PathVariable Long id) {
+        boolean deleted = courseService.delete(courseId, id);
         if (deleted) {
             return ResponseEntity.noContent().build();
         } else {

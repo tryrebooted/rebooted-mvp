@@ -1,11 +1,12 @@
 package rebootedmvp.domain.impl;
 
-import rebootedmvp.Content;
-
 import java.util.ArrayList;
 import java.util.List;
 
+import rebootedmvp.Content;
+
 public class QuestionContentImpl implements Content {
+
     private Long id;
     private String title;
     private String questionText;
@@ -18,8 +19,8 @@ public class QuestionContentImpl implements Content {
         this.options = new ArrayList<>();
     }
 
-    public QuestionContentImpl(Long id, String title, String questionText, List<String> options, 
-                              String correctAnswer, Long moduleId) {
+    public QuestionContentImpl(Long id, String title, String questionText, List<String> options,
+            String correctAnswer, Long moduleId) {
         this.id = id;
         this.title = title;
         this.questionText = questionText;
@@ -40,10 +41,6 @@ public class QuestionContentImpl implements Content {
     }
 
     @Override
-    public ContentType contentType() {
-        return ContentType.Question;
-    }
-
     public Long getId() {
         return id;
     }
@@ -52,10 +49,12 @@ public class QuestionContentImpl implements Content {
         this.id = id;
     }
 
+    @Override
     public String getTitle() {
         return title;
     }
 
+    @Override
     public void setTitle(String title) {
         this.title = title;
     }
@@ -98,5 +97,20 @@ public class QuestionContentImpl implements Content {
 
     public void setModuleId(Long moduleId) {
         this.moduleId = moduleId;
+    }
+
+    @Override
+    public ContentType getType() {
+        return ContentType.Question;
+    }
+
+    @Override
+    public String getBody() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public void setBody(String newBody) {
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 }
