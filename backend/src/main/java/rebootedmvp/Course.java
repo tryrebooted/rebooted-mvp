@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-public interface Course extends GetAll<Module> {
+public interface Course extends InfoContainer<Module> {
 
     /**
      * Returns A set of all L&D users who have access to the course Note: the

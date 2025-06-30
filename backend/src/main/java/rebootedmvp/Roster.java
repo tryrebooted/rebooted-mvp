@@ -15,7 +15,7 @@ import rebootedmvp.dto.NewRosterDTO;
  * access to a Course object directly, it must make an API call to roster to
  * first check if it should have access
  */
-public class Roster implements GetAll<Course> {
+public class Roster implements InfoContainer<Course> {
 
     HashMap<Long, Course> allCourses;
     String title;

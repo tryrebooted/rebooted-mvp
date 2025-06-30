@@ -11,8 +11,8 @@ import java.util.function.Function;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
-import rebootedmvp.GetAll;
 import rebootedmvp.HasID;
+import rebootedmvp.InfoContainer;
 import rebootedmvp.dto.NewDTO;
 
 /**
@@ -25,7 +25,7 @@ import rebootedmvp.dto.NewDTO;
  * example, if type 'T' is Course and R is 'Module', then 'Q' should be
  * 'NewModuleDTO'. R should be the new DTO type of type T.
  */
-public abstract class ServiceType<T extends GetAll<K>, K extends HasID, Q extends NewDTO, R extends NewDTO> {
+public abstract class ServiceType<T extends InfoContainer<K>, K extends HasID, Q extends NewDTO, R extends NewDTO> {
 
     private final Map<Long, T> datas = new ConcurrentHashMap<>();
     private final AtomicLong idGenerator = new AtomicLong(0);

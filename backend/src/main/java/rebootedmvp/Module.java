@@ -2,7 +2,7 @@ package rebootedmvp;
 
 import java.util.List;
 
-public interface Module extends GetAll<Content> {
+public interface Module extends InfoContainer<Content> {
 
     /**
      * Returns the weight of this module for user 'user'. Weight is the metric
