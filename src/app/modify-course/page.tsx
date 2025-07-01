@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { apiService } from '@/services/api';
-import { mockAuth } from '@/contexts/UserContext';
+import { useUser } from '@/contexts/UserContext';
 import { Course, Module } from '@/types/backend-api';
 import ContentBlockList from '@/components/content/ContentBlockList';
 import ContentCreator from '@/components/content/ContentCreator';
@@ -12,6 +12,7 @@ export default function ModifyCoursePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const courseId = searchParams.get('id');
+  const { user, loading: authLoading } = useUser();
 
   const [course, setCourse] = useState<Course | null>(null);
   const [modules, setModules] = useState<Module[]>([]);
@@ -43,20 +44,52 @@ export default function ModifyCoursePage() {
       return;
     }
 
-    loadCourseData();
-  }, [courseId]);
-
-  const loadCourseData = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      // Get current user to check permissions
-      const { data: { user }, error: userError } = await mockAuth.getUser();
-      if (userError || !user) {
+    const loadData = async () => {
+      // Wait for auth to finish loading
+      if (authLoading) return;
+      
+      // If no user, redirect to login
+      if (!user) {
         router.push('/login');
         return;
       }
+
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Fetch course basic info
+        const courseData = await apiService.getCourseById(parseInt(courseId!));
+        setCourse(courseData);
+
+        // Fetch modules for this course
+        const modulesData = await apiService.getModulesByCourseId(parseInt(courseId!));
+        setModules(modulesData);
+
+      } catch (err) {
+        console.error('Error loading course data:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load course');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, [courseId, user, authLoading, router]);
+
+  const loadCourseData = async () => {
+    // Wait for auth to finish loading
+    if (authLoading) return;
+    
+    // If no user, redirect to login
+    if (!user) {
+      router.push('/login');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
 
       // Fetch course basic info
       const courseData = await apiService.getCourseById(parseInt(courseId!));
@@ -108,12 +141,17 @@ export default function ModifyCoursePage() {
       setSaving(true);
       setSaveError(null);
 
-      const updatedCourse = await apiService.updateCourse(parseInt(courseId), {
+      await apiService.updateCourse(parseInt(courseId), {
         name: editedName.trim(),
         description: editedDescription.trim()
       });
 
-      setCourse(updatedCourse);
+      // Update the local course state with the edited values
+      setCourse(prev => prev ? {
+        ...prev,
+        name: editedName.trim(),
+        description: editedDescription.trim()
+      } : null);
       setIsEditing(false);
     } catch (err) {
       console.error('Error updating course:', err);
@@ -191,11 +229,12 @@ export default function ModifyCoursePage() {
     handleContentUpdate(); // Refresh the content list
   };
 
-  if (loading) {
+  // Show loading while auth is loading or data is loading
+  if (authLoading || loading) {
     return (
       <div style={{ 
         padding: '20px',
-        maxWidth: '1200px',
+        maxWidth: '800px',
         margin: '0 auto',
         backgroundColor: '#ffffff',
         minHeight: '100vh',
@@ -211,7 +250,7 @@ export default function ModifyCoursePage() {
     return (
       <div style={{ 
         padding: '20px',
-        maxWidth: '1200px',
+        maxWidth: '800px',
         margin: '0 auto',
         backgroundColor: '#ffffff',
         minHeight: '100vh',
@@ -245,10 +284,14 @@ export default function ModifyCoursePage() {
     );
   }
 
+  if (!user) {
+    return null; // Will redirect to login
+  }
+
   return (
     <div style={{ 
       padding: '20px',
-      maxWidth: '1200px',
+      maxWidth: '800px',
       margin: '0 auto',
       backgroundColor: '#ffffff',
       minHeight: '100vh',

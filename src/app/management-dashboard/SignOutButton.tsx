@@ -1,11 +1,11 @@
 'use client'
 
+import { createClient } from '@/utils/supabase/client'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import { useUser } from '@/contexts/UserContext'
 
 export default function SignOutButton() {
-  const { signOut } = useUser()
+  const supabase = createClient()
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
 
@@ -13,13 +13,20 @@ export default function SignOutButton() {
     setIsLoading(true)
     
     try {
-      await signOut()
-      // Redirect to login page
-      router.push('/login')
+      const { error } = await supabase.auth.signOut()
+      
+      if (error) {
+        console.error('Error signing out:', error)
+        alert('Error signing out: ' + error.message)
+        setIsLoading(false)
+      } else {
+        // Clear any cached data and redirect
+        router.push('/login')
+        router.refresh()
+      }
     } catch (error) {
       console.error('Unexpected error during sign out:', error)
       alert('An unexpected error occurred while signing out')
-    } finally {
       setIsLoading(false)
     }
   }

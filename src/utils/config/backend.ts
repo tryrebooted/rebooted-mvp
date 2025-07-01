@@ -9,7 +9,7 @@ export interface BackendConfig {
 
 export const getBackendConfig = (): BackendConfig => {
   return {
-    baseUrl: process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080/api',
+    baseUrl: process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080',
     timeout: parseInt(process.env.NEXT_PUBLIC_API_TIMEOUT || '10000'),
     retryAttempts: parseInt(process.env.NEXT_PUBLIC_API_RETRY_ATTEMPTS || '2'),
   };

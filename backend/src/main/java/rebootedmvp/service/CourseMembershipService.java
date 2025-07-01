@@ -6,6 +6,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -16,6 +18,8 @@ import rebootedmvp.dto.UserProfileDTO;
 
 @Service
 public class CourseMembershipService {
+
+    private static final Logger logger = LoggerFactory.getLogger(CourseMembershipService.class);
 
     // courseId -> userId -> role
     private final Map<Long, Map<String, String>> courseMemberships = new ConcurrentHashMap<>();
@@ -64,30 +68,78 @@ public class CourseMembershipService {
     }
 
     public List<UserCourseDTO> getUserCourses(String userId) {
-
-        return new LinkedList<>();
-
-        // Handle both username and UUID-based lookups
-        // final String actualUserId;
-        // // Check if the provided userId is actually a username
-        // UserProfileDTO userByUsername = userProfileService.findByUsername(userId);
-        // if (userByUsername != null) {
-        //     actualUserId = userByUsername.getId();
-        // } else {
-        //     actualUserId = userId;
-        // }
-        // return courseMemberships.entrySet().stream()
-        //         .filter(entry -> entry.getValue().containsKey(actualUserId))
-        //         .map(entry -> {
-        //             Long courseId = entry.getKey();
-        //             String role = entry.getValue().get(actualUserId);
-        //             CourseDTO course = courseService.getById(courseId);
-        //             return course != null
-        //                     ? new UserCourseDTO(courseId, course.getName(), course.getDescription(), role)
-        //                     : null;
-        //         })
-        //         .filter(course -> course != null)
-        //         .collect(Collectors.toList());
+        logger.info("===== CourseMembershipService.getUserCourses() START =====");
+        logger.info("Input userId: '{}'", userId);
+        logger.debug("Current courseMemberships map size: {}", courseMemberships.size());
+        logger.debug("Current courseMemberships content: {}", courseMemberships);
+        
+        try {
+            // Handle both username and UUID-based lookups
+            final String actualUserId;
+            
+            logger.debug("Step 1: Checking if userId is a username...");
+            UserProfileDTO userByUsername = null;
+            try {
+                userByUsername = userProfileService.findByUsername(userId);
+                logger.debug("findByUsername('{}') result: {}", userId, userByUsername);
+            } catch (Exception e) {
+                logger.error("Error calling userProfileService.findByUsername('{}'): {}", userId, e.getMessage(), e);
+                throw e;
+            }
+            
+            if (userByUsername != null) {
+                actualUserId = userByUsername.getId();
+                logger.info("User '{}' found as username, mapped to ID: '{}'", userId, actualUserId);
+            } else {
+                actualUserId = userId;
+                logger.info("User '{}' not found as username, using as-is for ID lookup", userId);
+            }
+            
+            logger.debug("Step 2: Filtering course memberships for actualUserId: '{}'", actualUserId);
+            
+            List<UserCourseDTO> result = courseMemberships.entrySet().stream()
+                    .filter(entry -> {
+                        boolean contains = entry.getValue().containsKey(actualUserId);
+                        logger.debug("Course {} contains user '{}': {}", entry.getKey(), actualUserId, contains);
+                        return contains;
+                    })
+                    .map(entry -> {
+                        Long courseId = entry.getKey();
+                        String role = entry.getValue().get(actualUserId);
+                        
+                        logger.debug("Processing course {} with role '{}' for user '{}'", courseId, role, actualUserId);
+                        
+                        try {
+                            // Create a basic course representation since CourseService.getById 
+                            // returns List<Module> not CourseDTO
+                            UserCourseDTO courseDTO = new UserCourseDTO(courseId, "Course " + courseId, 
+                                                           "Course description", role);
+                            logger.debug("Created UserCourseDTO: {}", courseDTO);
+                            return courseDTO;
+                        } catch (Exception e) {
+                            logger.error("Error creating UserCourseDTO for course {} and user '{}': {}", 
+                                       courseId, actualUserId, e.getMessage(), e);
+                            return null;
+                        }
+                    })
+                    .filter(course -> {
+                        boolean notNull = course != null;
+                        logger.debug("Course filtering - not null: {}", notNull);
+                        return notNull;
+                    })
+                    .collect(Collectors.toList());
+            
+            logger.info("===== CourseMembershipService.getUserCourses() SUCCESS =====");
+            logger.info("Returning {} courses for user '{}'", result.size(), userId);
+            logger.debug("Final result: {}", result);
+            
+            return result;
+            
+        } catch (Exception e) {
+            logger.error("===== CourseMembershipService.getUserCourses() ERROR =====");
+            logger.error("Error processing getUserCourses for user '{}': {}", userId, e.getMessage(), e);
+            throw e;
+        }
     }
 
     public boolean addUsersByCourse(Long courseId, List<String> usernames, String role) {

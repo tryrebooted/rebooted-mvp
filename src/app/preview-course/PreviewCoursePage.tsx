@@ -3,21 +3,20 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { apiService } from '@/services/api';
-import { mockAuth } from '@/contexts/UserContext';
+import { useUser } from '@/contexts/UserContext';
 import { Course, Module } from '@/types/backend-api';
 import ContentBlockList from '@/components/content/ContentBlockList';
-import ContentCreator from '@/components/content/ContentCreator';
 
 export default function PreviewCoursePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const courseId = searchParams.get('id');
+  const { user, loading: authLoading } = useUser();
 
   const [course, setCourse] = useState<Course | null>(null);
   const [modules, setModules] = useState<Module[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [currentUser, setCurrentUser] = useState<any>(null);
   const [selectedModuleId, setSelectedModuleId] = useState<number | null>(null);
 
   useEffect(() => {
@@ -28,21 +27,21 @@ export default function PreviewCoursePage() {
     }
 
     loadCourseData();
-  }, [courseId]);
+  }, [courseId, user, authLoading]);
 
   const loadCourseData = async () => {
+    // Wait for auth to finish loading
+    if (authLoading) return;
+    
+    // If no user, redirect to login
+    if (!user) {
+      router.push('/login');
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
-
-      // Get current user
-      const { data: { user }, error: userError } = await mockAuth.getUser();
-      if (userError || !user) {
-        router.push('/login');
-        return;
-      }
-
-      setCurrentUser(user);
 
       // Fetch course basic info
       const courseData = await apiService.getCourseById(parseInt(courseId!));
@@ -82,7 +81,8 @@ export default function PreviewCoursePage() {
     setSelectedModuleId(selectedModuleId === moduleId ? null : moduleId);
   };
 
-  if (loading) {
+  // Show loading while auth is loading or data is loading
+  if (authLoading || loading) {
     return (
       <div style={{ 
         padding: '20px',
@@ -134,6 +134,10 @@ export default function PreviewCoursePage() {
         </div>
       </div>
     );
+  }
+
+  if (!user) {
+    return null; // Will redirect to login
   }
 
   return (

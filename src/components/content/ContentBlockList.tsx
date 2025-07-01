@@ -210,7 +210,7 @@ export default function ContentBlockList({
 
       {/* Content Blocks */}
       <div>
-        {content.map((item, index) => {
+        {content.map((item, _index) => {
           if (isQuestionContent(item)) {
             return (
               <QuestionContentBlock

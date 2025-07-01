@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { apiService } from '@/services/api'
-import { mockAuth } from '@/contexts/UserContext'
+import { useUser } from '@/contexts/UserContext'
 import SignOutButton from './SignOutButton'
 
 interface Course {
@@ -15,7 +15,7 @@ interface Course {
 
 export default function DashboardPage() {
   const router = useRouter()
-  const [user, setUser] = useState<any>(null)
+  const { user, loading: authLoading } = useUser()
   const [courses, setCourses] = useState<Course[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -24,23 +24,21 @@ export default function DashboardPage() {
   useEffect(() => {
     let mounted = true
 
-    async function loadUserAndCourses() {
+    async function loadCourses() {
+      // Wait for auth to finish loading
+      if (authLoading) return
+      
+      // If no user, redirect to login
+      if (!user) {
+        router.push('/login?error=auth_required')
+        return
+      }
+
       try {
-        // Get current user from mock auth
-        const { data: { user: currentUser }, error: userError } = await mockAuth.getUser()
+        setLoading(true)
         
-        if (userError || !currentUser) {
-          console.error('Authentication error:', userError)
-          router.push('/login?error=auth_required')
-          return
-        }
-
-        if (!mounted) return
-
-        setUser(currentUser)
-
-        // Get the user ID (username from metadata or ID)
-        const userId = currentUser.user_metadata?.preferred_username || currentUser.id
+        // Get the user ID for API calls
+        const userId = user.id
 
         // Fetch courses for this user using backend API
         try {
@@ -75,13 +73,13 @@ export default function DashboardPage() {
       }
     }
 
-    loadUserAndCourses()
+    loadCourses()
 
     // Cleanup function
     return () => {
       mounted = false
     }
-  }, [router])
+  }, [router, user, authLoading])
 
   const deleteCourse = async (courseId: number) => {
     if (!confirm('Are you sure you want to delete this course? This action cannot be undone.')) {
@@ -105,7 +103,8 @@ export default function DashboardPage() {
     }
   }
 
-  if (loading) {
+  // Show loading while auth is loading or data is loading
+  if (authLoading || loading) {
     return (
       <div style={{ 
         paddingTop: '100px',
