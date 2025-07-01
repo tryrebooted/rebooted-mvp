@@ -30,6 +30,9 @@ public class CourseService {
     @Autowired
     private ModuleRepository moduleRepository;
 
+    /**
+     * Returns a list of all modules in all courses
+     */
     @Transactional(readOnly = true)
     public List<Module> findAll() {
         logger.debug("CourseService.findAll() called - returning all modules");
@@ -38,6 +41,9 @@ public class CourseService {
                 .toList();
     }
 
+    /**
+     * Returns a list of all modules within the course with given ID
+     */
     @Transactional(readOnly = true)
     public List<Module> getById(Long courseId) {
         logger.debug("CourseService.getById({}) called - getting modules for course", courseId);
@@ -51,6 +57,9 @@ public class CourseService {
                 .toList();
     }
 
+    /**
+     * Returns the specific module within the course
+     */
     @Transactional(readOnly = true)
     public Module getById(Long courseId, Long moduleId) {
         logger.debug("CourseService.getById({}, {}) called - getting specific module", courseId, moduleId);
@@ -72,6 +81,9 @@ public class CourseService {
         return convertToModule(module);
     }
 
+    /**
+     * Adds a new module to the specified course
+     */
     public Long addNew(Long courseId, NewModuleDTO newModuleDTO) {
         logger.debug("CourseService.addNew({}, {}) called", courseId, newModuleDTO.getTitle());
         
@@ -97,6 +109,9 @@ public class CourseService {
         return savedModule.getId();
     }
 
+    /**
+     * Updates a module within a course
+     */
     public void update(Long courseId, Long moduleId, NewModuleDTO updateDTO) {
         logger.debug("CourseService.update({}, {}, {}) called", courseId, moduleId, updateDTO.getTitle());
         
@@ -125,6 +140,9 @@ public class CourseService {
         logger.info("Updated module with ID: {} in course: {}", moduleId, courseId);
     }
 
+    /**
+     * Deletes a module from a course
+     */
     public boolean delete(Long courseId, Long moduleId) {
         logger.debug("CourseService.delete({}, {}) called", courseId, moduleId);
         
@@ -148,6 +166,8 @@ public class CourseService {
     }
 
     private Module convertToModule(ModuleEntityImpl moduleEntity) {
+        // Convert ModuleEntityImpl to Module interface
+        // Note: This assumes ModuleEntityImpl already implements Module interface
         return moduleEntity;
     }
 }
