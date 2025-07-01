@@ -1,7 +1,6 @@
 package rebootedmvp;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 
 public interface Course extends InfoContainer<Module> {
@@ -19,11 +18,6 @@ public interface Course extends InfoContainer<Module> {
      * and their union must be allUsers
      */
     Set<User> get_students();
-
-    /**
-     * Returns an ordered array of the modules of the course
-     */
-    List<Module> get_modules();
 
     /**
      * Returns the progress of user 'user' through this course. It must take

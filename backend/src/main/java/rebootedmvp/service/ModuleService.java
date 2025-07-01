@@ -47,11 +47,11 @@ public class ModuleService {
     @Transactional(readOnly = true)
     public List<Content> getById(Long moduleId) {
         logger.debug("ModuleService.getById({}) called - getting content for module", moduleId);
-        
+
         if (!moduleRepository.existsById(moduleId)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Module not found with id: " + moduleId);
         }
-        
+
         return contentRepository.findByModule_IdOrderByCreatedAtAsc(moduleId).stream()
                 .map(this::convertToContent)
                 .toList();
@@ -63,21 +63,22 @@ public class ModuleService {
     @Transactional(readOnly = true)
     public Content getById(Long moduleId, Long contentId) {
         logger.debug("ModuleService.getById({}, {}) called - getting specific content", moduleId, contentId);
-        
+
         if (!moduleRepository.existsById(moduleId)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Module not found with id: " + moduleId);
         }
-        
+
         Optional<ContentEntityImpl> contentOpt = contentRepository.findById(contentId);
         if (contentOpt.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Content not found with id: " + contentId);
         }
-        
+
         ContentEntityImpl content = contentOpt.get();
         if (!content.getModuleId().equals(moduleId)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Content " + contentId + " does not belong to module " + moduleId);
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND,
+                    "Content " + contentId + " does not belong to module " + moduleId);
         }
-        
+
         return convertToContent(content);
     }
 
@@ -86,7 +87,7 @@ public class ModuleService {
      */
     public Long addNew(Long moduleId, NewContentDTO newContentDTO) {
         logger.debug("ModuleService.addNew({}, {}) called", moduleId, newContentDTO.getTitle());
-        
+
         if (newContentDTO.getTitle() == null || newContentDTO.getTitle().trim().isEmpty()) {
             throw new IllegalArgumentException("The title must be supplied in the DTO");
         }
@@ -95,32 +96,30 @@ public class ModuleService {
         if (moduleOpt.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Module not found with id: " + moduleId);
         }
-        
+
         ModuleEntityImpl module = moduleOpt.get();
-        
+
         // Set the module ID in the DTO for the content service
         newContentDTO.setModuleId(moduleId);
-        
+
         ContentEntityImpl content;
         if ("Text".equals(newContentDTO.getType())) {
             content = new ContentEntityImpl(
-                newContentDTO.getTitle().trim(),
-                newContentDTO.getBody(),
-                module,
-                Content.ContentType.Text
-            );
+                    newContentDTO.getTitle().trim(),
+                    newContentDTO.getBody(),
+                    module,
+                    Content.ContentType.Text);
         } else if ("Question".equals(newContentDTO.getType())) {
             content = new ContentEntityImpl(
-                newContentDTO.getTitle().trim(),
-                newContentDTO.getBody(),
-                newContentDTO.getOptions(),
-                newContentDTO.getCorrectAnswer(),
-                module
-            );
+                    newContentDTO.getTitle().trim(),
+                    newContentDTO.getBody(),
+                    newContentDTO.getOptions(),
+                    newContentDTO.getCorrectAnswer(),
+                    module);
         } else {
             throw new IllegalArgumentException("Unsupported content type: " + newContentDTO.getType());
         }
-        
+
         ContentEntityImpl savedContent = contentRepository.save(content);
         logger.info("Created content with ID: {} in module: {}", savedContent.getId(), moduleId);
         return savedContent.getId();
@@ -131,19 +130,20 @@ public class ModuleService {
      */
     public void update(Long moduleId, Long contentId, NewContentDTO updateDTO) {
         logger.debug("ModuleService.update({}, {}, {}) called", moduleId, contentId, updateDTO.getTitle());
-        
+
         if (!moduleRepository.existsById(moduleId)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Module not found with id: " + moduleId);
         }
-        
+
         Optional<ContentEntityImpl> contentOpt = contentRepository.findById(contentId);
         if (contentOpt.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Content not found with id: " + contentId);
         }
-        
+
         ContentEntityImpl content = contentOpt.get();
         if (!content.getModuleId().equals(moduleId)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Content " + contentId + " does not belong to module " + moduleId);
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND,
+                    "Content " + contentId + " does not belong to module " + moduleId);
         }
 
         if (updateDTO.getTitle() != null && !updateDTO.getTitle().trim().isEmpty()) {
@@ -166,7 +166,7 @@ public class ModuleService {
                 content.setCorrectAnswer(updateDTO.getCorrectAnswer());
             }
         }
-        
+
         contentRepository.save(content);
         logger.info("Updated content with ID: {} in module: {}", contentId, moduleId);
     }
@@ -176,21 +176,21 @@ public class ModuleService {
      */
     public boolean delete(Long moduleId, Long contentId) {
         logger.debug("ModuleService.delete({}, {}) called", moduleId, contentId);
-        
+
         if (!moduleRepository.existsById(moduleId)) {
             return false;
         }
-        
+
         Optional<ContentEntityImpl> contentOpt = contentRepository.findById(contentId);
         if (contentOpt.isEmpty()) {
             return false;
         }
-        
+
         ContentEntityImpl content = contentOpt.get();
         if (!content.getModuleId().equals(moduleId)) {
             return false;
         }
-        
+
         contentRepository.deleteById(contentId);
         logger.info("Deleted content with ID: {} from module: {}", contentId, moduleId);
         return true;

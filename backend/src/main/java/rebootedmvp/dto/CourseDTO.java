@@ -17,7 +17,7 @@ public class CourseDTO {
         description = c.getBody();
         teacherCount = c.get_teachers().size();
         studentCount = c.get_students().size();
-        moduleCount = c.get_modules().size();
+        moduleCount = c.getAll().size();
     }
 
     public CourseDTO(Long id, String name, String description, int moduleCount) {

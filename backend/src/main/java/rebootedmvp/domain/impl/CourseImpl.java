@@ -54,11 +54,6 @@ public class CourseImpl implements Course {
     }
 
     @Override
-    public List<Module> get_modules() {
-        return new ArrayList<>(modules.values());
-    }
-
-    @Override
     public double getProgress(User user) throws UnknownUserException {
         return progress;
     }
@@ -75,9 +70,6 @@ public class CourseImpl implements Course {
         this.students = new HashSet<>(students);
     }
 
-    // public void setModules(List<Module> modules) {
-    //     this.modules = new ArrayList<>(modules);
-    // }
     @Override
     public void addSub(Long id, Module newMod) {
         modules.put(id, newMod);
@@ -136,7 +128,7 @@ public class CourseImpl implements Course {
 
     @Override
     public List<Module> getAll() {
-        return new ArrayList(modules.values());
+        return new ArrayList<>(modules.values());
     }
 
     @Override
