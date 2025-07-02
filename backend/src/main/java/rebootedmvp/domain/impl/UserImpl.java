@@ -44,7 +44,7 @@ public class UserImpl extends User {
                 List<rebootedmvp.dto.UserCourseDTO> userCourses = courseMembershipService.getUserCourses(this.name);
                 List<String> courseNames = new LinkedList<>();
                 for (rebootedmvp.dto.UserCourseDTO course : userCourses) {
-                    courseNames.add(course.getName());
+                    courseNames.add(course.getTitle());
                 }
                 return courseNames;
             } catch (Exception e) {
@@ -62,7 +62,7 @@ public class UserImpl extends User {
                 // Check if user has access to this course by checking user's course list
                 List<rebootedmvp.dto.UserCourseDTO> userCourses = courseMembershipService.getUserCourses(this.name);
                 for (rebootedmvp.dto.UserCourseDTO userCourse : userCourses) {
-                    if (userCourse.getName().equals(courseName)) {
+                    if (userCourse.getTitle().equals(courseName)) {
                         return true;
                     }
                 }

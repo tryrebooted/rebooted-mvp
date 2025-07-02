@@ -76,16 +76,16 @@ export default function CreateCoursePage() {
 
       // Create the course
       const courseId = await apiService.createCourse({
-        name: courseTitle.trim(),
-        description: courseDescription.trim()
+        title: courseTitle.trim(),
+        body: courseDescription.trim()
       });
 
       // Create modules if any
       if (modules.length > 0) {
         for (const moduleData of modules) {
           await apiService.createModule({
-            name: moduleData.title,
-            description: '',
+            title: moduleData.title,
+            body: '',
             courseId: courseId
           });
         }

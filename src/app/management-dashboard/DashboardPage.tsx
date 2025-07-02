@@ -8,8 +8,8 @@ import SignOutButton from './SignOutButton'
 
 interface Course {
   id: number
-  name: string
-  description: string | null
+  title: string
+  body: string | null
   role: 'teacher' | 'student'
 }
 
@@ -47,8 +47,8 @@ export default function DashboardPage() {
           // Transform backend UserCourseDTO to frontend Course interface
           const transformedCourses: Course[] = coursesData.map(course => ({
             id: course.id,
-            name: course.name,
-            description: course.description,
+            title: course.title,
+            body: course.body,
             role: course.role as 'teacher' | 'student'
           }))
           
@@ -253,15 +253,15 @@ export default function DashboardPage() {
                     fontSize: '18px',
                     color: '#171717'
                   }}>
-                    {course.name}
+                    {course.title}
                   </h3>
-                  {course.description && (
+                  {course.body && (
                     <p style={{
                       margin: '0 0 10px 0',
                       color: '#666',
                       fontSize: '14px'
                     }}>
-                      {course.description}
+                      {course.body}
                     </p>
                   )}
                 </div>

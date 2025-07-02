@@ -22,8 +22,8 @@ export default function ModifyCoursePage() {
   
   // Editing state
   const [isEditing, setIsEditing] = useState(false);
-  const [editedName, setEditedName] = useState('');
-  const [editedDescription, setEditedDescription] = useState('');
+  const [editedTitle, setEditedTitle] = useState('');
+  const [editedBody, setEditedBody] = useState('');
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
@@ -32,8 +32,8 @@ export default function ModifyCoursePage() {
 
   // Module creation state
   const [showModuleCreator, setShowModuleCreator] = useState(false);
-  const [newModuleName, setNewModuleName] = useState('');
-  const [newModuleDescription, setNewModuleDescription] = useState('');
+  const [newModuleTitle, setNewModuleTitle] = useState('');
+  const [newModuleBody, setNewModuleBody] = useState('');
   const [creatingModule, setCreatingModule] = useState(false);
   const [moduleCreationError, setModuleCreationError] = useState<string | null>(null);
 
@@ -94,8 +94,8 @@ export default function ModifyCoursePage() {
       // Fetch course basic info
       const courseData = await apiService.getCourseById(parseInt(courseId!));
       setCourse(courseData);
-      setEditedName(courseData.name);
-      setEditedDescription(courseData.description);
+      setEditedTitle(courseData.title);
+      setEditedBody(courseData.body);
 
       // Fetch modules for this course
       const modulesData = await apiService.getModulesByCourseId(parseInt(courseId!));
@@ -121,8 +121,8 @@ export default function ModifyCoursePage() {
 
   const handleCancelEdit = () => {
     if (course) {
-      setEditedName(course.name);
-      setEditedDescription(course.description);
+      setEditedTitle(course.title);
+      setEditedBody(course.body);
     }
     setIsEditing(false);
     setSaveError(null);
@@ -132,8 +132,8 @@ export default function ModifyCoursePage() {
     if (!courseId || !course) return;
 
     // Validation
-    if (!editedName.trim()) {
-      setSaveError('Course name is required');
+    if (!editedTitle.trim()) {
+      setSaveError('Course title is required');
       return;
     }
 
@@ -142,15 +142,15 @@ export default function ModifyCoursePage() {
       setSaveError(null);
 
       await apiService.updateCourse(parseInt(courseId), {
-        name: editedName.trim(),
-        description: editedDescription.trim()
+        title: editedTitle.trim(),
+        body: editedBody.trim()
       });
 
       // Update the local course state with the edited values
       setCourse(prev => prev ? {
         ...prev,
-        name: editedName.trim(),
-        description: editedDescription.trim()
+        title: editedTitle.trim(),
+        body: editedBody.trim()
       } : null);
       setIsEditing(false);
     } catch (err) {
@@ -162,8 +162,8 @@ export default function ModifyCoursePage() {
   };
 
   const handleCreateModule = async () => {
-    if (!courseId || !newModuleName.trim()) {
-      setModuleCreationError('Module name is required');
+    if (!courseId || !newModuleTitle.trim()) {
+      setModuleCreationError('Module title is required');
       return;
     }
 
@@ -172,14 +172,14 @@ export default function ModifyCoursePage() {
       setModuleCreationError(null);
 
       await apiService.createModule({
-        name: newModuleName.trim(),
-        description: newModuleDescription.trim(),
+        title: newModuleTitle.trim(),
+        body: newModuleBody.trim(),
         courseId: parseInt(courseId)
       });
 
       // Reset form
-      setNewModuleName('');
-      setNewModuleDescription('');
+      setNewModuleTitle('');
+      setNewModuleBody('');
       setShowModuleCreator(false);
       
       // Refresh data
@@ -194,8 +194,8 @@ export default function ModifyCoursePage() {
 
   const handleCancelModuleCreation = () => {
     setShowModuleCreator(false);
-    setNewModuleName('');
-    setNewModuleDescription('');
+    setNewModuleTitle('');
+    setNewModuleBody('');
     setModuleCreationError(null);
   };
 
@@ -351,8 +351,8 @@ export default function ModifyCoursePage() {
                 <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
                     <div style={{ flex: 1 }}>
-                      <h2 style={{ marginBottom: '10px', color: '#171717' }}>{course.name}</h2>
-                      <p style={{ color: '#666', marginBottom: '0' }}>{course.description}</p>
+                      <h2 style={{ marginBottom: '10px', color: '#171717' }}>{course.title}</h2>
+                      <p style={{ color: '#666', marginBottom: '0' }}>{course.body}</p>
                     </div>
                     <button
                       onClick={handleEditClick}
@@ -390,14 +390,14 @@ export default function ModifyCoursePage() {
                   )}
 
                   <div style={{ marginBottom: '15px' }}>
-                    <label htmlFor="courseName" style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', color: '#171717' }}>
-                      Course Name:
+                    <label htmlFor="courseTitle" style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', color: '#171717' }}>
+                      Course Title:
                     </label>
                     <input 
                       type="text" 
-                      id="courseName" 
-                      value={editedName}
-                      onChange={(e) => setEditedName(e.target.value)}
+                      id="courseTitle" 
+                      value={editedTitle}
+                      onChange={(e) => setEditedTitle(e.target.value)}
                       required
                       style={{ 
                         width: '100%',
@@ -411,13 +411,13 @@ export default function ModifyCoursePage() {
                   </div>
 
                   <div style={{ marginBottom: '20px' }}>
-                    <label htmlFor="courseDescription" style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', color: '#171717' }}>
+                    <label htmlFor="courseBody" style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', color: '#171717' }}>
                       Course Description:
                     </label>
                     <textarea 
-                      id="courseDescription" 
-                      value={editedDescription}
-                      onChange={(e) => setEditedDescription(e.target.value)}
+                      id="courseBody" 
+                      value={editedBody}
+                      onChange={(e) => setEditedBody(e.target.value)}
                       rows={4}
                       style={{ 
                         width: '100%',
@@ -434,14 +434,14 @@ export default function ModifyCoursePage() {
                   <div style={{ display: 'flex', gap: '10px' }}>
                     <button
                       onClick={handleSave}
-                      disabled={saving || !editedName.trim()}
+                      disabled={saving || !editedTitle.trim()}
                       style={{
                         padding: '10px 20px',
-                        backgroundColor: saving || !editedName.trim() ? '#6c757d' : '#28a745',
+                        backgroundColor: saving || !editedTitle.trim() ? '#6c757d' : '#28a745',
                         color: 'white',
                         border: 'none',
                         borderRadius: '4px',
-                        cursor: saving || !editedName.trim() ? 'not-allowed' : 'pointer'
+                        cursor: saving || !editedTitle.trim() ? 'not-allowed' : 'pointer'
                       }}
                     >
                       {saving ? 'Saving...' : 'Save Changes'}
@@ -511,11 +511,11 @@ export default function ModifyCoursePage() {
 
                     <input
                       type="text"
-                      placeholder="Module name"
-                      value={newModuleName}
-                      onChange={(e) => setNewModuleName(e.target.value)}
+                      placeholder="Module title"
+                      value={newModuleTitle}
+                      onChange={(e) => setNewModuleTitle(e.target.value)}
                       onKeyDown={(e) => {
-                        if (e.key === 'Enter' && newModuleName.trim()) {
+                        if (e.key === 'Enter' && newModuleTitle.trim()) {
                           handleCreateModule();
                         } else if (e.key === 'Escape') {
                           handleCancelModuleCreation();
@@ -535,8 +535,8 @@ export default function ModifyCoursePage() {
                     
                     <textarea
                       placeholder="Module description (optional)"
-                      value={newModuleDescription}
-                      onChange={(e) => setNewModuleDescription(e.target.value)}
+                      value={newModuleBody}
+                      onChange={(e) => setNewModuleBody(e.target.value)}
                       onKeyDown={(e) => {
                         if (e.key === 'Escape') {
                           handleCancelModuleCreation();
@@ -558,14 +558,14 @@ export default function ModifyCoursePage() {
                     <div style={{ display: 'flex', gap: '10px' }}>
                       <button
                         onClick={handleCreateModule}
-                        disabled={creatingModule || !newModuleName.trim()}
+                        disabled={creatingModule || !newModuleTitle.trim()}
                         style={{
                           padding: '8px 16px',
-                          backgroundColor: creatingModule || !newModuleName.trim() ? '#6c757d' : '#007cba',
+                          backgroundColor: creatingModule || !newModuleTitle.trim() ? '#6c757d' : '#007cba',
                           color: 'white',
                           border: 'none',
                           borderRadius: '4px',
-                          cursor: creatingModule || !newModuleName.trim() ? 'not-allowed' : 'pointer'
+                          cursor: creatingModule || !newModuleTitle.trim() ? 'not-allowed' : 'pointer'
                         }}
                       >
                         {creatingModule ? 'Creating...' : 'Create Module'}
@@ -604,10 +604,10 @@ export default function ModifyCoursePage() {
                       >
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <div>
-                            <strong>{index + 1}. {module.name}</strong>
-                            {module.description && (
+                            <strong>{index + 1}. {module.title}</strong>
+                            {module.body && (
                               <p style={{ margin: '5px 0 0 0', color: '#666', fontSize: '14px' }}>
-                                {module.description}
+                                {module.body}
                               </p>
                             )}
                           </div>
@@ -668,7 +668,7 @@ export default function ModifyCoursePage() {
               {/* Content Block List */}
               <ContentBlockList
                 moduleId={selectedModuleId}
-                moduleName={modules.find(m => m.id === selectedModuleId)?.name}
+                moduleTitle={modules.find(m => m.id === selectedModuleId)?.title}
                 isInteractive={true}
                 onContentUpdate={handleContentUpdate}
               />

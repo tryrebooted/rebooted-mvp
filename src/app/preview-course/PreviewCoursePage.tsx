@@ -210,8 +210,8 @@ export default function PreviewCoursePage() {
               marginBottom: '20px',
               backgroundColor: '#f8f9fa'
             }}>
-              <h2 style={{ marginBottom: '10px', color: '#171717' }}>{course.name}</h2>
-              <p style={{ color: '#666', marginBottom: '20px' }}>{course.description}</p>
+                      <h2 style={{ marginBottom: '10px', color: '#171717' }}>{course.title}</h2>
+        <p style={{ color: '#666', marginBottom: '20px' }}>{course.body}</p>
               
               <div style={{
                 padding: '15px',
@@ -248,10 +248,10 @@ export default function PreviewCoursePage() {
                       >
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <div style={{ flex: 1 }}>
-                            <strong style={{ color: '#171717' }}>{index + 1}. {module.name}</strong>
-                            {module.description && (
+                            <strong style={{ color: '#171717' }}>{index + 1}. {module.title}</strong>
+                            {module.body && (
                               <p style={{ margin: '5px 0 0 0', color: '#666', fontSize: '14px' }}>
-                                {module.description}
+                                {module.body}
                               </p>
                             )}
                           </div>
@@ -281,7 +281,7 @@ export default function PreviewCoursePage() {
           {selectedModuleId ? (
             <ContentBlockList
               moduleId={selectedModuleId}
-              moduleName={modules.find(m => m.id === selectedModuleId)?.name}
+              moduleTitle={modules.find(m => m.id === selectedModuleId)?.title}
               isInteractive={true}
               onContentUpdate={loadCourseData}
             />

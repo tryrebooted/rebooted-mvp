@@ -8,14 +8,14 @@ import QuestionContentBlock from './QuestionContentBlock';
 
 interface ContentBlockListProps {
   moduleId: number;
-  moduleName?: string;
+  moduleTitle?: string;
   isInteractive?: boolean;
   onContentUpdate?: () => void;
 }
 
 export default function ContentBlockList({ 
   moduleId, 
-  moduleName, 
+  moduleTitle, 
   isInteractive = true, 
   onContentUpdate 
 }: ContentBlockListProps) {
@@ -150,7 +150,7 @@ export default function ContentBlockList({
       }}>
         <h4 style={{ margin: '0 0 8px 0' }}>No Content Available</h4>
         <p style={{ margin: 0 }}>
-          {moduleName ? `The module "${moduleName}" doesn't have any content yet.` : 'This module doesn\'t have any content yet.'}
+          {moduleTitle ? `The module "${moduleTitle}" doesn't have any content yet.` : 'This module doesn\'t have any content yet.'}
         </p>
       </div>
     );
@@ -168,7 +168,7 @@ export default function ContentBlockList({
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
           <h3 style={{ margin: 0, color: '#171717' }}>
-            {moduleName ? `${moduleName} Content` : 'Module Content'}
+            {moduleTitle ? `${moduleTitle} Content` : 'Module Content'}
           </h3>
           <span style={{
             padding: '4px 12px',

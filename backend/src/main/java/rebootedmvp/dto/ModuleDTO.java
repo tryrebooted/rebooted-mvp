@@ -5,24 +5,24 @@ import rebootedmvp.Module;
 public class ModuleDTO {
 
     private Long id;
-    private String name;
-    private String description;
+    private String title;
+    private String body;
     private double progress;
     private Long courseId;
     private int contentCount;
 
     public ModuleDTO(Module mod) {
         this.id = mod.getId();
-        this.name = mod.getTitle();
-        this.description = mod.getBody();
+        this.title = mod.getTitle();
+        this.body = mod.getBody();
         this.courseId = mod.getCourseId();
         this.contentCount = mod.getContent().size();
     }
 
-    public ModuleDTO(Long id, String name, String description, Long courseId, int contentCount) {
+    public ModuleDTO(Long id, String title, String body, Long courseId, int contentCount) {
         this.id = id;
-        this.name = name;
-        this.description = description;
+        this.title = title;
+        this.body = body;
         this.courseId = courseId;
         this.contentCount = contentCount;
     }
@@ -35,20 +35,20 @@ public class ModuleDTO {
         this.id = id;
     }
 
-    public String getName() {
-        return name;
+    public String getTitle() {
+        return title;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setTitle(String title) {
+        this.title = title;
     }
 
-    public String getDescription() {
-        return description;
+    public String getBody() {
+        return body;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
+    public void setBody(String body) {
+        this.body = body;
     }
 
     public Long getCourseId() {
