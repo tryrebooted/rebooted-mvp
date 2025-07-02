@@ -19,8 +19,9 @@ import java.util.Arrays;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    @Autowired
-    private JwtAuthenticationFilter jwtAuthenticationFilter;
+    //TEMP COMMENTED OUT (authentication/validation)
+    //@Autowired
+    //private JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -32,8 +33,9 @@ public class SecurityConfig {
             // Set session management to stateless (JWT-based)
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             
+            //TEMP COMMENTED OUT (authentication/validation)
             // Add JWT authentication filter
-            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+            //.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
             
             // Configure authorization
             .authorizeHttpRequests(authz -> authz
@@ -42,7 +44,8 @@ public class SecurityConfig {
                 
                 // API endpoints require authentication
                 //.requestMatchers("/api/**").authenticated()
-                .requestMatchers("/api/**").permitAll()
+                //TEMP COMMENTED OUT (authentication/validation)
+                //.requestMatchers("/api/**").permitAll()
                 
                 // Allow all other requests (for now)
                 .anyRequest().permitAll()

@@ -19,7 +19,8 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
-@Component
+//TEMP COMMENTED OUT (authentication/validation)
+//@Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     
     private static final Logger logger = LoggerFactory.getLogger(JwtAuthenticationFilter.class);

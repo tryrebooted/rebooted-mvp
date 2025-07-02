@@ -19,7 +19,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * Service responsible for synchronizing Supabase users with the backend user system.
  * Automatically creates backend users when new Supabase users authenticate.
  */
-@Service
+//TEMP COMMENTED OUT (authentication/validation)
+ //@Service
 public class UserSyncService {
     
     private static final Logger logger = LoggerFactory.getLogger(UserSyncService.class);

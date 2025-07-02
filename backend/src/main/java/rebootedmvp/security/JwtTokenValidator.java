@@ -12,7 +12,8 @@ import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
-@Component
+//TEMP COMMENTED OUT (authentication/validation)
+//@Component
 public class JwtTokenValidator {
     
     private static final Logger logger = LoggerFactory.getLogger(JwtTokenValidator.class);
