@@ -11,6 +11,7 @@ import rebootedmvp.Course;
 import rebootedmvp.Module;
 import rebootedmvp.UnknownUserException;
 import rebootedmvp.User;
+import rebootedmvp.domain.impl.UserImpl;
 
 /**
  * JPA Entity implementation of Course interface for database persistence.
@@ -37,7 +38,7 @@ public class CourseEntityImpl implements Course {
     private LocalDateTime updatedAt;
 
     // One-to-Many relationship with ModuleEntityImpl
-    @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<ModuleEntityImpl> modules = new ArrayList<>();
 
     // Many-to-Many relationship for teachers
@@ -79,7 +80,7 @@ public class CourseEntityImpl implements Course {
 
     // Course interface methods
     @Override
-    public Module create(Long id, String title, String body) {
+    public Module create(Long ignored, String title, String body) {
         return new ModuleEntityImpl(title, body, this);
     }
 
@@ -103,7 +104,6 @@ public class CourseEntityImpl implements Course {
         return userSet;
     }
 
-    
     public List<Module> get_modules() {
         return new ArrayList<>(modules);
     }
@@ -122,86 +122,52 @@ public class CourseEntityImpl implements Course {
 
     @Override
     public boolean addStudent(User user) {
-        if (user instanceof UserImpl) {
-            UserImpl userImpl = (UserImpl) user;
-            if (userImpl.getUserType() == User.UserType.EmployeeUser) {
-                // Find corresponding UserProfileImpl
-                UserProfileImpl userProfile = findUserProfile(userImpl);
-                if (userProfile != null) {
-                    return students.add(userProfile);
-                }
-            }
+        UserProfileImpl userProfile = (UserProfileImpl) user;
+        if (userProfile.getUserType().equals("EmployeeUser")) {
+            return students.add(userProfile);
         }
         return false;
     }
 
     @Override
     public boolean removeStudent(User user) {
-        if (user instanceof UserImpl) {
-            UserImpl userImpl = (UserImpl) user;
-            UserProfileImpl userProfile = findUserProfile(userImpl);
-            if (userProfile != null) {
-                return students.remove(userProfile);
-            }
-        }
-        return false;
+        UserProfileImpl userProfile = (UserProfileImpl) user;
+        return students.remove(userProfile);
     }
 
     @Override
     public boolean isStudent(User user) {
-        if (user instanceof UserImpl) {
-            UserImpl userImpl = (UserImpl) user;
-            UserProfileImpl userProfile = findUserProfile(userImpl);
-            return userProfile != null && students.contains(userProfile);
-        }
-        return false;
+        UserProfileImpl userProfile = (UserProfileImpl) user;
+        return students.contains(userProfile);
     }
 
     @Override
     public boolean addTeacher(User user) {
-        if (user instanceof UserImpl) {
-            UserImpl userImpl = (UserImpl) user;
-            if (userImpl.getUserType() == User.UserType.LDUser) {
-                // Find corresponding UserProfileImpl
-                UserProfileImpl userProfile = findUserProfile(userImpl);
-                if (userProfile != null) {
-                    return teachers.add(userProfile);
-                }
-            }
+        UserProfileImpl userProfile = (UserProfileImpl) user;
+        if (userProfile.getUserType().equals("LDUser")) {
+            return teachers.add(userProfile);
         }
         return false;
     }
 
     @Override
     public boolean removeTeacher(User user) {
-        if (user instanceof UserImpl) {
-            UserImpl userImpl = (UserImpl) user;
-            UserProfileImpl userProfile = findUserProfile(userImpl);
-            if (userProfile != null) {
-                return teachers.remove(userProfile);
-            }
-        }
-        return false;
+        UserProfileImpl userProfile = (UserProfileImpl) user;
+        return teachers.remove(userProfile);
     }
 
     @Override
     public boolean isTeacher(User user) {
-        if (user instanceof UserImpl) {
-            UserImpl userImpl = (UserImpl) user;
-            UserProfileImpl userProfile = findUserProfile(userImpl);
-            return userProfile != null && teachers.contains(userProfile);
-        }
-        return false;
+        UserProfileImpl userProfile = (UserProfileImpl) user;
+        return teachers.contains(userProfile);
     }
 
     // InfoContainer interface methods
     @Override
     public void addSub(Long id, Module newMod) {
-        if (newMod instanceof ModuleEntityImpl) {
-            ModuleEntityImpl moduleEntity = (ModuleEntityImpl) newMod;
-            moduleEntity.setCourse(this);
-            modules.add(moduleEntity);
-        }
+        ModuleEntityImpl moduleEntity = (ModuleEntityImpl) newMod;
+        moduleEntity.setCourse(this);
+        modules.add(moduleEntity);
     }
 
     @Override
@@ -286,13 +252,6 @@ public class CourseEntityImpl implements Course {
     }
 
     // Helper methods
-    private UserProfileImpl findUserProfile(UserImpl user) {
-        // TODO: In a real implementation, this would lookup the UserProfileImpl
-        // from the database based on the User's ID or other identifying information
-        // For now, return null - this will need to be implemented with proper service layer
-        return null;
-    }
-
     private User convertToUser(UserProfileImpl userProfile) {
         // Convert UserProfileImpl to UserImpl
         User.UserType userType = User.UserType.valueOf(userProfile.getUserType());
