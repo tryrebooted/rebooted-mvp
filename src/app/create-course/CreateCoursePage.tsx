@@ -104,7 +104,7 @@ export default function CreateCoursePage() {
       }
 
       // Add current user as teacher if not already added  
-      const currentUsername = user.email; // Use email as username for Supabase users
+      const currentUsername = user.email?.split('@')[0]; // Extract username from email
       const currentUserIsTeacher = teachers.some(t => t.username === currentUsername);
       if (!currentUserIsTeacher && currentUsername) {
         await apiService.addTeachersToCourse(courseId, [currentUsername]);
