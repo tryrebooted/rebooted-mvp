@@ -153,8 +153,8 @@ export interface LegacyCourse {
   created_at?: string;
   updated_at?: string;
   // Additional fields from Supabase that may exist
-  user_id?: string;
-  is_public?: boolean;
+  userId?: string;
+  isPublic?: boolean;
 }
 
 export interface LegacyModule {
@@ -170,11 +170,11 @@ export interface LegacyModule {
 export interface LegacyUser {
   id: string;
   username: string;
-  full_name?: string;
-  user_type?: string;
+  fullName?: string;
+  userType?: string;
   email?: string;
-  created_at?: string;
-  updated_at?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 // ================ Utility Types ================
@@ -237,7 +237,7 @@ export interface DataMappingConfig {
   idMappings: {
     [supabaseId: string]: number;
   };
-  
+
   // Field name mappings
   fieldMappings: {
     supabaseField: string;
@@ -247,9 +247,9 @@ export interface DataMappingConfig {
 
 // ================ Error Handling Types ================
 
-export type ApiErrorType = 
+export type ApiErrorType =
   | 'NETWORK_ERROR'
-  | 'VALIDATION_ERROR' 
+  | 'VALIDATION_ERROR'
   | 'NOT_FOUND'
   | 'UNAUTHORIZED'
   | 'SERVER_ERROR'
@@ -265,7 +265,7 @@ export interface DetailedApiError {
 
 // ================ Union Types for Type Safety ================
 
-export type BackendRequestTypes = 
+export type BackendRequestTypes =
   | NewCourseRequest
   | UpdateCourseRequest
   | NewModuleRequest
@@ -277,7 +277,7 @@ export type BackendRequestTypes =
   | AddUsersRequest
   | SubmitAnswerRequest;
 
-export type BackendResponseTypes = 
+export type BackendResponseTypes =
   | Course
   | Module
   | Content
@@ -286,7 +286,7 @@ export type BackendResponseTypes =
   | UserCourse
   | CourseUser;
 
-export type LegacySupabaseTypes = 
+export type LegacySupabaseTypes =
   | LegacyCourse
   | LegacyModule
   | LegacyUser; 

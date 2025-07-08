@@ -1,20 +1,21 @@
 package rebootedmvp.dto;
 
+import rebootedmvp.User;
+
 public class CourseUserDTO {
     private Long courseId;
     private String userId;
-    private String role;
+    private User.UserType role;
     private String username;
-    private String fullName;
 
-    public CourseUserDTO() {}
+    public CourseUserDTO() {
+    }
 
-    public CourseUserDTO(Long courseId, String userId, String role, String username, String fullName) {
+    public CourseUserDTO(Long courseId, String userId, User.UserType role, String username) {
         this.courseId = courseId;
         this.userId = userId;
         this.role = role;
         this.username = username;
-        this.fullName = fullName;
     }
 
     public Long getCourseId() {
@@ -33,11 +34,11 @@ public class CourseUserDTO {
         this.userId = userId;
     }
 
-    public String getRole() {
+    public User.UserType getRole() {
         return role;
     }
 
-    public void setRole(String role) {
+    public void setRole(User.UserType role) {
         this.role = role;
     }
 
@@ -49,11 +50,4 @@ public class CourseUserDTO {
         this.username = username;
     }
 
-    public String getFullName() {
-        return fullName;
-    }
-
-    public void setFullName(String fullName) {
-        this.fullName = fullName;
-    }
 }

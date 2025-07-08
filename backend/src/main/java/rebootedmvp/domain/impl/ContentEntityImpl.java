@@ -1,60 +1,34 @@
 package rebootedmvp.domain.impl;
 
-import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.DiscriminatorColumn;
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Inheritance;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import rebootedmvp.Content;
+import rebootedmvp.Module;
+import jakarta.persistence.InheritanceType;
+import jakarta.persistence.DiscriminatorType;
 
 /**
  * JPA Entity implementation of Content interface for database persistence.
- * This replaces the in-memory TextContentImpl and QuestionContentImpl with proper database mapping.
+ * This replaces the in-memory TextContentImpl and QuestionContentImpl with
+ * proper database mapping.
  */
 @Entity
-@Table(name = "content")
-@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
-@DiscriminatorColumn(name = "content_type", discriminatorType = DiscriminatorType.STRING)
-public class ContentEntityImpl implements Content {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @Column(nullable = false)
-    private String title;
-
-    @Column(columnDefinition = "TEXT")
-    private String body;
-
-    @Column(name = "is_complete")
-    private boolean isComplete = false;
-
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
-
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-
-    // Many-to-One relationship back to Module
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "module_id", nullable = false)
-    private ModuleEntityImpl module;
-
-    // Fields specific to Question content type
-    @Column(name = "question_text", columnDefinition = "TEXT")
-    private String questionText;
-
-    @ElementCollection
-    @CollectionTable(name = "content_options", joinColumns = @JoinColumn(name = "content_id"))
-    @Column(name = "option_text")
-    private List<String> options = new ArrayList<>();
-
-    @Column(name = "correct_answer")
-    private String correctAnswer;
-
-    @Column(name = "user_answer")
-    private String userAnswer;
+// @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
+// @DiscriminatorColumn(name = "content_type", discriminatorType =
+// DiscriminatorType.STRING)
+@DiscriminatorValue("CONTENT")
+public class ContentEntityImpl extends Content {
 
     @PrePersist
     protected void onCreate() {
@@ -68,23 +42,34 @@ public class ContentEntityImpl implements Content {
     }
 
     // Constructors
-    public ContentEntityImpl() {}
+    public ContentEntityImpl() {
+    }
 
-    public ContentEntityImpl(String title, String body, ModuleEntityImpl module, ContentType contentType) {
+    public ContentEntityImpl(String title, String body, Module module, ContentType contentType) {
         this.title = title;
         this.body = body;
-        this.module = module;
+        this.moduleId = module.getId();
         this.isComplete = false;
     }
 
     // Constructor for Question content
-    public ContentEntityImpl(String title, String questionText, List<String> options, 
-                           String correctAnswer, ModuleEntityImpl module) {
+    public ContentEntityImpl(String title, String questionText, List<String> options,
+            String correctAnswer, Module module) {
         this.title = title;
         this.questionText = questionText;
-        this.options = new ArrayList<>(options);
+        this.optionText = new ArrayList<>(options);
         this.correctAnswer = correctAnswer;
-        this.module = module;
+        this.moduleId = module.getId();
+        this.isComplete = false;
+    }
+
+    public ContentEntityImpl(Content c) {
+        this.body = c.getBody();
+        this.id = c.getId();
+        this.title = c.getTitle();
+        this.optionText = c.getOptions();
+        this.correctAnswer = c.getCorrectAnswer();
+        this.moduleId = c.getModuleId();
         this.isComplete = false;
     }
 
@@ -95,11 +80,6 @@ public class ContentEntityImpl implements Content {
             return userAnswer != null && userAnswer.equals(correctAnswer);
         }
         return isComplete;
-    }
-
-    @Override
-    public Content getContent() {
-        return this;
     }
 
     @Override
@@ -143,16 +123,14 @@ public class ContentEntityImpl implements Content {
         this.isComplete = complete;
     }
 
-    public ModuleEntityImpl getModule() {
-        return module;
-    }
-
-    public void setModule(ModuleEntityImpl module) {
-        this.module = module;
-    }
-
+    @Override
     public Long getModuleId() {
-        return module != null ? module.getId() : null;
+        return moduleId;
+    }
+
+    @Override
+    public void setModuleId(Long moduleId) {
+        this.moduleId = moduleId;
     }
 
     public String getQuestionText() {
@@ -164,11 +142,11 @@ public class ContentEntityImpl implements Content {
     }
 
     public List<String> getOptions() {
-        return new ArrayList<>(options);
+        return new ArrayList<>(optionText);
     }
 
     public void setOptions(List<String> options) {
-        this.options = new ArrayList<>(options != null ? options : new ArrayList<>());
+        this.optionText = new ArrayList<>(options != null ? options : new ArrayList<>());
     }
 
     public String getCorrectAnswer() {
@@ -201,58 +179,5 @@ public class ContentEntityImpl implements Content {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
-    }
-}
-
-/**
- * Text Content Entity - represents text-based content
- */
-@Entity
-@DiscriminatorValue("TEXT")
-class TextContentEntityImpl extends ContentEntityImpl {
-    
-    public TextContentEntityImpl() {
-        super();
-    }
-    
-    public TextContentEntityImpl(String title, String body, ModuleEntityImpl module) {
-        super(title, body, module, ContentType.Text);
-    }
-    
-    @Override
-    public ContentType getType() {
-        return ContentType.Text;
-    }
-}
-
-/**
- * Question Content Entity - represents question-based content
- */
-@Entity
-@DiscriminatorValue("QUESTION")
-class QuestionContentEntityImpl extends ContentEntityImpl {
-    
-    public QuestionContentEntityImpl() {
-        super();
-    }
-    
-    public QuestionContentEntityImpl(String title, String questionText, List<String> options, 
-                                   String correctAnswer, ModuleEntityImpl module) {
-        super(title, questionText, options, correctAnswer, module);
-    }
-    
-    @Override
-    public ContentType getType() {
-        return ContentType.Question;
-    }
-    
-    @Override
-    public String getBody() {
-        return getQuestionText();
-    }
-    
-    @Override
-    public void setBody(String body) {
-        setQuestionText(body);
     }
 }

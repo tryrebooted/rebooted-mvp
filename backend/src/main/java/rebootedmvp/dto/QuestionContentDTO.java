@@ -8,17 +8,15 @@ public class QuestionContentDTO extends ContentDTO {
 
     private List<String> options;
     private String correctAnswer;
-    private String userAnswer;
 
     // public QuestionContentDTO() {
-    //     super()
+    // super()
     // }
     public QuestionContentDTO(Long id, String title, String body, boolean isComplete, Long moduleId,
-            List<String> options, String correctAnswer, String userAnswer) {
+            List<String> options, String correctAnswer) {
         super(id, Content.ContentType.Question, title, body, isComplete, moduleId);
         this.options = options;
         this.correctAnswer = correctAnswer;
-        this.userAnswer = userAnswer;
     }
 
     public List<String> getOptions() {
@@ -37,11 +35,4 @@ public class QuestionContentDTO extends ContentDTO {
         this.correctAnswer = correctAnswer;
     }
 
-    public String getUserAnswer() {
-        return userAnswer;
-    }
-
-    public void setUserAnswer(String userAnswer) {
-        this.userAnswer = userAnswer;
-    }
 }

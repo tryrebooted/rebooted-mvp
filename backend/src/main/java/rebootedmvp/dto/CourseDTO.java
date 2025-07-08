@@ -15,8 +15,8 @@ public class CourseDTO {
         id = c.getId();
         title = c.getTitle();
         body = c.getBody();
-        teacherCount = c.get_teachers().size();
-        studentCount = c.get_students().size();
+        teacherCount = c.getTeachers().size();
+        studentCount = c.getStudents().size();
         moduleCount = c.getAll().size();
     }
 

@@ -19,13 +19,11 @@ public interface InfoContainer<R> extends HasID {
     public List<R> getAll();
 
     /**
-     * Adds a lower element with id 'id' to the higher collection.
+     * Adds a lower element to the higher collection.
      * 
-     * @param id           - The id of the element to add. Must be the same as
-     *                     smallerGroup.getId()
      * @param smallerGroup - the lower element to add
      */
-    public void addSub(Long id, R smallerGroup);
+    public void addSub(R smallerGroup);
 
     /**
      * Removes the element with id 'removeId'

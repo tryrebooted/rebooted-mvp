@@ -11,53 +11,20 @@ import rebootedmvp.Course;
 import rebootedmvp.Module;
 import rebootedmvp.UnknownUserException;
 import rebootedmvp.User;
-import rebootedmvp.domain.impl.UserImpl;
 
 /**
  * JPA Entity implementation of Course interface for database persistence.
  * This replaces the in-memory CourseImpl with proper database mapping.
  */
 @Entity
-@Table(name = "courses")
-public class CourseEntityImpl implements Course {
+// @Table(name = "courses")
+@DiscriminatorValue("COURSE")
+public class CourseEntityImpl extends Course {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @Column(nullable = false)
-    private String title;
-
-    @Column(columnDefinition = "TEXT")
-    private String body;
-
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
-
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-
-    // One-to-Many relationship with ModuleEntityImpl
-    @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    private List<ModuleEntityImpl> modules = new ArrayList<>();
-
-    // Many-to-Many relationship for teachers
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(
-        name = "course_teachers",
-        joinColumns = @JoinColumn(name = "course_id"),
-        inverseJoinColumns = @JoinColumn(name = "user_id")
-    )
-    private Set<UserProfileImpl> teachers = new HashSet<>();
-
-    // Many-to-Many relationship for students
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(
-        name = "course_students",
-        joinColumns = @JoinColumn(name = "course_id"),
-        inverseJoinColumns = @JoinColumn(name = "user_id")
-    )
-    private Set<UserProfileImpl> students = new HashSet<>();
+    public CourseEntityImpl(String title, String body) {
+        this.title = title;
+        this.body = body;
+    }
 
     @PrePersist
     protected void onCreate() {
@@ -70,14 +37,6 @@ public class CourseEntityImpl implements Course {
         updatedAt = LocalDateTime.now();
     }
 
-    // Constructors
-    public CourseEntityImpl() {}
-
-    public CourseEntityImpl(String title, String body) {
-        this.title = title;
-        this.body = body;
-    }
-
     // Course interface methods
     @Override
     public Module create(Long ignored, String title, String body) {
@@ -85,27 +44,31 @@ public class CourseEntityImpl implements Course {
     }
 
     @Override
-    public Set<User> get_teachers() {
+    public Set<User> getTeachers() {
         // Convert UserProfileImpl to User interface
         Set<User> userSet = new HashSet<>();
-        for (UserProfileImpl userProfile : teachers) {
-            userSet.add(convertToUser(userProfile));
+        for (User userProfile : teachers) {
+            userSet.add(userProfile);
         }
         return userSet;
     }
 
     @Override
-    public Set<User> get_students() {
+    public Set<User> getStudents() {
         // Convert UserProfileImpl to User interface
         Set<User> userSet = new HashSet<>();
-        for (UserProfileImpl userProfile : students) {
-            userSet.add(convertToUser(userProfile));
+        for (User userProfile : students) {
+            userSet.add(userProfile);
         }
         return userSet;
     }
 
-    public List<Module> get_modules() {
-        return new ArrayList<>(modules);
+    public void setTeachers(Set<User> teachers) {
+        this.teachers = teachers;
+    }
+
+    public void setStudents(Set<User> students) {
+        this.students = students;
     }
 
     @Override
@@ -115,69 +78,73 @@ public class CourseEntityImpl implements Course {
     }
 
     @Override
-    public ArrayList<ArrayList<Boolean>> getCompletion(User user) throws UnknownUserException {
+    public List<List<Boolean>> getCompletion(User user) throws UnknownUserException {
         // TODO: Implement completion tracking
         throw new UnsupportedOperationException("Completion tracking not yet implemented");
     }
 
     @Override
     public boolean addStudent(User user) {
-        UserProfileImpl userProfile = (UserProfileImpl) user;
-        if (userProfile.getUserType().equals("EmployeeUser")) {
-            return students.add(userProfile);
+        if (user != null) {
+            return students.add(user);
         }
         return false;
     }
 
     @Override
     public boolean removeStudent(User user) {
-        UserProfileImpl userProfile = (UserProfileImpl) user;
-        return students.remove(userProfile);
-    }
-
-    @Override
-    public boolean isStudent(User user) {
-        UserProfileImpl userProfile = (UserProfileImpl) user;
-        return students.contains(userProfile);
-    }
-
-    @Override
-    public boolean addTeacher(User user) {
-        UserProfileImpl userProfile = (UserProfileImpl) user;
-        if (userProfile.getUserType().equals("LDUser")) {
-            return teachers.add(userProfile);
+        if (user != null) {
+            return students.remove(user);
         }
         return false;
     }
 
     @Override
+    public boolean isStudent(User user) {
+        return user != null && students.contains(user);
+
+    }
+
+    @Override
+    public boolean addTeacher(User user) {
+        if (user != null) {
+            return teachers.add(user);
+        }
+
+        return false;
+    }
+
+    @Override
     public boolean removeTeacher(User user) {
-        UserProfileImpl userProfile = (UserProfileImpl) user;
-        return teachers.remove(userProfile);
+        if (user != null) {
+            return teachers.remove(user);
+        }
+        return false;
+
     }
 
     @Override
     public boolean isTeacher(User user) {
-        UserProfileImpl userProfile = (UserProfileImpl) user;
-        return teachers.contains(userProfile);
+        return user != null && teachers.contains(user);
+
     }
 
     // InfoContainer interface methods
     @Override
-    public void addSub(Long id, Module newMod) {
-        ModuleEntityImpl moduleEntity = (ModuleEntityImpl) newMod;
-        moduleEntity.setCourse(this);
-        modules.add(moduleEntity);
+    public void addSub(Module newMod) {
+        modules.put(newMod.getId(), newMod);
+        newMod.setCourseId(this.id);
     }
 
     @Override
     public List<Module> getAll() {
-        return get_modules();
+        return new ArrayList<>(modules.values());
     }
 
     @Override
     public boolean removeSub(Long moduleId) {
-        return modules.removeIf(module -> module.getId().equals(moduleId));
+        Module removed = modules.remove(moduleId);
+        return removed != null;
     }
 
     // HasID interface methods
@@ -211,30 +178,6 @@ public class CourseEntityImpl implements Course {
         this.id = id;
     }
 
-    public List<ModuleEntityImpl> getModuleEntities() {
-        return modules;
-    }
-
-    public void setModuleEntities(List<ModuleEntityImpl> modules) {
-        this.modules = modules;
-    }
-
-    public Set<UserProfileImpl> getTeacherProfiles() {
-        return teachers;
-    }
-
-    public void setTeacherProfiles(Set<UserProfileImpl> teachers) {
-        this.teachers = teachers;
-    }
-
-    public Set<UserProfileImpl> getStudentProfiles() {
-        return students;
-    }
-
-    public void setStudentProfiles(Set<UserProfileImpl> students) {
-        this.students = students;
-    }
-
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
@@ -251,11 +194,4 @@ public class CourseEntityImpl implements Course {
         this.updatedAt = updatedAt;
     }
 
-    // Helper methods
-    private User convertToUser(UserProfileImpl userProfile) {
-        // Convert UserProfileImpl to UserImpl
-        User.UserType userType = User.UserType.valueOf(userProfile.getUserType());
-        UserImpl user = new UserImpl(userProfile.getUsername(), userType);
-        return user;
-    }
 }

@@ -1,13 +1,13 @@
 package rebootedmvp.repository;
 
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import rebootedmvp.domain.impl.ModuleEntityImpl;
-
-import java.util.List;
 
 /**
  * Repository interface for Module entities.
@@ -19,12 +19,12 @@ public interface ModuleRepository extends JpaRepository<ModuleEntityImpl, Long> 
     /**
      * Find modules by course ID
      */
-    List<ModuleEntityImpl> findByCourse_Id(Long courseId);
+    List<ModuleEntityImpl> findByCourseId(Long courseId);
 
     /**
      * Find modules by course ID ordered by creation date
      */
-    List<ModuleEntityImpl> findByCourse_IdOrderByCreatedAtAsc(Long courseId);
+    List<ModuleEntityImpl> findByCourseIdOrderByCreatedAtAsc(Long courseId);
 
     /**
      * Find modules by title (case-insensitive)
@@ -34,18 +34,18 @@ public interface ModuleRepository extends JpaRepository<ModuleEntityImpl, Long> 
     /**
      * Find modules by course ID and title (case-insensitive)
      */
-    List<ModuleEntityImpl> findByCourse_IdAndTitleContainingIgnoreCase(Long courseId, String title);
+    List<ModuleEntityImpl> findByCourseIdAndTitleContainingIgnoreCase(Long courseId, String title);
 
     /**
      * Count modules in a specific course
      */
-    @Query("SELECT COUNT(m) FROM ModuleEntityImpl m WHERE m.course.id = :courseId")
+    @Query("SELECT COUNT(m) FROM ModuleEntityImpl m WHERE m.courseId = :courseId")
     Long countModulesInCourse(@Param("courseId") Long courseId);
 
     /**
      * Get total weight of all modules in a course
      */
-    @Query("SELECT SUM(m.weight) FROM ModuleEntityImpl m WHERE m.course.id = :courseId")
+    @Query("SELECT SUM(m.weight) FROM ModuleEntityImpl m WHERE m.courseId = :courseId")
     Double getTotalWeightInCourse(@Param("courseId") Long courseId);
 
     /**
@@ -57,6 +57,6 @@ public interface ModuleRepository extends JpaRepository<ModuleEntityImpl, Long> 
     /**
      * Check if a module belongs to a specific course
      */
-    @Query("SELECT COUNT(m) > 0 FROM ModuleEntityImpl m WHERE m.id = :moduleId AND m.course.id = :courseId")
+    @Query("SELECT COUNT(m) > 0 FROM ModuleEntityImpl m WHERE m.id = :moduleId AND m.courseId = :courseId")
     boolean existsByIdAndCourseId(@Param("moduleId") Long moduleId, @Param("courseId") Long courseId);
 }

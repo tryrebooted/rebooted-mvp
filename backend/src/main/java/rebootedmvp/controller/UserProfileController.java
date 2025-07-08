@@ -57,8 +57,7 @@ public class UserProfileController {
         Map<String, Boolean> result = usernames.stream()
                 .collect(java.util.stream.Collectors.toMap(
                         username -> username,
-                        validUsernames::contains
-                ));
+                        validUsernames::contains));
 
         return ResponseEntity.ok(result);
     }

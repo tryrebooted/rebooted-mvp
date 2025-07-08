@@ -56,7 +56,8 @@ public class CourseController {
     }
 
     @PutMapping("/update/{id}")
-    public void updateModule(@PathVariable Long courseId, @PathVariable Long id, @RequestBody NewModuleDTO updateModuleDTO) {
+    public void updateModule(@PathVariable Long courseId, @PathVariable Long id,
+            @RequestBody NewModuleDTO updateModuleDTO) {
         courseService.update(courseId, id, updateModuleDTO);
     }
 

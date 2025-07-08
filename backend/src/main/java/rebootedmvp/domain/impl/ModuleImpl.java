@@ -7,7 +7,7 @@ import java.util.Map;
 import rebootedmvp.Content;
 import rebootedmvp.Module;
 
-public class ModuleImpl implements Module {
+public class ModuleImpl extends Module {
 
     private Long id;
     private String title;
@@ -17,7 +17,7 @@ public class ModuleImpl implements Module {
     private double weight;
 
     // public ModuleImpl() {
-    //     this.content = new ArrayList<>();
+    // this.content = new ArrayList<>();
     // }
     public ModuleImpl(Long id, String title, String body) {
         this.id = id;
@@ -48,27 +48,19 @@ public class ModuleImpl implements Module {
     }
 
     @Override
-    public List<Content> getContent() {
-        return new ArrayList<>(content.values());
-    }
-
-    @Override
-    public void addSub(Long id, Content contentItem) {
+    public void addSub(Content contentItem) {
         if (contentItem != null) {
-            this.content.put(id, contentItem);
+            this.content.put(contentItem.getId(), contentItem);
         }
     }
 
     // public void setContent(List<Content> content) {
-    //     this.content = new ArrayList<>(content != null ? content : new ArrayList<>());
+    // this.content = new ArrayList<>(content != null ? content : new
+    // ArrayList<>());
     // }
     @Override
     public Long getId() {
         return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
     }
 
     @Override
@@ -76,6 +68,7 @@ public class ModuleImpl implements Module {
         return courseId;
     }
 
+    @Override
     public void setCourseId(Long courseId) {
         this.courseId = courseId;
     }

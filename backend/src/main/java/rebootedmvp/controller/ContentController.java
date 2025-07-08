@@ -1,7 +1,6 @@
 package rebootedmvp.controller;
 
 import java.util.List;
-import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -59,7 +58,8 @@ public class ContentController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ContentDTO> updateContent(@PathVariable Long id, @RequestBody NewContentDTO updateContentDTO) {
+    public ResponseEntity<ContentDTO> updateContent(@PathVariable Long id,
+            @RequestBody NewContentDTO updateContentDTO) {
         try {
             ContentDTO updatedContent = contentService.update(id, updateContentDTO);
             if (updatedContent == null) {
@@ -90,19 +90,20 @@ public class ContentController {
         return ResponseEntity.ok(content);
     }
 
-    @PostMapping("/{id}/answer")
-    public ResponseEntity<ContentDTO> submitAnswer(@PathVariable Long id, @RequestBody Map<String, String> request) {
-        String answer = request.get("answer");
-        if (answer == null) {
-            return ResponseEntity.badRequest().build();
-        }
+    // @PostMapping("/{id}/answer")
+    // public ResponseEntity<ContentDTO> submitAnswer(@PathVariable Long id,
+    // @RequestBody Map<String, String> request) {
+    // String answer = request.get("answer");
+    // if (answer == null) {
+    // return ResponseEntity.badRequest().build();
+    // }
 
-        ContentDTO content = contentService.submitAnswer(id, answer);
-        if (content == null) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(content);
-    }
+    // // ContentDTO content = contentService.submitAnswer(id, answer);
+    // if (content == null) {
+    // return ResponseEntity.notFound().build();
+    // }
+    // return ResponseEntity.ok(content);
+    // }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<String> handleException(Exception e) {

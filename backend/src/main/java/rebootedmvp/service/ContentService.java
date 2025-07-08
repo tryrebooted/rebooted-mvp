@@ -10,8 +10,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import rebootedmvp.Content;
+import rebootedmvp.ContentMapper;
+import rebootedmvp.Module;
+import rebootedmvp.ModuleMapper;
 import rebootedmvp.domain.impl.ContentEntityImpl;
-import rebootedmvp.domain.impl.ModuleEntityImpl;
+import rebootedmvp.domain.impl.QuestionContentImpl;
 import rebootedmvp.dto.ContentDTO;
 import rebootedmvp.dto.NewContentDTO;
 import rebootedmvp.dto.QuestionContentDTO;
@@ -41,7 +44,7 @@ public class ContentService {
     @Transactional(readOnly = true)
     public List<ContentDTO> findByModuleId(Long moduleId) {
         logger.debug("ContentService.findByModuleId({}) called", moduleId);
-        return contentRepository.findByModule_IdOrderByCreatedAtAsc(moduleId).stream()
+        return contentRepository.findByModuleIdOrderByCreatedAtAsc(moduleId).stream()
                 .map(this::convertToDTO)
                 .toList();
     }
@@ -49,13 +52,13 @@ public class ContentService {
     @Transactional(readOnly = true)
     public ContentDTO findById(Long id) {
         logger.debug("ContentService.findById({}) called", id);
-        Optional<ContentEntityImpl> content = contentRepository.findById(id);
+        Optional<Content> content = contentRepository.findById(id).map(ContentMapper::toDomain);
         return content.map(this::convertToDTO).orElse(null);
     }
 
     public ContentDTO create(NewContentDTO newContentDTO) {
         logger.debug("ContentService.create() called with type: {}", newContentDTO.getType());
-        
+
         if (newContentDTO.getTitle() == null || newContentDTO.getTitle().trim().isEmpty()) {
             throw new IllegalArgumentException("Content title cannot be empty");
         }
@@ -67,21 +70,20 @@ public class ContentService {
         }
 
         // Find the module
-        Optional<ModuleEntityImpl> moduleOpt = moduleRepository.findById(newContentDTO.getModuleId());
+        Optional<Module> moduleOpt = moduleRepository.findById(newContentDTO.getModuleId()).map(ModuleMapper::toDomain);
         if (moduleOpt.isEmpty()) {
             throw new IllegalArgumentException("Module not found with ID: " + newContentDTO.getModuleId());
         }
-        ModuleEntityImpl module = moduleOpt.get();
+        Module module = moduleOpt.get();
 
-        ContentEntityImpl content;
+        Content content;
 
         if ("Text".equals(newContentDTO.getType())) {
             content = new ContentEntityImpl(
-                newContentDTO.getTitle().trim(),
-                newContentDTO.getBody(),
-                module,
-                Content.ContentType.Text
-            );
+                    newContentDTO.getTitle().trim(),
+                    newContentDTO.getBody(),
+                    module,
+                    Content.ContentType.Text);
         } else if ("Question".equals(newContentDTO.getType())) {
             List<String> options = newContentDTO.getOptions() != null ? newContentDTO.getOptions() : List.of();
             String correctAnswer = newContentDTO.getCorrectAnswer() != null ? newContentDTO.getCorrectAnswer() : "";
@@ -98,30 +100,29 @@ public class ContentService {
             }
 
             content = new ContentEntityImpl(
-                newContentDTO.getTitle().trim(),
-                newContentDTO.getBody(),
-                options,
-                correctAnswer,
-                module
-            );
+                    newContentDTO.getTitle().trim(),
+                    newContentDTO.getBody(),
+                    options,
+                    correctAnswer,
+                    module);
         } else {
             throw new IllegalArgumentException("Unsupported content type: " + newContentDTO.getType());
         }
 
-        ContentEntityImpl savedContent = contentRepository.save(content);
+        Content savedContent = contentRepository.save(ContentMapper.toEntity(content));
         logger.info("Created content with ID: {} in module: {}", savedContent.getId(), module.getId());
         return convertToDTO(savedContent);
     }
 
     public ContentDTO update(Long id, NewContentDTO updateContentDTO) {
         logger.debug("ContentService.update({}) called", id);
-        
-        Optional<ContentEntityImpl> contentOpt = contentRepository.findById(id);
+
+        Optional<Content> contentOpt = contentRepository.findById(id).map(ContentMapper::toDomain);
         if (contentOpt.isEmpty()) {
             return null;
         }
 
-        ContentEntityImpl content = contentOpt.get();
+        Content content = contentOpt.get();
 
         if (updateContentDTO.getTitle() != null && !updateContentDTO.getTitle().trim().isEmpty()) {
             content.setTitle(updateContentDTO.getTitle().trim());
@@ -129,29 +130,30 @@ public class ContentService {
         if (updateContentDTO.getBody() != null) {
             if (content.getType() == Content.ContentType.Text) {
                 content.setBody(updateContentDTO.getBody());
-            } else if (content.getType() == Content.ContentType.Question) {
-                content.setQuestionText(updateContentDTO.getBody());
             }
         }
 
         // Update question-specific fields if this is a question
         if (content.getType() == Content.ContentType.Question) {
+            ((QuestionContentImpl) content).setQuestionText(updateContentDTO.getBody());
             if (updateContentDTO.getOptions() != null) {
-                content.setOptions(updateContentDTO.getOptions());
+                ((QuestionContentImpl) content).setOptions(updateContentDTO.getOptions());
             }
             if (updateContentDTO.getCorrectAnswer() != null) {
-                content.setCorrectAnswer(updateContentDTO.getCorrectAnswer());
+                ((QuestionContentImpl) content).setCorrectAnswer(updateContentDTO.getCorrectAnswer());
             }
         }
 
-        ContentEntityImpl savedContent = contentRepository.save(content);
+        Content savedContent = contentRepository.save(ContentMapper.toEntity(content));
         logger.info("Updated content with ID: {}", savedContent.getId());
-        return convertToDTO(savedContent);
+        return
+
+        convertToDTO(savedContent);
     }
 
     public boolean delete(Long id) {
         logger.debug("ContentService.delete({}) called", id);
-        
+
         if (contentRepository.existsById(id)) {
             contentRepository.deleteById(id);
             logger.info("Deleted content with ID: {}", id);
@@ -162,61 +164,38 @@ public class ContentService {
 
     public ContentDTO markComplete(Long id) {
         logger.debug("ContentService.markComplete({}) called", id);
-        
-        Optional<ContentEntityImpl> contentOpt = contentRepository.findById(id);
+
+        Optional<Content> contentOpt = contentRepository.findById(id).map(ContentMapper::toDomain);
         if (contentOpt.isEmpty()) {
             return null;
         }
 
-        ContentEntityImpl content = contentOpt.get();
+        Content content = contentOpt.get();
         content.setComplete(true);
-        
-        ContentEntityImpl savedContent = contentRepository.save(content);
+
+        Content savedContent = contentRepository.save(ContentMapper.toEntity(content));
         logger.info("Marked content {} as complete", savedContent.getId());
         return convertToDTO(savedContent);
     }
 
-    public ContentDTO submitAnswer(Long id, String answer) {
-        logger.debug("ContentService.submitAnswer({}, {}) called", id, answer);
-        
-        Optional<ContentEntityImpl> contentOpt = contentRepository.findById(id);
-        if (contentOpt.isEmpty()) {
-            return null;
-        }
-
-        ContentEntityImpl content = contentOpt.get();
-        if (content.getType() == Content.ContentType.Question) {
-            content.setUserAnswer(answer);
-            
-            ContentEntityImpl savedContent = contentRepository.save(content);
-            logger.info("Submitted answer for content {}: {}", savedContent.getId(), answer);
-            return convertToDTO(savedContent);
-        }
-
-        return convertToDTO(content);
-    }
-
-    private ContentDTO convertToDTO(ContentEntityImpl content) {
+    private ContentDTO convertToDTO(Content content) {
         if (content.getType() == Content.ContentType.Text) {
             return new ContentDTO(
-                content.getId(),
-                Content.ContentType.Text,
-                content.getTitle(),
-                content.getBody(),
-                content.isComplete(),
-                content.getModuleId()
-            );
+                    content.getId(),
+                    Content.ContentType.Text,
+                    content.getTitle(),
+                    content.getBody(),
+                    content.isComplete(),
+                    content.getModuleId());
         } else if (content.getType() == Content.ContentType.Question) {
             return new QuestionContentDTO(
-                content.getId(),
-                content.getTitle(),
-                content.getQuestionText(),
-                content.isComplete(),
-                content.getModuleId(),
-                content.getOptions(),
-                content.getCorrectAnswer(),
-                content.getUserAnswer()
-            );
+                    content.getId(),
+                    content.getTitle(),
+                    ((QuestionContentImpl) content).getQuestionText(),
+                    content.isComplete(),
+                    content.getModuleId(),
+                    ((QuestionContentImpl) content).getOptions(),
+                    ((QuestionContentImpl) content).getCorrectAnswer());
         }
         return null;
     }

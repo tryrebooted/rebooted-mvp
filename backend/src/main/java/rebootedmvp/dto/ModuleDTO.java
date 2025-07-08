@@ -16,7 +16,7 @@ public class ModuleDTO {
         this.title = mod.getTitle();
         this.body = mod.getBody();
         this.courseId = mod.getCourseId();
-        this.contentCount = mod.getContent().size();
+        this.contentCount = mod.getAll().size();
     }
 
     public ModuleDTO(Long id, String title, String body, Long courseId, int contentCount) {

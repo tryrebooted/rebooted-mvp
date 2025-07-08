@@ -3,17 +3,18 @@ package rebootedmvp.domain.impl;
 import java.util.ArrayList;
 import java.util.List;
 
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
 import rebootedmvp.Content;
 
-public class QuestionContentImpl implements Content {
+@Entity
+@DiscriminatorValue("QUESTION")
+public class QuestionContentImpl extends Content {
 
-    private Long id;
-    private String title;
     private String questionText;
     private List<String> options;
     private String correctAnswer;
-    private String userAnswer;
-    private Long moduleId;
+    private boolean complete;
 
     public QuestionContentImpl() {
         this.options = new ArrayList<>();
@@ -27,17 +28,12 @@ public class QuestionContentImpl implements Content {
         this.options = new ArrayList<>(options);
         this.correctAnswer = correctAnswer;
         this.moduleId = moduleId;
-        this.userAnswer = null;
+        complete = false;
     }
 
     @Override
     public boolean isComplete() {
-        return userAnswer != null && userAnswer.equals(correctAnswer);
-    }
-
-    @Override
-    public Content getContent() {
-        return this;
+        return complete;
     }
 
     @Override
@@ -83,18 +79,12 @@ public class QuestionContentImpl implements Content {
         this.correctAnswer = correctAnswer;
     }
 
-    public String getUserAnswer() {
-        return userAnswer;
-    }
-
-    public void setUserAnswer(String userAnswer) {
-        this.userAnswer = userAnswer;
-    }
-
+    @Override
     public Long getModuleId() {
         return moduleId;
     }
 
+    @Override
     public void setModuleId(Long moduleId) {
         this.moduleId = moduleId;
     }
@@ -112,5 +102,10 @@ public class QuestionContentImpl implements Content {
     @Override
     public void setBody(String newBody) {
         throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public void setComplete(boolean complete) {
+        throw new UnsupportedOperationException("Unimplemented method 'setComplete'");
     }
 }

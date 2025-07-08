@@ -89,7 +89,7 @@ public abstract class ServiceType<T extends InfoContainer<K>, R extends NewDTO, 
         T highLevel = datas.get(highId);
 
         K smallerGroup = highLevel.create(newId, newData.getTitle(), newData.getBody());
-        highLevel.addSub(newId, smallerGroup);
+        highLevel.addSub(smallerGroup);
 
         return newId;
     }

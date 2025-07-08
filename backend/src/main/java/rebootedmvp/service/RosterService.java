@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import rebootedmvp.Course;
+import rebootedmvp.CourseMapper;
 import rebootedmvp.domain.impl.CourseEntityImpl;
 import rebootedmvp.dto.NewCourseDTO;
 import rebootedmvp.dto.NewRosterDTO;
@@ -45,8 +46,9 @@ public class RosterService {
     public List<Course> findAll() {
         logger.debug("RosterService.findAll() called - returning all courses");
         return courseRepository.findAll().stream()
-                .map(this::convertToCourse)
+                .map(CourseMapper::toDomain)
                 .toList();
+
     }
 
     /**
@@ -66,12 +68,12 @@ public class RosterService {
     public Course getById(Long rosterId, Long courseId) {
         logger.debug("RosterService.getById({}, {}) called - getting specific course", rosterId, courseId);
 
-        Optional<CourseEntityImpl> courseOpt = courseRepository.findById(courseId);
+        Optional<Course> courseOpt = (courseRepository.findById(courseId)).map(CourseMapper::toDomain);
         if (courseOpt.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Course not found with id: " + courseId);
         }
 
-        return convertToCourse(courseOpt.get());
+        return courseOpt.get();
     }
 
     /**
@@ -99,12 +101,12 @@ public class RosterService {
     public void update(Long rosterId, Long courseId, NewCourseDTO updateDTO) {
         logger.debug("RosterService.update({}, {}, {}) called", rosterId, courseId, updateDTO.getTitle());
 
-        Optional<CourseEntityImpl> courseOpt = courseRepository.findById(courseId);
+        Optional<Course> courseOpt = courseRepository.findById(courseId).map(CourseMapper::toDomain);
         if (courseOpt.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Course not found with id: " + courseId);
         }
 
-        CourseEntityImpl course = courseOpt.get();
+        Course course = courseOpt.get();
 
         if (updateDTO.getTitle() != null && !updateDTO.getTitle().trim().isEmpty()) {
             course.setTitle(updateDTO.getTitle().trim());
@@ -113,7 +115,7 @@ public class RosterService {
             course.setBody(updateDTO.getBody());
         }
 
-        courseRepository.save(course);
+        courseRepository.save(CourseMapper.toEntity(course));
         logger.info("Updated course with ID: {}", courseId);
     }
 
@@ -131,9 +133,4 @@ public class RosterService {
         return false;
     }
 
-    private Course convertToCourse(CourseEntityImpl courseEntity) {
-        // Convert CourseEntityImpl to Course interface
-        // Note: This assumes CourseEntityImpl already implements Course interface
-        return courseEntity;
-    }
 }

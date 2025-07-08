@@ -19,37 +19,37 @@ import java.util.Arrays;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    //TEMP COMMENTED OUT (authentication/validation)
-    //@Autowired
-    //private JwtAuthenticationFilter jwtAuthenticationFilter;
+    // TEMP COMMENTED OUT (authentication/validation)
+    // @Autowired
+    // private JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            // Enable CORS and disable CSRF for API usage
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .csrf(csrf -> csrf.disable())
-            
-            // Set session management to stateless (JWT-based)
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            
-            //TEMP COMMENTED OUT (authentication/validation)
-            // Add JWT authentication filter
-            //.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-            
-            // Configure authorization
-            .authorizeHttpRequests(authz -> authz
-                // Public endpoints - no authentication required
-                .requestMatchers("/api/health", "/api/docs/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                
-                // API endpoints require authentication
-                //.requestMatchers("/api/**").authenticated()
-                //TEMP COMMENTED OUT (authentication/validation)
-                //.requestMatchers("/api/**").permitAll()
-                
-                // Allow all other requests (for now)
-                .anyRequest().permitAll()
-            );
+                // Enable CORS and disable CSRF for API usage
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .csrf(csrf -> csrf.disable())
+
+                // Set session management to stateless (JWT-based)
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
+                // TEMP COMMENTED OUT (authentication/validation)
+                // Add JWT authentication filter
+                // .addFilterBefore(jwtAuthenticationFilter,
+                // UsernamePasswordAuthenticationFilter.class)
+
+                // Configure authorization
+                .authorizeHttpRequests(authz -> authz
+                        // Public endpoints - no authentication required
+                        .requestMatchers("/api/health", "/api/docs/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
+
+                        // API endpoints require authentication
+                        // .requestMatchers("/api/**").authenticated()
+                        // TEMP COMMENTED OUT (authentication/validation)
+                        // .requestMatchers("/api/**").permitAll()
+
+                        // Allow all other requests (for now)
+                        .anyRequest().permitAll());
 
         return http.build();
     }
@@ -61,7 +61,7 @@ public class SecurityConfig {
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);
-        
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/api/**", configuration);
         return source;

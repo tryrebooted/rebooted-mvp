@@ -11,16 +11,21 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import rebootedmvp.Course;
+import rebootedmvp.CourseMapper;
+import rebootedmvp.InfoContainer;
 import rebootedmvp.Module;
-import rebootedmvp.domain.impl.CourseEntityImpl;
+import rebootedmvp.ModuleMapper;
 import rebootedmvp.domain.impl.ModuleEntityImpl;
+import rebootedmvp.dto.NewCourseDTO;
 import rebootedmvp.dto.NewModuleDTO;
 import rebootedmvp.repository.CourseRepository;
 import rebootedmvp.repository.ModuleRepository;
 
 @Service
 @Transactional
-public class CourseService {
+public class CourseService
+        extends ServiceType<InfoContainer<Module>, NewCourseDTO, Module, NewModuleDTO> {
 
     private static final Logger logger = LoggerFactory.getLogger(CourseService.class);
 
@@ -34,10 +39,12 @@ public class CourseService {
      * Returns a list of all modules in all courses
      */
     @Transactional(readOnly = true)
+    @Override
     public List<Module> findAll() {
         logger.debug("CourseService.findAll() called - returning all modules");
-        return moduleRepository.findAll().stream()
-                .map(this::convertToModule)
+        return moduleRepository.findAll()
+                .stream()
+                .map(ModuleMapper::toDomain)
                 .toList();
     }
 
@@ -45,6 +52,7 @@ public class CourseService {
      * Returns a list of all modules within the course with given ID
      */
     @Transactional(readOnly = true)
+    @Override
     public List<Module> getById(Long courseId) {
         logger.debug("CourseService.getById({}) called - getting modules for course", courseId);
 
@@ -52,8 +60,9 @@ public class CourseService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Course not found with id: " + courseId);
         }
 
-        return moduleRepository.findByCourse_IdOrderByCreatedAtAsc(courseId).stream()
-                .map(this::convertToModule)
+        return moduleRepository.findByCourseIdOrderByCreatedAtAsc(courseId)
+                .stream()
+                .map(ModuleMapper::toDomain)
                 .toList();
     }
 
@@ -61,6 +70,7 @@ public class CourseService {
      * Returns the specific module within the course
      */
     @Transactional(readOnly = true)
+    @Override
     public Module getById(Long courseId, Long moduleId) {
         logger.debug("CourseService.getById({}, {}) called - getting specific module", courseId, moduleId);
 
@@ -68,23 +78,24 @@ public class CourseService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Course not found with id: " + courseId);
         }
 
-        Optional<ModuleEntityImpl> moduleOpt = moduleRepository.findById(moduleId);
+        Optional<Module> moduleOpt = moduleRepository.findById(moduleId).map(ModuleMapper::toDomain);
         if (moduleOpt.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Module not found with id: " + moduleId);
         }
 
-        ModuleEntityImpl module = moduleOpt.get();
+        Module module = moduleOpt.get();
         if (!module.getCourseId().equals(courseId)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND,
                     "Module " + moduleId + " does not belong to course " + courseId);
         }
 
-        return convertToModule(module);
+        return module;
     }
 
     /**
      * Adds a new module to the specified course
      */
+    @Override
     public Long addNew(Long courseId, NewModuleDTO newModuleDTO) {
         logger.debug("CourseService.addNew({}, {}) called", courseId, newModuleDTO.getTitle());
 
@@ -92,19 +103,19 @@ public class CourseService {
             throw new IllegalArgumentException("The title must be supplied in the DTO");
         }
 
-        Optional<CourseEntityImpl> courseOpt = courseRepository.findById(courseId);
+        Optional<Course> courseOpt = courseRepository.findById(courseId).map(CourseMapper::toDomain);
         if (courseOpt.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Course not found with id: " + courseId);
         }
 
-        CourseEntityImpl course = courseOpt.get();
+        Course course = courseOpt.get();
 
-        ModuleEntityImpl module = new ModuleEntityImpl(
+        Module module = new ModuleEntityImpl(
                 newModuleDTO.getTitle().trim(),
                 newModuleDTO.getBody(),
                 course);
 
-        ModuleEntityImpl savedModule = moduleRepository.save(module);
+        Module savedModule = moduleRepository.save(ModuleMapper.toEntity(module));
         logger.info("Created module with ID: {} in course: {}", savedModule.getId(), courseId);
         return savedModule.getId();
     }
@@ -112,6 +123,7 @@ public class CourseService {
     /**
      * Updates a module within a course
      */
+    @Override
     public void update(Long courseId, Long moduleId, NewModuleDTO updateDTO) {
         logger.debug("CourseService.update({}, {}, {}) called", courseId, moduleId, updateDTO.getTitle());
 
@@ -119,12 +131,12 @@ public class CourseService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Course not found with id: " + courseId);
         }
 
-        Optional<ModuleEntityImpl> moduleOpt = moduleRepository.findById(moduleId);
+        Optional<Module> moduleOpt = moduleRepository.findById(moduleId).map(ModuleMapper::toDomain);
         if (moduleOpt.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Module not found with id: " + moduleId);
         }
 
-        ModuleEntityImpl module = moduleOpt.get();
+        Module module = moduleOpt.get();
         if (!module.getCourseId().equals(courseId)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND,
                     "Module " + moduleId + " does not belong to course " + courseId);
@@ -137,13 +149,14 @@ public class CourseService {
             module.setBody(updateDTO.getBody());
         }
 
-        moduleRepository.save(module);
+        moduleRepository.save(ModuleMapper.toEntity(module));
         logger.info("Updated module with ID: {} in course: {}", moduleId, courseId);
     }
 
     /**
      * Deletes a module from a course
      */
+    @Override
     public boolean delete(Long courseId, Long moduleId) {
         logger.debug("CourseService.delete({}, {}) called", courseId, moduleId);
 
@@ -151,12 +164,12 @@ public class CourseService {
             return false;
         }
 
-        Optional<ModuleEntityImpl> moduleOpt = moduleRepository.findById(moduleId);
+        Optional<Module> moduleOpt = moduleRepository.findById(moduleId).map(ModuleMapper::toDomain);
         if (moduleOpt.isEmpty()) {
             return false;
         }
 
-        ModuleEntityImpl module = moduleOpt.get();
+        Module module = moduleOpt.get();
         if (!module.getCourseId().equals(courseId)) {
             return false;
         }
@@ -164,11 +177,5 @@ public class CourseService {
         moduleRepository.deleteById(moduleId);
         logger.info("Deleted module with ID: {} from course: {}", moduleId, courseId);
         return true;
-    }
-
-    private Module convertToModule(ModuleEntityImpl moduleEntity) {
-        // Convert ModuleEntityImpl to Module interface
-        // Note: This assumes ModuleEntityImpl already implements Module interface
-        return moduleEntity;
     }
 }

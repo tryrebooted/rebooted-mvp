@@ -1,9 +1,12 @@
 package rebootedmvp.service;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,6 +15,10 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import rebootedmvp.User;
+import rebootedmvp.Course;
+import rebootedmvp.CourseMapper;
+import rebootedmvp.UserMapper;
 import rebootedmvp.domain.impl.CourseEntityImpl;
 import rebootedmvp.domain.impl.UserProfileImpl;
 import rebootedmvp.dto.CourseUserDTO;
@@ -41,7 +48,7 @@ public class CourseMembershipService {
 
     public boolean addUserToCourse(Long courseId, String userId, String role) {
         logger.debug("Adding user {} to course {} with role {}", userId, courseId, role);
-        
+
         // Find the user
         UserProfileDTO userDTO = userProfileService.findById(userId);
         if (userDTO == null) {
@@ -50,41 +57,36 @@ public class CourseMembershipService {
         }
 
         // Find the UserProfileImpl entity
-        Optional<UserProfileImpl> userOpt = userProfileRepository.findBySupabaseUserId(userDTO.getId());
+        Optional<User> userOpt = userProfileRepository.findBySupabaseUserId(userDTO.getId()).map(UserMapper::toDomain);
         if (userOpt.isEmpty()) {
             logger.warn("UserProfileImpl not found for ID: {}", userId);
             return false;
         }
-        UserProfileImpl user = userOpt.get();
+        User user = userOpt.get();
 
         // Find the course
-        Optional<CourseEntityImpl> courseOpt = courseRepository.findById(courseId);
+        Optional<Course> courseOpt = courseRepository.findById(courseId).map(CourseMapper::toDomain);
         if (courseOpt.isEmpty()) {
             logger.warn("Course not found with ID: {}", courseId);
             return false;
         }
-        CourseEntityImpl course = courseOpt.get();
+        Course course = courseOpt.get();
 
         // Add user to appropriate role
-        boolean success = false;
         if ("teacher".equals(role)) {
-            if (!course.getTeacherProfiles().contains(user)) {
-                course.getTeacherProfiles().add(user);
-                success = true;
-            }
-        } else if ("student".equals(role)) {
-            if (!course.getStudentProfiles().contains(user)) {
-                course.getStudentProfiles().add(user);
-                success = true;
-            }
-        }
 
-        if (success) {
-            courseRepository.save(course);
+            course.addTeacher(user);
+            courseRepository.save(CourseMapper.toEntity(course));
             logger.info("Successfully added user {} to course {} as {}", userId, courseId, role);
-        }
+            return true;
 
-        return success;
+        } else if ("student".equals(role)) {
+            course.addStudent(user);
+            courseRepository.save(CourseMapper.toEntity(course));
+            logger.info("Successfully added user {} to course {} as {}", userId, courseId, role);
+            return true;
+        }
+        return false;
     }
 
     public boolean removeUserFromCourse(Long courseId, String userId) {
@@ -98,58 +100,55 @@ public class CourseMembershipService {
         }
 
         // Find the UserProfileImpl entity
-        Optional<UserProfileImpl> userOpt = userProfileRepository.findBySupabaseUserId(userDTO.getId());
+        Optional<User> userOpt = userProfileRepository.findBySupabaseUserId(userDTO.getId()).map(UserMapper::toDomain);
         if (userOpt.isEmpty()) {
             logger.warn("UserProfileImpl not found for ID: {}", userId);
             return false;
         }
-        UserProfileImpl user = userOpt.get();
+        User user = userOpt.get();
 
         // Find the course
-        Optional<CourseEntityImpl> courseOpt = courseRepository.findById(courseId);
+        Optional<Course> courseOpt = courseRepository.findById(courseId).map(CourseMapper::toDomain);
         if (courseOpt.isEmpty()) {
             logger.warn("Course not found with ID: {}", courseId);
             return false;
         }
-        CourseEntityImpl course = courseOpt.get();
+        Course course = courseOpt.get();
 
         // Remove user from both roles
-        boolean removedAsTeacher = course.getTeacherProfiles().remove(user);
-        boolean removedAsStudent = course.getStudentProfiles().remove(user);
-        boolean success = removedAsTeacher || removedAsStudent;
+        boolean removedAsTeacher = course.removeTeacher(user);
+        boolean removedAsStudent = course.removeStudent(user);
 
-        if (success) {
-            courseRepository.save(course);
+        if (removedAsTeacher || removedAsStudent) {
+            courseRepository.save(CourseMapper.toEntity(course));
             logger.info("Successfully removed user {} from course {}", userId, courseId);
+            return true;
         }
+        return false;
 
-        return success;
     }
 
     @Transactional(readOnly = true)
     public List<CourseUserDTO> getCourseUsers(Long courseId) {
         logger.debug("Getting users for course {}", courseId);
 
-        Optional<CourseEntityImpl> courseOpt = courseRepository.findById(courseId);
+        Optional<Course> courseOpt = courseRepository.findById(courseId).map(CourseMapper::toDomain);
         if (courseOpt.isEmpty()) {
             logger.warn("Course not found with ID: {}", courseId);
             return List.of();
         }
 
-        CourseEntityImpl course = courseOpt.get();
-        List<CourseUserDTO> result = new ArrayList<>();
+        Course course = courseOpt.get();
+
+        List<CourseUserDTO> result = Stream.concat(
+                course.getStudents().stream(),
+                course.getTeachers().stream())
+                .collect(Collectors.toSet()).stream()
+                .map(elem -> new CourseUserDTO(courseId, elem.getSupabaseUserId(), elem.getUserType(),
+                        elem.getUsername()))
+                .toList();
 
         // Add teachers
-        for (UserProfileImpl teacher : course.getTeacherProfiles()) {
-            result.add(new CourseUserDTO(courseId, teacher.getSupabaseUserId(), "teacher",
-                    teacher.getUsername(), teacher.getFullName()));
-        }
-
-        // Add students
-        for (UserProfileImpl student : course.getStudentProfiles()) {
-            result.add(new CourseUserDTO(courseId, student.getSupabaseUserId(), "student",
-                    student.getUsername(), student.getFullName()));
-        }
 
         logger.debug("Found {} users for course {}", result.size(), courseId);
         return result;
@@ -159,70 +158,34 @@ public class CourseMembershipService {
     public List<UserCourseDTO> getUserCourses(String userId) {
         logger.info("===== CourseMembershipService.getUserCourses() START =====");
         logger.info("Input userId: '{}'", userId);
-        
-        try {
-            // Handle both username and UUID-based lookups
-            UserProfileImpl user = null;
-            
-            logger.debug("Step 1: Checking if userId is a username...");
-            UserProfileDTO userByUsername = null;
-            try {
-                userByUsername = userProfileService.findByUsername(userId);
-                logger.debug("findByUsername('{}') result: {}", userId, userByUsername);
-            } catch (Exception e) {
-                logger.error("Error calling userProfileService.findByUsername('{}'): {}", userId, e.getMessage(), e);
-                throw e;
-            }
-            
-            if (userByUsername != null) {
-                // Found by username, now find the entity
-                Optional<UserProfileImpl> userOpt = userProfileRepository.findBySupabaseUserId(userByUsername.getId());
-                if (userOpt.isPresent()) {
-                    user = userOpt.get();
-                    logger.info("User '{}' found as username, mapped to entity ID: '{}'", userId, user.getId());
-                }
-            } else {
-                // Try to find by ID directly
-                Optional<UserProfileImpl> userOpt = userProfileRepository.findBySupabaseUserId(userId);
-                if (userOpt.isPresent()) {
-                    user = userOpt.get();
-                    logger.info("User '{}' found by ID, entity ID: '{}'", userId, user.getId());
-                }
-            }
 
-            if (user == null) {
+        try {
+
+            Optional<User> userOpt = userProfileRepository.findBySupabaseUserId(userId).map(UserMapper::toDomain);
+
+            if (!userOpt.isPresent()) {
                 logger.warn("User not found: {}", userId);
                 return List.of();
             }
+            User user = userOpt.get();
+            logger.info("User '{}' found as username, mapped to entity ID: '{}'", userId,
+                    user.getSupabaseUserId());
+            logger.debug("Step 2: Finding courses for user entity ID: '{}'", user.getSupabaseUserId());
 
-            logger.debug("Step 2: Finding courses for user entity ID: '{}'", user.getId());
-            
             // Find courses where user is either teacher or student
-            List<CourseEntityImpl> courses = courseRepository.findCoursesByUserId(user.getId());
-            
-            List<UserCourseDTO> result = new ArrayList<>();
-            for (CourseEntityImpl course : courses) {
-                String role;
-                if (course.getTeacherProfiles().contains(user)) {
-                    role = "teacher";
-                } else if (course.getStudentProfiles().contains(user)) {
-                    role = "student";
-                } else {
-                    continue; // Skip if user not found in either role (shouldn't happen)
-                }
+            Stream<Course> courses = courseRepository.findCoursesByUserId(user.getSupabaseUserId())
+                    .stream()
+                    .map(CourseMapper::toDomain);
 
-                UserCourseDTO courseDTO = new UserCourseDTO(course.getId(), course.getTitle(), 
-                                               course.getBody(), role);
-                result.add(courseDTO);
-                logger.debug("Added course: {} with role: {}", course.getTitle(), role);
-            }
-            
+            List<UserCourseDTO> courseDTOs = courses.map(elem -> new UserCourseDTO(elem.getId(), elem.getTitle(),
+                    elem.getBody(), elem.isStudent(user) ? User.UserType.EmployeeUser : User.UserType.LDUser)).toList();
+
             logger.info("===== CourseMembershipService.getUserCourses() SUCCESS =====");
-            logger.info("Returning {} courses for user '{}'", result.size(), userId);
-            logger.debug("Final result: {}", result);
-            
-            return result;
-            
+            logger.info("Returning {} courses for user '{}'", courseDTOs.size(), userId);
+            logger.debug("Final result: {}", courseDTOs);
+
+            return courseDTOs;
+
         } catch (Exception e) {
             logger.error("===== CourseMembershipService.getUserCourses() ERROR =====");
             logger.error("Error processing getUserCourses for user '{}': {}", userId, e.getMessage(), e);
@@ -241,54 +204,55 @@ public class CourseMembershipService {
         }
 
         // Find the course
-        Optional<CourseEntityImpl> courseOpt = courseRepository.findById(courseId);
+        Optional<Course> courseOpt = courseRepository.findById(courseId).map(CourseMapper::toDomain);
         if (courseOpt.isEmpty()) {
             logger.warn("Course not found with ID: {}", courseId);
             return false;
         }
-        CourseEntityImpl course = courseOpt.get();
+        Course course = courseOpt.get();
 
-        // Find all UserProfileImpl entities
-        List<UserProfileImpl> users = new ArrayList<>();
+        // Find all User entities
+        List<User> users = new ArrayList<>();
         for (UserProfileDTO userDTO : userDTOs) {
-            Optional<UserProfileImpl> userOpt = userProfileRepository.findBySupabaseUserId(userDTO.getId());
+            Optional<User> userOpt = userProfileRepository.findBySupabaseUserId(userDTO.getId())
+                    .map(UserMapper::toDomain);
             if (userOpt.isEmpty()) {
-                logger.warn("UserProfileImpl not found for ID: {}", userDTO.getId());
+                logger.warn("User not found for ID: {}", userDTO.getId());
                 return false;
             }
             users.add(userOpt.get());
         }
 
         // Add users to appropriate role
-        if ("teacher".equals(role)) {
-            course.getTeacherProfiles().addAll(users);
-        } else if ("student".equals(role)) {
-            course.getStudentProfiles().addAll(users);
-        } else {
-            logger.warn("Invalid role: {}", role);
-            return false;
-        }
+        for (User user : users) {
+            if ("teacher".equals(role)) {
+                course.addTeacher(user);
+            } else if ("student".equals(role)) {
+                course.addStudent(user);
+            }
 
-        courseRepository.save(course);
-        logger.info("Successfully added {} users to course {} as {}", users.size(), courseId, role);
+            courseRepository.save(CourseMapper.toEntity(course));
+            logger.info("Successfully added {} users to course {} as {}", users.size(), courseId, role);
+        }
         return true;
+
     }
 
     @Transactional(readOnly = true)
     public int getTeacherCount(Long courseId) {
-        Optional<CourseEntityImpl> courseOpt = courseRepository.findById(courseId);
+        Optional<Course> courseOpt = courseRepository.findById(courseId).map(CourseMapper::toDomain);
         if (courseOpt.isEmpty()) {
             return 0;
         }
-        return courseOpt.get().getTeacherProfiles().size();
+        return courseOpt.get().getTeachers().size();
     }
 
     @Transactional(readOnly = true)
     public int getStudentCount(Long courseId) {
-        Optional<CourseEntityImpl> courseOpt = courseRepository.findById(courseId);
+        Optional<Course> courseOpt = courseRepository.findById(courseId).map(CourseMapper::toDomain);
         if (courseOpt.isEmpty()) {
             return 0;
         }
-        return courseOpt.get().getStudentProfiles().size();
+        return courseOpt.get().getStudents().size();
     }
 }

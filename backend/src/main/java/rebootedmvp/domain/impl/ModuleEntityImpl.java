@@ -1,11 +1,16 @@
 package rebootedmvp.domain.impl;
 
-import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Table;
 import rebootedmvp.Content;
+import rebootedmvp.Course;
 import rebootedmvp.Module;
 
 /**
@@ -13,36 +18,8 @@ import rebootedmvp.Module;
  * This replaces the in-memory ModuleImpl with proper database mapping.
  */
 @Entity
-@Table(name = "modules")
-public class ModuleEntityImpl implements Module {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @Column(nullable = false)
-    private String title;
-
-    @Column(columnDefinition = "TEXT")
-    private String body;
-
-    @Column(nullable = false)
-    private double weight = 1.0;
-
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
-
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-
-    // Many-to-One relationship back to Course
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "course_id", nullable = false)
-    private CourseEntityImpl course;
-
-    // One-to-Many relationship with ContentEntityImpl
-    @OneToMany(mappedBy = "module", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<ContentEntityImpl> contentItems = new ArrayList<>();
+@DiscriminatorValue("MODULE")
+public class ModuleEntityImpl extends Module {
 
     @PrePersist
     protected void onCreate() {
@@ -55,33 +32,41 @@ public class ModuleEntityImpl implements Module {
         updatedAt = LocalDateTime.now();
     }
 
-    // Constructors
-    public ModuleEntityImpl() {}
-
-    public ModuleEntityImpl(String title, String body) {
+    public ModuleEntityImpl(String title, String body, Long courseId) {
         this.title = title;
         this.body = body;
         this.weight = 1.0;
+        this.courseId = courseId;
     }
 
-    public ModuleEntityImpl(String title, String body, CourseEntityImpl course) {
+    public ModuleEntityImpl(String title, String body, Course course) {
         this.title = title;
         this.body = body;
-        this.course = course;
+        this.courseId = course.getId();
         this.weight = 1.0;
     }
 
-    public ModuleEntityImpl(String title, String body, CourseEntityImpl course, double weight) {
+    public ModuleEntityImpl(String title, String body, Course course, double weight) {
         this.title = title;
         this.body = body;
-        this.course = course;
+        this.courseId = course.getId();
         this.weight = weight;
+    }
+
+    public ModuleEntityImpl(Module m) {
+        this.id = m.getId();
+        this.title = m.getTitle();
+        this.body = m.getBody();
+        this.weight = m.getWeight();
+        this.courseId = m.getCourseId();
+        this.contentItems = m.getContents();
+
     }
 
     // Module interface methods
     @Override
     public Content create(Long id, String title, String body) {
-        return new ContentEntityImpl(title, body, this, Content.ContentType.Text);
+        return new ContentEntityImpl(title, body, (Module) this, Content.ContentType.Text);
     }
 
     @Override
@@ -90,33 +75,30 @@ public class ModuleEntityImpl implements Module {
     }
 
     @Override
-    public List<Content> getContent() {
-        return new ArrayList<>(contentItems);
+    public Long getCourseId() {
+        return courseId;
     }
 
     @Override
-    public Long getCourseId() {
-        return course != null ? course.getId() : null;
+    public void setCourseId(Long courseId) {
+        this.courseId = courseId;
     }
 
     // InfoContainer interface methods
     @Override
-    public void addSub(Long id, Content contentItem) {
-        if (contentItem instanceof ContentEntityImpl) {
-            ContentEntityImpl contentEntity = (ContentEntityImpl) contentItem;
-            contentEntity.setModule(this);
-            contentItems.add(contentEntity);
-        }
+    public void addSub(Content contentItem) {
+        contentItems.put(contentItem.getId(), contentItem);
     }
 
     @Override
     public List<Content> getAll() {
-        return getContent();
+        return new ArrayList<>(contentItems.values());
     }
 
     @Override
     public boolean removeSub(Long contentId) {
-        return contentItems.removeIf(content -> content.getId().equals(contentId));
+        Content removed = contentItems.remove(contentId);
+        return removed != null;
     }
 
     // HasID interface methods
@@ -154,22 +136,6 @@ public class ModuleEntityImpl implements Module {
         this.weight = weight;
     }
 
-    public CourseEntityImpl getCourse() {
-        return course;
-    }
-
-    public void setCourse(CourseEntityImpl course) {
-        this.course = course;
-    }
-
-    public List<ContentEntityImpl> getContentEntities() {
-        return contentItems;
-    }
-
-    public void setContentEntities(List<ContentEntityImpl> contentItems) {
-        this.contentItems = contentItems;
-    }
-
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
@@ -185,4 +151,5 @@ public class ModuleEntityImpl implements Module {
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
     }
+
 }

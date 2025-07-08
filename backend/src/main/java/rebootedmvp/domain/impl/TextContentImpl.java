@@ -1,14 +1,13 @@
 package rebootedmvp.domain.impl;
 
+import java.util.List;
+
+import jakarta.persistence.Entity;
 import rebootedmvp.Content;
 
-public class TextContentImpl implements Content {
-
-    private Long id;
-    private String title;
-    private String body;
-    private boolean isComplete;
-    private Long moduleId;
+@Entity
+@jakarta.persistence.DiscriminatorValue("TEXT")
+public class TextContentImpl extends Content {
 
     public TextContentImpl(Long id, String title, String body) {
         this.id = id;
@@ -28,11 +27,6 @@ public class TextContentImpl implements Content {
     @Override
     public boolean isComplete() {
         return isComplete;
-    }
-
-    @Override
-    public Content getContent() {
-        return this;
     }
 
     @Override
@@ -64,14 +58,17 @@ public class TextContentImpl implements Content {
         this.body = body;
     }
 
+    @Override
     public void setComplete(boolean complete) {
         isComplete = complete;
     }
 
+    @Override
     public Long getModuleId() {
         return moduleId;
     }
 
+    @Override
     public void setModuleId(Long moduleId) {
         this.moduleId = moduleId;
     }
@@ -79,5 +76,17 @@ public class TextContentImpl implements Content {
     @Override
     public ContentType getType() {
         return ContentType.Text;
+    }
+
+    @Override
+    public String getCorrectAnswer() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public List<String> getOptions() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getOptions'");
     }
 }

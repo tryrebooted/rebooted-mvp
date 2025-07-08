@@ -12,8 +12,12 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import rebootedmvp.Content;
+import rebootedmvp.ContentMapper;
+import rebootedmvp.Module;
+import rebootedmvp.ModuleMapper;
 import rebootedmvp.domain.impl.ContentEntityImpl;
-import rebootedmvp.domain.impl.ModuleEntityImpl;
+import rebootedmvp.domain.impl.QuestionContentImpl;
+import rebootedmvp.domain.impl.TextContentImpl;
 import rebootedmvp.dto.NewContentDTO;
 import rebootedmvp.repository.ContentRepository;
 import rebootedmvp.repository.ModuleRepository;
@@ -36,9 +40,7 @@ public class ModuleService {
     @Transactional(readOnly = true)
     public List<Content> findAll() {
         logger.debug("ModuleService.findAll() called - returning all content");
-        return contentRepository.findAll().stream()
-                .map(this::convertToContent)
-                .toList();
+        return contentRepository.findAll().stream().map(ContentMapper::toDomain).toList();
     }
 
     /**
@@ -52,8 +54,9 @@ public class ModuleService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Module not found with id: " + moduleId);
         }
 
-        return contentRepository.findByModule_IdOrderByCreatedAtAsc(moduleId).stream()
-                .map(this::convertToContent)
+        return contentRepository.findByModuleIdOrderByCreatedAtAsc(moduleId)
+                .stream()
+                .map(ContentMapper::toDomain)
                 .toList();
     }
 
@@ -68,18 +71,18 @@ public class ModuleService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Module not found with id: " + moduleId);
         }
 
-        Optional<ContentEntityImpl> contentOpt = contentRepository.findById(contentId);
+        Optional<Content> contentOpt = contentRepository.findById(contentId).map(ContentMapper::toDomain);
         if (contentOpt.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Content not found with id: " + contentId);
         }
 
-        ContentEntityImpl content = contentOpt.get();
+        Content content = contentOpt.get();
         if (!content.getModuleId().equals(moduleId)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND,
                     "Content " + contentId + " does not belong to module " + moduleId);
         }
 
-        return convertToContent(content);
+        return content;
     }
 
     /**
@@ -92,35 +95,36 @@ public class ModuleService {
             throw new IllegalArgumentException("The title must be supplied in the DTO");
         }
 
-        Optional<ModuleEntityImpl> moduleOpt = moduleRepository.findById(moduleId);
+        Optional<Module> moduleOpt = moduleRepository.findById(moduleId).map(ModuleMapper::toDomain);
         if (moduleOpt.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Module not found with id: " + moduleId);
         }
 
-        ModuleEntityImpl module = moduleOpt.get();
+        Module module = moduleOpt.get();
 
         // Set the module ID in the DTO for the content service
         newContentDTO.setModuleId(moduleId);
 
-        ContentEntityImpl content;
-        if ("Text".equals(newContentDTO.getType())) {
-            content = new ContentEntityImpl(
-                    newContentDTO.getTitle().trim(),
-                    newContentDTO.getBody(),
-                    module,
-                    Content.ContentType.Text);
-        } else if ("Question".equals(newContentDTO.getType())) {
-            content = new ContentEntityImpl(
-                    newContentDTO.getTitle().trim(),
-                    newContentDTO.getBody(),
-                    newContentDTO.getOptions(),
-                    newContentDTO.getCorrectAnswer(),
-                    module);
-        } else {
+        Content content;
+        if (null == newContentDTO.getType()) {
             throw new IllegalArgumentException("Unsupported content type: " + newContentDTO.getType());
-        }
+        } else
+            switch (newContentDTO.getType()) {
+                case "Text" -> content = new ContentEntityImpl(
+                        newContentDTO.getTitle().trim(),
+                        newContentDTO.getBody(),
+                        module,
+                        Content.ContentType.Text);
+                case "Question" -> content = new ContentEntityImpl(
+                        newContentDTO.getTitle().trim(),
+                        newContentDTO.getBody(),
+                        newContentDTO.getOptions(),
+                        newContentDTO.getCorrectAnswer(),
+                        module);
+                default -> throw new IllegalArgumentException("Unsupported content type: " + newContentDTO.getType());
+            }
 
-        ContentEntityImpl savedContent = contentRepository.save(content);
+        Content savedContent = contentRepository.save(ContentMapper.toEntity(content));
         logger.info("Created content with ID: {} in module: {}", savedContent.getId(), moduleId);
         return savedContent.getId();
     }
@@ -135,12 +139,12 @@ public class ModuleService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Module not found with id: " + moduleId);
         }
 
-        Optional<ContentEntityImpl> contentOpt = contentRepository.findById(contentId);
+        Optional<Content> contentOpt = contentRepository.findById(contentId).map(ContentMapper::toDomain);
         if (contentOpt.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Content not found with id: " + contentId);
         }
 
-        ContentEntityImpl content = contentOpt.get();
+        Content content = contentOpt.get();
         if (!content.getModuleId().equals(moduleId)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND,
                     "Content " + contentId + " does not belong to module " + moduleId);
@@ -149,25 +153,26 @@ public class ModuleService {
         if (updateDTO.getTitle() != null && !updateDTO.getTitle().trim().isEmpty()) {
             content.setTitle(updateDTO.getTitle().trim());
         }
-        if (updateDTO.getBody() != null) {
-            if (content.getType() == Content.ContentType.Text) {
-                content.setBody(updateDTO.getBody());
-            } else if (content.getType() == Content.ContentType.Question) {
-                content.setQuestionText(updateDTO.getBody());
-            }
-        }
 
-        // Update question-specific fields if this is a question
-        if (content.getType() == Content.ContentType.Question) {
-            if (updateDTO.getOptions() != null) {
-                content.setOptions(updateDTO.getOptions());
-            }
-            if (updateDTO.getCorrectAnswer() != null) {
-                content.setCorrectAnswer(updateDTO.getCorrectAnswer());
-            }
+        switch (content.getType()) {
+            case Text:
+                content = (TextContentImpl) content;
+                if (updateDTO.getBody() != null) {
+                    content.setBody(updateDTO.getBody());
+                }
+            case Question:
+                QuestionContentImpl questionContent = (QuestionContentImpl) content;
+                if (updateDTO.getBody() != null) {
+                    questionContent.setQuestionText(updateDTO.getBody());
+                }
+                if (updateDTO.getOptions() != null) {
+                    questionContent.setOptions(updateDTO.getOptions());
+                }
+                if (updateDTO.getCorrectAnswer() != null) {
+                    questionContent.setCorrectAnswer(updateDTO.getCorrectAnswer());
+                }
         }
-
-        contentRepository.save(content);
+        contentRepository.save(ContentMapper.toEntity(content));
         logger.info("Updated content with ID: {} in module: {}", contentId, moduleId);
     }
 
@@ -181,12 +186,12 @@ public class ModuleService {
             return false;
         }
 
-        Optional<ContentEntityImpl> contentOpt = contentRepository.findById(contentId);
+        Optional<Content> contentOpt = contentRepository.findById(contentId).map(ContentMapper::toDomain);
         if (contentOpt.isEmpty()) {
             return false;
         }
 
-        ContentEntityImpl content = contentOpt.get();
+        Content content = contentOpt.get();
         if (!content.getModuleId().equals(moduleId)) {
             return false;
         }
@@ -196,9 +201,4 @@ public class ModuleService {
         return true;
     }
 
-    private Content convertToContent(ContentEntityImpl contentEntity) {
-        // Convert ContentEntityImpl to Content interface
-        // Note: This assumes ContentEntityImpl already implements Content interface
-        return contentEntity;
-    }
 }
