@@ -1,0 +1,502 @@
+import React, { useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { BookOpen, Clock, Users, Target, X, Plus, Loader2 } from "lucide-react";
+
+interface CreateCourseDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onCourseCreated?: (course: CourseFormData) => void;
+}
+
+export interface CourseFormData {
+  title: string;
+  description: string;
+  category: string;
+  duration: string;
+  difficulty: string;
+  maxStudents: number;
+  tags: string[];
+  objectives: string[];
+  prerequisites: string;
+}
+
+const CreateCourseDialog: React.FC<CreateCourseDialogProps> = ({
+  open,
+  onOpenChange,
+  onCourseCreated,
+}) => {
+  const [formData, setFormData] = useState<CourseFormData>({
+    title: "",
+    description: "",
+    category: "",
+    duration: "",
+    difficulty: "",
+    maxStudents: 50,
+    tags: [],
+    objectives: [],
+    prerequisites: "",
+  });
+
+  const [newTag, setNewTag] = useState("");
+  const [newObjective, setNewObjective] = useState("");
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const categories = [
+    "Technology",
+    "Marketing",
+    "Leadership",
+    "Management",
+    "Analytics",
+    "Design",
+    "Sales",
+    "HR",
+    "Finance",
+    "Operations",
+  ];
+
+  const difficulties = ["Beginner", "Intermediate", "Advanced"];
+
+  const durations = [
+    "1 week",
+    "2 weeks",
+    "3 weeks",
+    "4 weeks",
+    "6 weeks",
+    "8 weeks",
+    "12 weeks",
+  ];
+
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {};
+
+    if (!formData.title.trim()) {
+      newErrors.title = "Course title is required";
+    }
+
+    if (!formData.description.trim()) {
+      newErrors.description = "Course description is required";
+    }
+
+    if (!formData.category) {
+      newErrors.category = "Please select a category";
+    }
+
+    if (!formData.duration) {
+      newErrors.duration = "Please select a duration";
+    }
+
+    if (!formData.difficulty) {
+      newErrors.difficulty = "Please select a difficulty level";
+    }
+
+    if (formData.maxStudents < 1 || formData.maxStudents > 500) {
+      newErrors.maxStudents = "Max students must be between 1 and 500";
+    }
+
+    if (formData.objectives.length === 0) {
+      newErrors.objectives = "Please add at least one learning objective";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!validateForm()) {
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      // Call the callback with the course data
+      onCourseCreated?.(formData);
+
+      // Reset form
+      setFormData({
+        title: "",
+        description: "",
+        category: "",
+        duration: "",
+        difficulty: "",
+        maxStudents: 50,
+        tags: [],
+        objectives: [],
+        prerequisites: "",
+      });
+
+      // Close dialog
+      onOpenChange(false);
+    } catch (error) {
+      setErrors({ submit: "Failed to create course. Please try again." });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const addTag = () => {
+    if (newTag.trim() && !formData.tags.includes(newTag.trim())) {
+      setFormData({
+        ...formData,
+        tags: [...formData.tags, newTag.trim()],
+      });
+      setNewTag("");
+    }
+  };
+
+  const removeTag = (tagToRemove: string) => {
+    setFormData({
+      ...formData,
+      tags: formData.tags.filter((tag) => tag !== tagToRemove),
+    });
+  };
+
+  const addObjective = () => {
+    if (
+      newObjective.trim() &&
+      !formData.objectives.includes(newObjective.trim())
+    ) {
+      setFormData({
+        ...formData,
+        objectives: [...formData.objectives, newObjective.trim()],
+      });
+      setNewObjective("");
+      if (errors.objectives) {
+        setErrors({ ...errors, objectives: "" });
+      }
+    }
+  };
+
+  const removeObjective = (objectiveToRemove: string) => {
+    setFormData({
+      ...formData,
+      objectives: formData.objectives.filter(
+        (obj) => obj !== objectiveToRemove,
+      ),
+    });
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <BookOpen className="h-5 w-5" />
+            Create New Course
+          </DialogTitle>
+          <DialogDescription>
+            Fill in the details below to create a new learning course for your
+            students.
+          </DialogDescription>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Basic Information */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium">Basic Information</h3>
+
+            <div className="space-y-2">
+              <Label htmlFor="title">Course Title *</Label>
+              <Input
+                id="title"
+                value={formData.title}
+                onChange={(e) =>
+                  setFormData({ ...formData, title: e.target.value })
+                }
+                placeholder="e.g., Advanced React Development"
+                className={errors.title ? "border-destructive" : ""}
+              />
+              {errors.title && (
+                <p className="text-sm text-destructive">{errors.title}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="description">Description *</Label>
+              <Textarea
+                id="description"
+                value={formData.description}
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
+                placeholder="Describe what students will learn in this course..."
+                className={`min-h-[100px] ${errors.description ? "border-destructive" : ""}`}
+              />
+              {errors.description && (
+                <p className="text-sm text-destructive">{errors.description}</p>
+              )}
+            </div>
+          </div>
+
+          {/* Course Details */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium">Course Details</h3>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Category *</Label>
+                <Select
+                  value={formData.category}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, category: value })
+                  }
+                >
+                  <SelectTrigger
+                    className={errors.category ? "border-destructive" : ""}
+                  >
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((category) => (
+                      <SelectItem key={category} value={category}>
+                        {category}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {errors.category && (
+                  <p className="text-sm text-destructive">{errors.category}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label>Duration *</Label>
+                <Select
+                  value={formData.duration}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, duration: value })
+                  }
+                >
+                  <SelectTrigger
+                    className={errors.duration ? "border-destructive" : ""}
+                  >
+                    <SelectValue placeholder="Select duration" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {durations.map((duration) => (
+                      <SelectItem key={duration} value={duration}>
+                        <div className="flex items-center gap-2">
+                          <Clock className="h-4 w-4" />
+                          {duration}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {errors.duration && (
+                  <p className="text-sm text-destructive">{errors.duration}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label>Difficulty Level *</Label>
+                <Select
+                  value={formData.difficulty}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, difficulty: value })
+                  }
+                >
+                  <SelectTrigger
+                    className={errors.difficulty ? "border-destructive" : ""}
+                  >
+                    <SelectValue placeholder="Select difficulty" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {difficulties.map((difficulty) => (
+                      <SelectItem key={difficulty} value={difficulty}>
+                        <div className="flex items-center gap-2">
+                          <Target className="h-4 w-4" />
+                          {difficulty}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {errors.difficulty && (
+                  <p className="text-sm text-destructive">
+                    {errors.difficulty}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="maxStudents">Max Students *</Label>
+                <Input
+                  id="maxStudents"
+                  type="number"
+                  min="1"
+                  max="500"
+                  value={formData.maxStudents}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      maxStudents: parseInt(e.target.value) || 0,
+                    })
+                  }
+                  className={errors.maxStudents ? "border-destructive" : ""}
+                />
+                {errors.maxStudents && (
+                  <p className="text-sm text-destructive">
+                    {errors.maxStudents}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Learning Objectives */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium">Learning Objectives *</h3>
+            <div className="space-y-2">
+              <div className="flex gap-2">
+                <Input
+                  value={newObjective}
+                  onChange={(e) => setNewObjective(e.target.value)}
+                  placeholder="Add a learning objective..."
+                  onKeyPress={(e) =>
+                    e.key === "Enter" && (e.preventDefault(), addObjective())
+                  }
+                />
+                <Button type="button" onClick={addObjective} size="sm">
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+              {errors.objectives && (
+                <p className="text-sm text-destructive">{errors.objectives}</p>
+              )}
+              <div className="flex flex-wrap gap-2">
+                {formData.objectives.map((objective) => (
+                  <Badge
+                    key={objective}
+                    variant="secondary"
+                    className="text-sm"
+                  >
+                    {objective}
+                    <button
+                      type="button"
+                      onClick={() => removeObjective(objective)}
+                      className="ml-2 hover:text-destructive"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Tags */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium">Tags (Optional)</h3>
+            <div className="space-y-2">
+              <div className="flex gap-2">
+                <Input
+                  value={newTag}
+                  onChange={(e) => setNewTag(e.target.value)}
+                  placeholder="Add a tag..."
+                  onKeyPress={(e) =>
+                    e.key === "Enter" && (e.preventDefault(), addTag())
+                  }
+                />
+                <Button
+                  type="button"
+                  onClick={addTag}
+                  size="sm"
+                  variant="outline"
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {formData.tags.map((tag) => (
+                  <Badge key={tag} variant="outline" className="text-sm">
+                    {tag}
+                    <button
+                      type="button"
+                      onClick={() => removeTag(tag)}
+                      className="ml-2 hover:text-destructive"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Prerequisites */}
+          <div className="space-y-2">
+            <Label htmlFor="prerequisites">Prerequisites (Optional)</Label>
+            <Textarea
+              id="prerequisites"
+              value={formData.prerequisites}
+              onChange={(e) =>
+                setFormData({ ...formData, prerequisites: e.target.value })
+              }
+              placeholder="List any prerequisites or recommended background knowledge..."
+              className="min-h-[80px]"
+            />
+          </div>
+
+          {errors.submit && (
+            <Alert variant="destructive">
+              <AlertDescription>{errors.submit}</AlertDescription>
+            </Alert>
+          )}
+        </form>
+
+        <DialogFooter>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={isSubmitting}
+          >
+            Cancel
+          </Button>
+          <Button onClick={handleSubmit} disabled={isSubmitting}>
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Creating...
+              </>
+            ) : (
+              <>
+                <BookOpen className="mr-2 h-4 w-4" />
+                Create Course
+              </>
+            )}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+export default CreateCourseDialog;

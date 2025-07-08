@@ -1,6 +1,7 @@
-'use client';
+'use client'
 
-import { useState} from 'react'
+import React, { useState } from "react";
+import Layout from "@/components/content/Layout";
 import CourseCard, { Course } from "@/components/content/CourseCard";
 import {
   Card,
@@ -19,7 +20,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import Navigation from "@/components/content/Navigation";
 import {
   BookOpen,
   Clock,
@@ -30,58 +30,58 @@ import {
   TrendingUp,
 } from "lucide-react";
 
-export default function StudentDashboard() {
+// Mock data for student courses
+const mockCourses: Course[] = [
+  {
+    id: "1",
+    title: "Digital Marketing Fundamentals",
+    description:
+      "Learn the basics of digital marketing including SEO, social media, and content strategy.",
+    duration: "4 weeks",
+    modules: 8,
+    progress: 75,
+    status: "in-progress",
+    dueDate: "2024-02-15",
+    category: "Marketing",
+  },
+  {
+    id: "2",
+    title: "Data Analytics for Business",
+    description:
+      "Master data analysis techniques and tools to make informed business decisions.",
+    duration: "6 weeks",
+    modules: 12,
+    progress: 100,
+    status: "completed",
+    category: "Analytics",
+  },
+  {
+    id: "3",
+    title: "Leadership Communication",
+    description:
+      "Develop effective communication skills for leadership roles and team management.",
+    duration: "3 weeks",
+    modules: 6,
+    progress: 0,
+    status: "not-started",
+    dueDate: "2024-03-01",
+    category: "Leadership",
+  },
+  {
+    id: "4",
+    title: "Project Management Essentials",
+    description:
+      "Learn project management methodologies and tools to deliver successful projects.",
+    duration: "5 weeks",
+    modules: 10,
+    progress: 30,
+    status: "in-progress",
+    dueDate: "2024-02-28",
+    category: "Management",
+  },
+];
 
-  const mockCourses: Course[] = [
-    {
-      id: "1",
-      title: "Digital Marketing Fundamentals",
-      description:
-        "Learn the basics of digital marketing including SEO, social media, and content strategy.",
-      duration: "4 weeks",
-      modules: 8,
-      progress: 75,
-      status: "in-progress",
-      dueDate: "2024-02-15",
-      category: "Marketing",
-    },
-    {
-      id: "2",
-      title: "Data Analytics for Business",
-      description:
-        "Master data analysis techniques and tools to make informed business decisions.",
-      duration: "6 weeks",
-      modules: 12,
-      progress: 100,
-      status: "completed",
-      category: "Analytics",
-    },
-    {
-      id: "3",
-      title: "Leadership Communication",
-      description:
-        "Develop effective communication skills for leadership roles and team management.",
-      duration: "3 weeks",
-      modules: 6,
-      progress: 0,
-      status: "not-started",
-      dueDate: "2024-03-01",
-      category: "Leadership",
-    },
-    {
-      id: "4",
-      title: "Project Management Essentials",
-      description:
-        "Learn project management methodologies and tools to deliver successful projects.",
-      duration: "5 weeks",
-      modules: 10,
-      progress: 30,
-      status: "in-progress",
-      dueDate: "2024-02-28",
-      category: "Management",
-    },
-  ];
-
+const StudentDashboard: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
@@ -113,7 +113,7 @@ export default function StudentDashboard() {
   );
 
   return (
-    <Navigation>
+    <Layout>
       <div className="space-y-6">
         {/* Header */}
         <div>
@@ -268,6 +268,8 @@ export default function StudentDashboard() {
           )}
         </div>
       </div>
-    </Navigation>
-  )
-}
+    </Layout>
+  );
+};
+
+export default StudentDashboard;
