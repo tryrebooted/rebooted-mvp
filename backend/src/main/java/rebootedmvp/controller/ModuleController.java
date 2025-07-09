@@ -23,7 +23,7 @@ public class ModuleController {
     private ModuleService moduleService;
 
     @GetMapping
-    public ResponseEntity<List<ContentDTO>> getAllContents(@PathVariable Long id) {
+    public ResponseEntity<List<ContentDTO>> getAllContents(@PathVariable Long moduleId) {
         List<Content> contents = moduleService.findAll();
         return ResponseEntity.ok(mapToDTO(contents));
     }
