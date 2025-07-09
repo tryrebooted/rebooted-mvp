@@ -2,12 +2,13 @@ package rebootedmvp.repository;
 
 import java.util.List;
 
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Repository;
 
-import rebootedmvp.Course;
 import rebootedmvp.domain.impl.CourseEntityImpl;
 
 /**
@@ -26,12 +27,14 @@ public interface CourseRepository extends JpaRepository<CourseEntityImpl, Long> 
          * Find courses where the user is a teacher
          */
         @Query("SELECT c FROM CourseEntityImpl c JOIN c.teachers t WHERE t.id = :userId")
+        @EntityGraph(attributePaths = { "teachers" })
         List<CourseEntityImpl> findCoursesByTeacherId(@Param("userId") Long userId);
 
         /**
          * Find courses where the user is a student
          */
         @Query("SELECT c FROM CourseEntityImpl c JOIN c.students s WHERE s.id = :userId")
+        @EntityGraph(attributePaths = { "students" })
         List<CourseEntityImpl> findCoursesByStudentId(@Param("userId") Long userId);
 
         /**
@@ -73,4 +76,8 @@ public interface CourseRepository extends JpaRepository<CourseEntityImpl, Long> 
          */
         @Query("SELECT COUNT(DISTINCT t) FROM CourseEntityImpl c JOIN c.teachers t")
         Long countTotalTeachers();
+
+        @NonNull
+        @EntityGraph(attributePaths = { "teachers", "students" })
+        List<CourseEntityImpl> findAll();
 }

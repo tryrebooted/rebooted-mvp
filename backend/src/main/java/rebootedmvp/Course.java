@@ -29,8 +29,9 @@ import rebootedmvp.domain.impl.ModuleEntityImpl;
 import rebootedmvp.domain.impl.UserProfileImpl;
 
 @Entity
-@Inheritance(strategy = InheritanceType.SINGLE_TABLE) // or JOINED, TABLE_PER_CLASS
-@DiscriminatorColumn(name = "course_type", discriminatorType = DiscriminatorType.STRING)
+@Inheritance(strategy = InheritanceType.JOINED) // or JOINED, TABLE_PER_CLASS
+// @DiscriminatorColumn(name = "course_type", discriminatorType =
+// DiscriminatorType.STRING)
 @Table(name = "courses")
 public abstract class Course implements InfoContainer<Module> {
 
@@ -63,12 +64,12 @@ public abstract class Course implements InfoContainer<Module> {
 
     // Many-to-Many relationship for teachers
     @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(name = "course_teachers", joinColumns = @JoinColumn(name = "course_id"), inverseJoinColumns = @JoinColumn(name = "user_id"))
+    @JoinTable(name = "course_teachers", joinColumns = @JoinColumn(name = "course_id"), inverseJoinColumns = @JoinColumn(name = "supabase_user_id"))
     protected Set<User> teachers = new HashSet<>();
 
     // Many-to-Many relationship for students
     @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(name = "course_students", joinColumns = @JoinColumn(name = "course_id"), inverseJoinColumns = @JoinColumn(name = "user_id"))
+    @JoinTable(name = "course_students", joinColumns = @JoinColumn(name = "course_id"), inverseJoinColumns = @JoinColumn(name = "supabase_user_id"))
     protected Set<User> students = new HashSet<>();
 
     /**

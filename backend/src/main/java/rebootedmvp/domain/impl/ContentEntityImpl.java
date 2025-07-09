@@ -27,7 +27,7 @@ import jakarta.persistence.DiscriminatorType;
 // @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 // @DiscriminatorColumn(name = "content_type", discriminatorType =
 // DiscriminatorType.STRING)
-@DiscriminatorValue("CONTENT")
+// @DiscriminatorValue("CONTENT")
 public class ContentEntityImpl extends Content {
 
     @PrePersist

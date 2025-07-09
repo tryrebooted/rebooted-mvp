@@ -20,6 +20,7 @@ public interface ContentRepository extends JpaRepository<ContentEntityImpl, Long
     /**
      * Find content by module ID
      */
+
     List<ContentEntityImpl> findByModuleId(Long moduleId);
 
     /**

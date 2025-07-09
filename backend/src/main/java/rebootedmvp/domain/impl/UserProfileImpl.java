@@ -13,8 +13,7 @@ import rebootedmvp.InaccessibleCourseException;
 import rebootedmvp.User;
 
 @Entity
-@DiscriminatorValue("USER")
-
+// @DiscriminatorValue("USER")
 public class UserProfileImpl extends User {
 
     @PrePersist
@@ -56,6 +55,12 @@ public class UserProfileImpl extends User {
         this.email = user.getEmail();
         this.supabaseUserId = user.getSupabaseUserId();
 
+    }
+
+    // ⚠️ Required by JPA — but not usable by normal code
+    @Deprecated
+    protected UserProfileImpl() {
+        // JPA only
     }
 
     @Override

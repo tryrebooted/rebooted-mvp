@@ -21,7 +21,7 @@ import rebootedmvp.dto.NewRosterDTO;
  * first check if it should have access
  */
 @Entity
-@DiscriminatorValue("ROSTER")
+// @DiscriminatorValue("ROSTER")
 public class RosterImpl extends Roster {
 
     public RosterImpl(NewRosterDTO newData) {
@@ -35,6 +35,12 @@ public class RosterImpl extends Roster {
         this.id = id;
         this.title = title;
         this.body = body;
+    }
+
+    // ⚠️ Required by JPA — but not usable by normal code
+    @Deprecated
+    protected RosterImpl() {
+        // JPA only
     }
 
     /**

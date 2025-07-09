@@ -18,7 +18,7 @@ import rebootedmvp.Module;
  * This replaces the in-memory ModuleImpl with proper database mapping.
  */
 @Entity
-@DiscriminatorValue("MODULE")
+// @DiscriminatorValue("MODULE")
 public class ModuleEntityImpl extends Module {
 
     @PrePersist
@@ -61,6 +61,12 @@ public class ModuleEntityImpl extends Module {
         this.courseId = m.getCourseId();
         this.contentItems = m.getContents();
 
+    }
+
+    // ⚠️ Required by JPA — but not usable by normal code
+    @Deprecated
+    protected ModuleEntityImpl() {
+        // JPA only
     }
 
     // Module interface methods

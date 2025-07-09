@@ -18,12 +18,18 @@ import rebootedmvp.User;
  */
 @Entity
 // @Table(name = "courses")
-@DiscriminatorValue("COURSE")
+// @DiscriminatorValue("COURSE")
 public class CourseEntityImpl extends Course {
 
     public CourseEntityImpl(String title, String body) {
         this.title = title;
         this.body = body;
+    }
+
+    // ⚠️ Required by JPA — but not usable by normal code
+    @Deprecated
+    protected CourseEntityImpl() {
+        // JPA only
     }
 
     @PrePersist

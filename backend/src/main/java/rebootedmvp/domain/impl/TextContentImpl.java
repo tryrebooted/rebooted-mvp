@@ -6,7 +6,7 @@ import jakarta.persistence.Entity;
 import rebootedmvp.Content;
 
 @Entity
-@jakarta.persistence.DiscriminatorValue("TEXT")
+// @jakarta.persistence.DiscriminatorValue("TEXT")
 public class TextContentImpl extends Content {
 
     public TextContentImpl(Long id, String title, String body) {
@@ -22,6 +22,12 @@ public class TextContentImpl extends Content {
         this.body = body;
         this.moduleId = moduleId;
         this.isComplete = false;
+    }
+
+    // ⚠️ Required by JPA — but not usable by normal code
+    @Deprecated
+    protected TextContentImpl() {
+        // JPA only
     }
 
     @Override

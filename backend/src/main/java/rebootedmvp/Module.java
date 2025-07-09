@@ -19,7 +19,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 @Entity
-@Inheritance(strategy = InheritanceType.SINGLE_TABLE) // or JOINED, TABLE_PER_CLASS
+@Inheritance(strategy = InheritanceType.JOINED) // or JOINED, TABLE_PER_CLASS
 @Table(name = "modules")
 public abstract class Module implements InfoContainer<Content> {
 

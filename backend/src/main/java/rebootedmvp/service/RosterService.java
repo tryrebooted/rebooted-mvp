@@ -14,6 +14,7 @@ import org.springframework.web.server.ResponseStatusException;
 import rebootedmvp.Course;
 import rebootedmvp.CourseMapper;
 import rebootedmvp.domain.impl.CourseEntityImpl;
+import rebootedmvp.dto.CourseDTO;
 import rebootedmvp.dto.NewCourseDTO;
 import rebootedmvp.dto.NewRosterDTO;
 import rebootedmvp.repository.CourseRepository;
@@ -43,11 +44,11 @@ public class RosterService {
      * rosters")
      */
     @Transactional(readOnly = true)
-    public List<Course> findAll() {
+    public List<CourseDTO> findAll() {
         logger.debug("RosterService.findAll() called - returning all courses");
-        return courseRepository.findAll().stream()
+        return mapToDTO(courseRepository.findAll().stream()
                 .map(CourseMapper::toDomain)
-                .toList();
+                .toList());
 
     }
 
@@ -56,7 +57,7 @@ public class RosterService {
      * directly)
      */
     @Transactional(readOnly = true)
-    public List<Course> getById(Long rosterId) {
+    public List<CourseDTO> getById(Long rosterId) {
         logger.debug("RosterService.getById({}) called - returning all courses (roster ID ignored)", rosterId);
         return findAll();
     }
@@ -65,7 +66,7 @@ public class RosterService {
      * Returns a specific course (roster ID is ignored, course ID is used directly)
      */
     @Transactional(readOnly = true)
-    public Course getById(Long rosterId, Long courseId) {
+    public CourseDTO getById(Long rosterId, Long courseId) {
         logger.debug("RosterService.getById({}, {}) called - getting specific course", rosterId, courseId);
 
         Optional<Course> courseOpt = (courseRepository.findById(courseId)).map(CourseMapper::toDomain);
@@ -73,7 +74,7 @@ public class RosterService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Course not found with id: " + courseId);
         }
 
-        return courseOpt.get();
+        return new CourseDTO(courseOpt.get());
     }
 
     /**
@@ -131,6 +132,11 @@ public class RosterService {
             return true;
         }
         return false;
+    }
+
+    private static List<CourseDTO> mapToDTO(List<Course> toMap) {
+        return toMap.stream().map(
+                elem -> new CourseDTO(elem)).toList();
     }
 
 }

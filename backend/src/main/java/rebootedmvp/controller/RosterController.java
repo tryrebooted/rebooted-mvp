@@ -15,8 +15,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import rebootedmvp.Course;
-import rebootedmvp.Roster;
 import rebootedmvp.domain.impl.RosterImpl;
 import rebootedmvp.dto.CourseDTO;
 import rebootedmvp.dto.NewCourseDTO;
@@ -38,9 +36,7 @@ public class RosterController {
 
     @GetMapping
     public ResponseEntity<List<CourseDTO>> getAllCourses() {
-        List<Course> courses = rosterService.findAll();
-
-        return ResponseEntity.ok(mapToDTO(courses));
+        return ResponseEntity.ok(rosterService.findAll());
     }
 
     @PostMapping("/add")
@@ -74,8 +70,4 @@ public class RosterController {
                 .body("An error occurred: " + e.getMessage());
     }
 
-    private static List<CourseDTO> mapToDTO(List<Course> toMap) {
-        return toMap.stream().map(
-                elem -> new CourseDTO(elem)).toList();
-    }
 }

@@ -17,7 +17,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Table;
 
 @Entity
-@Inheritance(strategy = InheritanceType.SINGLE_TABLE) // or JOINED, TABLE_PER_CLASS
+@Inheritance(strategy = InheritanceType.JOINED) // or JOINED, TABLE_PER_CLASS
 @Table(name = "contents")
 public abstract class Content implements HasID {
 

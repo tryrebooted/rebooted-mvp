@@ -6,6 +6,7 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -50,6 +51,7 @@ public class ContentService {
     }
 
     @Transactional(readOnly = true)
+    @EntityGraph(attributePaths = { "teachers" })
     public ContentDTO findById(Long id) {
         logger.debug("ContentService.findById({}) called", id);
         Optional<Content> content = contentRepository.findById(id).map(ContentMapper::toDomain);

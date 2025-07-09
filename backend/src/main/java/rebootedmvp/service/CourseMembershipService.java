@@ -248,6 +248,7 @@ public class CourseMembershipService {
     }
 
     @Transactional(readOnly = true)
+
     public int getStudentCount(Long courseId) {
         Optional<Course> courseOpt = courseRepository.findById(courseId).map(CourseMapper::toDomain);
         if (courseOpt.isEmpty()) {
