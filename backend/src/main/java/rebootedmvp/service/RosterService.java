@@ -53,13 +53,16 @@ public class RosterService {
     }
 
     /**
-     * Returns a list of all courses (roster ID is ignored since we manage courses
-     * directly)
+     * Returns the course with id given by 'courseId'
      */
     @Transactional(readOnly = true)
-    public List<CourseDTO> getById(Long rosterId) {
-        logger.debug("RosterService.getById({}) called - returning all courses (roster ID ignored)", rosterId);
-        return findAll();
+    public CourseDTO getById(Long courseId) {
+        logger.debug("RosterService.getById({}) called - returning course with called id (roster ID ignored)",
+                courseId);
+        Course c = courseRepository.findById(courseId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Course not found with id: " + courseId));
+        return new CourseDTO(c);
     }
 
     /**

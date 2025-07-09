@@ -29,20 +29,17 @@ public class CourseController {
 
     @GetMapping
     public ResponseEntity<List<ModuleDTO>> getAllModules(@PathVariable Long courseId) {
-        List<Module> mod = courseService.getById(courseId);
-
-        return ResponseEntity.ok(mapToDTO(mod));
+        return ResponseEntity.ok(courseService.getById(courseId));
     }
 
     @GetMapping("/module/{moduleId}")
     public ResponseEntity<ModuleDTO> getModuleById(@PathVariable Long courseId, @PathVariable Long moduleId) {
-        Module mod;
         try {
-            mod = courseService.getById(courseId, moduleId);
+            return ResponseEntity.ok(courseService.getById(courseId, moduleId));
         } catch (Exception e) {
             return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.ok(new ModuleDTO(mod));
+
     }
 
     @PostMapping("/add")
@@ -77,8 +74,4 @@ public class CourseController {
                 .body("An error occurred: " + e.getMessage());
     }
 
-    private static List<ModuleDTO> mapToDTO(List<Module> toMap) {
-        return toMap.stream().map(
-                elem -> new ModuleDTO(elem)).toList();
-    }
 }

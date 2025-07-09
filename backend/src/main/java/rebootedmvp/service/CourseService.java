@@ -17,6 +17,7 @@ import rebootedmvp.InfoContainer;
 import rebootedmvp.Module;
 import rebootedmvp.ModuleMapper;
 import rebootedmvp.domain.impl.ModuleEntityImpl;
+import rebootedmvp.dto.ModuleDTO;
 import rebootedmvp.dto.NewCourseDTO;
 import rebootedmvp.dto.NewModuleDTO;
 import rebootedmvp.repository.CourseRepository;
@@ -24,8 +25,7 @@ import rebootedmvp.repository.ModuleRepository;
 
 @Service
 @Transactional
-public class CourseService
-        extends ServiceType<InfoContainer<Module>, NewCourseDTO, Module, NewModuleDTO> {
+public class CourseService {
 
     private static final Logger logger = LoggerFactory.getLogger(CourseService.class);
 
@@ -39,39 +39,36 @@ public class CourseService
      * Returns a list of all modules in all courses
      */
     @Transactional(readOnly = true)
-    @Override
-    public List<Module> findAll() {
+    public List<ModuleDTO> findAll() {
         logger.debug("CourseService.findAll() called - returning all modules");
-        return moduleRepository.findAll()
+        return mapToDTO(moduleRepository.findAll()
                 .stream()
                 .map(ModuleMapper::toDomain)
-                .toList();
+                .toList());
     }
 
     /**
      * Returns a list of all modules within the course with given ID
      */
     @Transactional(readOnly = true)
-    @Override
-    public List<Module> getById(Long courseId) {
+    public List<ModuleDTO> getById(Long courseId) {
         logger.debug("CourseService.getById({}) called - getting modules for course", courseId);
 
         if (!courseRepository.existsById(courseId)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Course not found with id: " + courseId);
         }
 
-        return moduleRepository.findByCourseIdOrderByCreatedAtAsc(courseId)
+        return mapToDTO(moduleRepository.findByCourseIdOrderByCreatedAtAsc(courseId)
                 .stream()
                 .map(ModuleMapper::toDomain)
-                .toList();
+                .toList());
     }
 
     /**
      * Returns the specific module within the course
      */
     @Transactional(readOnly = true)
-    @Override
-    public Module getById(Long courseId, Long moduleId) {
+    public ModuleDTO getById(Long courseId, Long moduleId) {
         logger.debug("CourseService.getById({}, {}) called - getting specific module", courseId, moduleId);
 
         if (!courseRepository.existsById(courseId)) {
@@ -89,13 +86,12 @@ public class CourseService
                     "Module " + moduleId + " does not belong to course " + courseId);
         }
 
-        return module;
+        return new ModuleDTO(module);
     }
 
     /**
      * Adds a new module to the specified course
      */
-    @Override
     public Long addNew(Long courseId, NewModuleDTO newModuleDTO) {
         logger.debug("CourseService.addNew({}, {}) called", courseId, newModuleDTO.getTitle());
 
@@ -123,7 +119,6 @@ public class CourseService
     /**
      * Updates a module within a course
      */
-    @Override
     public void update(Long courseId, Long moduleId, NewModuleDTO updateDTO) {
         logger.debug("CourseService.update({}, {}, {}) called", courseId, moduleId, updateDTO.getTitle());
 
@@ -156,7 +151,6 @@ public class CourseService
     /**
      * Deletes a module from a course
      */
-    @Override
     public boolean delete(Long courseId, Long moduleId) {
         logger.debug("CourseService.delete({}, {}) called", courseId, moduleId);
 
@@ -177,5 +171,10 @@ public class CourseService
         moduleRepository.deleteById(moduleId);
         logger.info("Deleted module with ID: {} from course: {}", moduleId, courseId);
         return true;
+    }
+
+    private static List<ModuleDTO> mapToDTO(List<Module> toMap) {
+        return toMap.stream().map(
+                elem -> new ModuleDTO(elem)).toList();
     }
 }

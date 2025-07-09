@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import rebootedmvp.domain.impl.RosterImpl;
 import rebootedmvp.dto.CourseDTO;
+import rebootedmvp.dto.ModuleDTO;
 import rebootedmvp.dto.NewCourseDTO;
 import rebootedmvp.dto.NewRosterDTO;
 import rebootedmvp.service.RosterService;
@@ -37,6 +38,18 @@ public class RosterController {
     @GetMapping
     public ResponseEntity<List<CourseDTO>> getAllCourses() {
         return ResponseEntity.ok(rosterService.findAll());
+    }
+
+    @GetMapping("/{courseId}")
+    public ResponseEntity<CourseDTO> getCourseById(@PathVariable Long courseId) {
+
+        try {
+            CourseDTO course = rosterService.getById(courseId);
+            return ResponseEntity.ok(course);
+        } catch (Exception e) {
+            return ResponseEntity.notFound().build();
+        }
+
     }
 
     @PostMapping("/add")
