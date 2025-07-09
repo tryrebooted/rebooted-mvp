@@ -6,6 +6,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 export interface MockUser {
   id: string;
   email: string;
+  role: 'teacher' | 'student';
   user_metadata?: {
     full_name?: string;
     preferred_username?: string;
@@ -31,6 +32,7 @@ const TEST_USERS: { [key: string]: MockUser } = {
   'teacher1': {
     id: 'teacher1-uuid',
     email: 'teacher1@example.com',
+    role: 'teacher',
     user_metadata: {
       full_name: 'Teacher One',
       preferred_username: 'teacher1'
@@ -39,6 +41,7 @@ const TEST_USERS: { [key: string]: MockUser } = {
   'teacher2': {
     id: 'teacher2-uuid',
     email: 'teacher2@example.com',
+    role: 'teacher',
     user_metadata: {
       full_name: 'Teacher Two',
       preferred_username: 'teacher2'
@@ -47,6 +50,7 @@ const TEST_USERS: { [key: string]: MockUser } = {
   'student1': {
     id: 'student1-uuid',
     email: 'student1@example.com',
+    role: 'student',
     user_metadata: {
       full_name: 'Student One',
       preferred_username: 'student1'
@@ -55,6 +59,7 @@ const TEST_USERS: { [key: string]: MockUser } = {
   'student2': {
     id: 'student2-uuid',
     email: 'student2@example.com',
+    role: 'student',
     user_metadata: {
       full_name: 'Student Two',
       preferred_username: 'student2'
@@ -63,6 +68,7 @@ const TEST_USERS: { [key: string]: MockUser } = {
   'student3': {
     id: 'student3-uuid',
     email: 'student3@example.com',
+    role: 'student',
     user_metadata: {
       full_name: 'Student Three',
       preferred_username: 'student3'

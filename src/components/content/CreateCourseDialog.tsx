@@ -106,13 +106,13 @@ const CreateCourseDialog: React.FC<CreateCourseDialogProps> = ({
       newErrors.duration = "Please select a duration";
     }
 
-    if (!formData.difficulty) {
-      newErrors.difficulty = "Please select a difficulty level";
-    }
+    // if (!formData.difficulty) {
+    //   newErrors.difficulty = "Please select a difficulty level";
+    // }
 
-    if (formData.maxStudents < 1 || formData.maxStudents > 500) {
-      newErrors.maxStudents = "Max students must be between 1 and 500";
-    }
+    // if (formData.maxStudents < 1 || formData.maxStudents > 500) {
+    //   newErrors.maxStudents = "Max students must be between 1 and 500";
+    // }
 
     if (formData.objectives.length === 0) {
       newErrors.objectives = "Please add at least one learning objective";
@@ -207,12 +207,12 @@ const CreateCourseDialog: React.FC<CreateCourseDialogProps> = ({
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <BookOpen className="h-5 w-5" />
+            {/* <BookOpen className="h-5 w-5" /> */}
             Create New Course
           </DialogTitle>
           <DialogDescription>
-            Fill in the details below to create a new learning course for your
-            students.
+            {/* Fill in the details below to create a new learning course for your
+            students. */}
           </DialogDescription>
         </DialogHeader>
 
@@ -302,7 +302,7 @@ const CreateCourseDialog: React.FC<CreateCourseDialogProps> = ({
                     {durations.map((duration) => (
                       <SelectItem key={duration} value={duration}>
                         <div className="flex items-center gap-2">
-                          <Clock className="h-4 w-4" />
+                          {/* <Clock className="h-4 w-4" /> */}
                           {duration}
                         </div>
                       </SelectItem>
@@ -314,7 +314,7 @@ const CreateCourseDialog: React.FC<CreateCourseDialogProps> = ({
                 )}
               </div>
 
-              <div className="space-y-2">
+              {/* <div className="space-y-2">
                 <Label>Difficulty Level *</Label>
                 <Select
                   value={formData.difficulty}
@@ -343,9 +343,9 @@ const CreateCourseDialog: React.FC<CreateCourseDialogProps> = ({
                     {errors.difficulty}
                   </p>
                 )}
-              </div>
+              </div> */}
 
-              <div className="space-y-2">
+              {/* <div className="space-y-2">
                 <Label htmlFor="maxStudents">Max Students *</Label>
                 <Input
                   id="maxStudents"
@@ -366,7 +366,7 @@ const CreateCourseDialog: React.FC<CreateCourseDialogProps> = ({
                     {errors.maxStudents}
                   </p>
                 )}
-              </div>
+              </div> */}
             </div>
           </div>
 
@@ -384,7 +384,8 @@ const CreateCourseDialog: React.FC<CreateCourseDialogProps> = ({
                   }
                 />
                 <Button type="button" onClick={addObjective} size="sm">
-                  <Plus className="h-4 w-4" />
+                  {/* <Plus className="h-4 w-4" /> */}
+                  <p>+</p>
                 </Button>
               </div>
               {errors.objectives && (
@@ -412,7 +413,7 @@ const CreateCourseDialog: React.FC<CreateCourseDialogProps> = ({
           </div>
 
           {/* Tags */}
-          <div className="space-y-4">
+          {/* <div className="space-y-4">
             <h3 className="text-lg font-medium">Tags (Optional)</h3>
             <div className="space-y-2">
               <div className="flex gap-2">
@@ -448,10 +449,10 @@ const CreateCourseDialog: React.FC<CreateCourseDialogProps> = ({
                 ))}
               </div>
             </div>
-          </div>
+          </div> */}
 
           {/* Prerequisites */}
-          <div className="space-y-2">
+          {/* <div className="space-y-2">
             <Label htmlFor="prerequisites">Prerequisites (Optional)</Label>
             <Textarea
               id="prerequisites"
@@ -462,7 +463,7 @@ const CreateCourseDialog: React.FC<CreateCourseDialogProps> = ({
               placeholder="List any prerequisites or recommended background knowledge..."
               className="min-h-[80px]"
             />
-          </div>
+          </div> */}
 
           {errors.submit && (
             <Alert variant="destructive">
@@ -488,7 +489,7 @@ const CreateCourseDialog: React.FC<CreateCourseDialogProps> = ({
               </>
             ) : (
               <>
-                <BookOpen className="mr-2 h-4 w-4" />
+                {/* <BookOpen className="mr-2 h-4 w-4" /> */}
                 Create Course
               </>
             )}

@@ -117,17 +117,17 @@ const StudentDashboard: React.FC = () => {
       <div className="space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-3xl font-bold text-foreground">
+          <h1 className="text-3xl font-bolD">
             My Learning Dashboard
           </h1>
-          <p className="text-muted-foreground mt-1">
+          <p className=" mt-1">
             Track your progress and continue your professional development
             journey
           </p>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
@@ -179,10 +179,10 @@ const StudentDashboard: React.FC = () => {
               </p>
             </CardContent>
           </Card>
-        </div>
+        </div> */}
 
         {/* Current Progress Overview */}
-        <Card>
+        {/* <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Target className="h-5 w-5" />
@@ -207,10 +207,10 @@ const StudentDashboard: React.FC = () => {
               </div>
             </div>
           </CardContent>
-        </Card>
+        </Card> */}
 
         {/* Filters and Search */}
-        <div className="flex flex-col sm:flex-row gap-4">
+        {/* <div className="flex flex-col sm:flex-row gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
             <Input
@@ -232,15 +232,15 @@ const StudentDashboard: React.FC = () => {
               <SelectItem value="completed">Completed</SelectItem>
             </SelectContent>
           </Select>
-        </div>
+        </div> */}
 
         {/* Courses Grid */}
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold">My Courses</h2>
-            <Badge variant="outline">
+            <h2 className="text-xl">My Courses</h2>
+            {/* <Badge variant="outline">
               {filteredCourses.length} of {totalCourses} courses
-            </Badge>
+            </Badge> */}
           </div>
 
           {filteredCourses.length > 0 ? (

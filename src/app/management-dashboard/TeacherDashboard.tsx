@@ -37,21 +37,21 @@ const TeacherDashboard: React.FC = () => {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">
+            <h1 className="text-3xl">
               Course Management
             </h1>
-            <p className="text-muted-foreground mt-1">
+            <p className="">
               Manage your courses and track student progress
             </p>
           </div>
           <Button onClick={() => setIsCreateDialogOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
+            <Plus className="h-4 w-4 mr-2 " />
             Create Course
           </Button>
         </div>
 
         {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
@@ -94,24 +94,24 @@ const TeacherDashboard: React.FC = () => {
               </p>
             </CardContent>
           </Card>
-        </div>
+        </div> */}
 
         {/* Recent Courses */}
         {recentCourses.length > 0 && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <CheckCircle className="h-5 w-5 text-green-600" />
+                {/* <CheckCircle className="h-5 w-5 text-green-600" /> */}
                 Recently Created Courses
               </CardTitle>
-              <CardDescription>Your latest course creations</CardDescription>
+              {/* <CardDescription>Your latest course creations</CardDescription> */}
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 {recentCourses.map((course, index) => (
                   <div
                     key={index}
-                    className="flex items-start justify-between p-4 border rounded-lg bg-muted/30"
+                    className="justify-between"
                   >
                     <div className="space-y-2">
                       <h3 className="font-medium">{course.title}</h3>
@@ -119,13 +119,15 @@ const TeacherDashboard: React.FC = () => {
                         {course.description}
                       </p>
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <Badge variant="secondary">{course.category}</Badge>
+                        {/* <Badge variant="secondary">{course.category}</Badge> */}
+                        <span>•</span>
+                        <span>{course.category}</span>
                         <span>•</span>
                         <span>{course.duration}</span>
-                        <span>•</span>
-                        <span>{course.difficulty}</span>
-                        <span>•</span>
-                        <span>Max {course.maxStudents} students</span>
+                        {/* <span>•</span> */}
+                        {/* <span>{course.difficulty}</span> */}
+                        {/* <span>•</span> */}
+                        {/* <span>Max {course.maxStudents} students</span> */}
                       </div>
                       {course.tags.length > 0 && (
                         <div className="flex gap-1 flex-wrap">
@@ -146,7 +148,7 @@ const TeacherDashboard: React.FC = () => {
                         </div>
                       )}
                     </div>
-                    <Button variant="outline" size="sm">
+                    <Button className="mt-2" variant="outline" size="sm">
                       Add Content
                     </Button>
                   </div>
@@ -168,8 +170,8 @@ const TeacherDashboard: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="text-center py-12">
-              <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-medium mb-2">
+              {/* <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" /> */}
+              <h3 className="text-lg mb-2">
                 {recentCourses.length > 0
                   ? "Ready to Add Course Content"
                   : "Create Your First Course"}
