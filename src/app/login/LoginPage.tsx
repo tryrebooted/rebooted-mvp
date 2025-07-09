@@ -140,7 +140,7 @@ export default function LoginPage() {
             <label htmlFor="username" style={{ 
               display: 'block', 
               marginBottom: '5px', 
-              fontWeight: '500',
+              fontWeight: 'bold',
               color: '#374151'
             }}>
               Username:
@@ -169,7 +169,7 @@ export default function LoginPage() {
             <label htmlFor="password" style={{ 
               display: 'block', 
               marginBottom: '5px', 
-              fontWeight: '500',
+              fontWeight: 'bold',
               color: '#374151'
             }}>
               Password:
@@ -200,7 +200,7 @@ export default function LoginPage() {
             style={{
               width: '100%',
               padding: '12px 20px',
-              backgroundColor: isLoading ? '#9ca3af' : '#4285f4',
+              backgroundColor: isLoading ? '#9ca3af' : '#0f172a',
               color: 'white',
               border: 'none',
               borderRadius: '6px',
@@ -238,13 +238,23 @@ export default function LoginPage() {
           padding: '15px',
           backgroundColor: '#f8f9fa',
           borderRadius: '6px',
-          fontSize: '13px',
-          color: '#6c757d'
+          fontSize: '14px',
+          color: '#0f172a',
+          textAlign: 'left'
         }}>
-          <p style={{ margin: '0 0 8px 0', fontWeight: '500' }}>Test Users:</p>
-          <p style={{ margin: '2px 0' }}>• teacher1, teacher2 (Teachers)</p>
-          <p style={{ margin: '2px 0' }}>• student1, student2, student3 (Students)</p>
-          <p style={{ margin: '8px 0 0 0', fontSize: '12px' }}>Use any password</p>
+          <p style={{margin: '0 0 px 0', fontWeight: 'bold' }}>Test Users:</p>
+          <div style={{display: 'flex', gap: '12px', fontSize: '11px'}}>
+            <p style={{fontWeight: 'bold' }}>Teachers:</p>
+            <p >teacher1, teacher2</p>
+          </div>
+          <div style={{ display: 'flex', gap: '12px', fontSize: '11px'}}>
+            <p style={{ fontWeight: 'bold' }}>Students:</p>
+            <p style={{ }}>student1, student2, student3</p>
+          </div>
+          <div style={{ display: 'flex', gap: '12px', fontSize: '11px'}}>
+            <p style={{ fontWeight: 'bold' }}>Password:</p>
+            <p style={{ }}>Use any password</p>
+          </div>        
         </div>
       </div>
       
