@@ -90,6 +90,15 @@ public class ContentController {
         return ResponseEntity.ok(content);
     }
 
+    @PostMapping("/{id}/incomplete")
+    public ResponseEntity<ContentDTO> markContentInComplete(@PathVariable Long id) {
+        ContentDTO content = contentService.markComplete(id);
+        if (content == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(content);
+    }
+
     // @PostMapping("/{id}/answer")
     // public ResponseEntity<ContentDTO> submitAnswer(@PathVariable Long id,
     // @RequestBody Map<String, String> request) {

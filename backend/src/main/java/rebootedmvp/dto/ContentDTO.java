@@ -21,7 +21,8 @@ public class ContentDTO {
 
     }
 
-    public ContentDTO(Long id, Content.ContentType type, String title, String body, boolean isComplete, Long moduleId) {
+    public ContentDTO(Long id, Content.ContentType type, String title, String body, boolean isComplete,
+            Long moduleId) {
         this.id = id;
         this.type = type;
         this.title = title;

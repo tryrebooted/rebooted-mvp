@@ -180,6 +180,22 @@ public class ContentService {
         return convertToDTO(savedContent);
     }
 
+    public ContentDTO markIncomplete(Long id) {
+        logger.debug("ContentService.markComplete({}) called", id);
+
+        Optional<Content> contentOpt = contentRepository.findById(id).map(ContentMapper::toDomain);
+        if (contentOpt.isEmpty()) {
+            return null;
+        }
+
+        Content content = contentOpt.get();
+        content.setComplete(false);
+
+        Content savedContent = contentRepository.save(ContentMapper.toEntity(content));
+        logger.info("Marked content {} as complete", savedContent.getId());
+        return convertToDTO(savedContent);
+    }
+
     private ContentDTO convertToDTO(Content content) {
         if (content.getType() == Content.ContentType.Text) {
             return new ContentDTO(

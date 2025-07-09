@@ -18,6 +18,7 @@ import rebootedmvp.ModuleMapper;
 import rebootedmvp.domain.impl.ContentEntityImpl;
 import rebootedmvp.domain.impl.QuestionContentImpl;
 import rebootedmvp.domain.impl.TextContentImpl;
+import rebootedmvp.dto.ContentDTO;
 import rebootedmvp.dto.NewContentDTO;
 import rebootedmvp.repository.ContentRepository;
 import rebootedmvp.repository.ModuleRepository;
@@ -38,33 +39,33 @@ public class ModuleService {
      * Returns a list of all content in all modules
      */
     @Transactional(readOnly = true)
-    public List<Content> findAll() {
+    public List<ContentDTO> findAll() {
         logger.debug("ModuleService.findAll() called - returning all content");
-        return contentRepository.findAll().stream().map(ContentMapper::toDomain).toList();
+        return mapToDTO(contentRepository.findAll().stream().map(ContentMapper::toDomain).toList());
     }
 
     /**
      * Returns a list of all content within the module with given ID
      */
     @Transactional(readOnly = true)
-    public List<Content> getById(Long moduleId) {
+    public List<ContentDTO> getById(Long moduleId) {
         logger.debug("ModuleService.getById({}) called - getting content for module", moduleId);
 
         if (!moduleRepository.existsById(moduleId)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Module not found with id: " + moduleId);
         }
 
-        return contentRepository.findByModuleIdOrderByCreatedAtAsc(moduleId)
+        return mapToDTO(contentRepository.findByModuleIdOrderByCreatedAtAsc(moduleId)
                 .stream()
                 .map(ContentMapper::toDomain)
-                .toList();
+                .toList());
     }
 
     /**
      * Returns the specific content within the module
      */
     @Transactional(readOnly = true)
-    public Content getById(Long moduleId, Long contentId) {
+    public ContentDTO getById(Long moduleId, Long contentId) {
         logger.debug("ModuleService.getById({}, {}) called - getting specific content", moduleId, contentId);
 
         if (!moduleRepository.existsById(moduleId)) {
@@ -82,7 +83,7 @@ public class ModuleService {
                     "Content " + contentId + " does not belong to module " + moduleId);
         }
 
-        return content;
+        return new ContentDTO(content);
     }
 
     /**
@@ -199,6 +200,11 @@ public class ModuleService {
         contentRepository.deleteById(contentId);
         logger.info("Deleted content with ID: {} from module: {}", contentId, moduleId);
         return true;
+    }
+
+    private static List<ContentDTO> mapToDTO(List<Content> toMap) {
+        return toMap.stream().map(
+                elem -> new ContentDTO(elem)).toList();
     }
 
 }
