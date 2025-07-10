@@ -1,0 +1,9 @@
+Starting Course Generation API server...
+API will be available at: http://localhost:8001
+Documentation at: http://localhost:8001/docs
+Health check at: http://localhost:8001/health
+INFO:     127.0.0.1:55822 - "POST /generate-course HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55837 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55837 - "OPTIONS /generate-course HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55943 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55943 - "OPTIONS /generate-course HTTP/1.1" 200 OK

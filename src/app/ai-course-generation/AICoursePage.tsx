@@ -12,16 +12,16 @@ import { Button } from '@/components/ui/button';
 
 export default function AICoursePage() {
   // Form state
-  const [courseTitle, setCourseTitle] = useState('');
-  const [courseDescription, setCourseDescription] = useState('');
-  const [courseTopics, setCourseTopics] = useState('');
-  const [startingPoint, setStartingPoint] = useState('');
-  const [finishLine, setFinishLine] = useState('');
+  const [courseTitle, setCourseTitle] = useState('Introduction to Python Programming');
+  const [courseDescription, setCourseDescription] = useState('A comprehensive beginner-friendly course that teaches Python programming fundamentals through hands-on exercises and practical projects.');
+  const [courseTopics, setCourseTopics] = useState('Variables and data types, Control structures (if/else, loops), Functions and modules, File handling, Error handling, Object-oriented programming basics, Working with libraries');
+  const [startingPoint, setStartingPoint] = useState('Basic computer literacy and familiarity with using a computer. No prior programming experience required.');
+  const [finishLine, setFinishLine] = useState('Students will be able to write Python programs, solve basic programming problems, work with files and data, and understand fundamental programming concepts.');
 
   // Generation state
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // const [generatedCourse, setGeneratedCourse] = useState<GeneratedCourse | null>(null);
+  const [generatedCourse, setGeneratedCourse] = useState<GeneratedCourse | null>(null);
 
   const generatedCoursea = {
     course_title: "Web Development for Beginners",
@@ -66,7 +66,7 @@ export default function AICoursePage() {
     ]
   };
   
-  const [generatedCourse, setGeneratedCourse] = useState(generatedCoursea); // mock course for styleing is the object above
+//   const [generatedCourse, setGeneratedCourse] = useState(generatedCoursea); // mock course for styleing is the object above
 
 
   const handleGenerateCourse = async () => {
