@@ -49,9 +49,8 @@ const TeacherDashboard: React.FC = () => {
             </p>
           </div>
           <div className="flex gap-2">
-            {/* <Button onClick={() => setIsCreateDialogOpen(true)}>
-             */}
-            <Button onClick={() => router.push('/create-course')}>
+           <Button onClick={() => setIsCreateDialogOpen(true)}>
+            {/* <Button onClick={() => router.push('/create-course')}> */}
               <Plus className="h-4 w-4 mr-2 " />
               Create Course
             </Button>
@@ -194,8 +193,7 @@ const TeacherDashboard: React.FC = () => {
                   : "Click the 'Create Course' button to design your first learning program."}
               </p>
               {recentCourses.length === 0 && (
-                // <Button onClick={() => setIsCreateDialogOpen(true)}>
-                <Button onClick={() => router.push('create-course')}>
+                <Button onClick={() => setIsCreateDialogOpen(true)}>
                   <Plus className="h-4 w-4 mr-2" />
                   Create Your First Course
                 </Button>
