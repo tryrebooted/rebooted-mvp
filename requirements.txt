@@ -1,4 +1,6 @@
 dspy-ai
 pydantic
 python-dotenv
-streamlit 
+streamlit
+fastapi
+uvicorn[standard]
