@@ -13,8 +13,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import jakarta.persistence.EntityNotFoundException;
+import rebootedmvp.Course;
 import rebootedmvp.Module;
 import rebootedmvp.dto.ModuleDTO;
 import rebootedmvp.dto.NewModuleDTO;
@@ -52,20 +55,38 @@ public class CourseController {
         }
     }
 
-    @PutMapping("/update/{id}")
-    public void updateModule(@PathVariable Long courseId, @PathVariable Long id,
+    @PutMapping("/update/{moduleId}")
+    public void updateModule(@PathVariable Long courseId, @PathVariable Long moduleId,
             @RequestBody NewModuleDTO updateModuleDTO) {
-        courseService.update(courseId, id, updateModuleDTO);
+        courseService.update(courseId, moduleId, updateModuleDTO);
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteModule(@PathVariable Long courseId, @PathVariable Long id) {
-        boolean deleted = courseService.delete(courseId, id);
+    @DeleteMapping("/{moduleId}")
+    public ResponseEntity<Void> deleteModule(@PathVariable Long courseId, @PathVariable Long moduleId) {
+        boolean deleted = courseService.delete(courseId, moduleId);
         if (deleted) {
             return ResponseEntity.noContent().build();
         } else {
             return ResponseEntity.notFound().build();
         }
+    }
+
+    @PostMapping("/addTeacher/{userId}")
+    public ResponseEntity<Void> enrollUserAsTeacher(
+            @PathVariable Long courseId,
+            @PathVariable Long userId) {
+
+        courseService.addTeacher(courseId, userId);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/addStudent/{userId}")
+    public ResponseEntity<Void> enrollUserAsStudent(
+            @PathVariable Long courseId,
+            @PathVariable Long userId) {
+
+        courseService.addStudent(courseId, userId);
+        return ResponseEntity.ok().build();
     }
 
     @ExceptionHandler(Exception.class)

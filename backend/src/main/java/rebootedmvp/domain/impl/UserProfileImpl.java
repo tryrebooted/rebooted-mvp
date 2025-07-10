@@ -11,6 +11,7 @@ import rebootedmvp.Course;
 import rebootedmvp.CourseDoesNotExistException;
 import rebootedmvp.InaccessibleCourseException;
 import rebootedmvp.User;
+import rebootedmvp.dto.NewUserDTO;
 
 @Entity
 // @DiscriminatorValue("USER")
@@ -41,6 +42,13 @@ public class UserProfileImpl extends User {
         this.supabaseUserId = supabaseUserId;
         this.email = email;
         this.fullName = fullName;
+    }
+
+    public UserProfileImpl(String supabaseUserId, NewUserDTO newUserDTO) {
+        this.username = newUserDTO.getUsername();
+        this.userType = newUserDTO.getUserType();
+        this.supabaseUserId = supabaseUserId;
+        // this.email = newUserDTO.getEmail();
     }
 
     // Backward compatibility constructor

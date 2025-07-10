@@ -17,11 +17,13 @@ import rebootedmvp.InfoContainer;
 import rebootedmvp.Module;
 import rebootedmvp.ModuleMapper;
 import rebootedmvp.domain.impl.ModuleEntityImpl;
+import rebootedmvp.domain.impl.UserProfileImpl;
 import rebootedmvp.dto.ModuleDTO;
 import rebootedmvp.dto.NewCourseDTO;
 import rebootedmvp.dto.NewModuleDTO;
 import rebootedmvp.repository.CourseRepository;
 import rebootedmvp.repository.ModuleRepository;
+import rebootedmvp.repository.UserProfileRepository;
 
 @Service
 @Transactional
@@ -31,6 +33,9 @@ public class CourseService {
 
     @Autowired
     private CourseRepository courseRepository;
+
+    @Autowired
+    private UserProfileRepository userRepository;
 
     @Autowired
     private ModuleRepository moduleRepository;
@@ -171,6 +176,30 @@ public class CourseService {
         moduleRepository.deleteById(moduleId);
         logger.info("Deleted module with ID: {} from course: {}", moduleId, courseId);
         return true;
+    }
+
+    @Transactional
+    public void addStudent(Long courseId, Long userId) {
+        Course course = courseRepository.findById(courseId)
+                .orElseThrow(() -> new IllegalArgumentException("Course not found"));
+
+        UserProfileImpl user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        course.addStudent(user);
+        courseRepository.save(CourseMapper.toEntity(course)); // this is needed to persist the join table change
+    }
+
+    @Transactional
+    public void addTeacher(Long courseId, Long userId) {
+        Course course = courseRepository.findById(courseId)
+                .orElseThrow(() -> new IllegalArgumentException("Course not found"));
+
+        UserProfileImpl user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        course.addTeacher(user);
+        courseRepository.save(CourseMapper.toEntity(course)); // this is needed to persist the join table change
     }
 
     private static List<ModuleDTO> mapToDTO(List<Module> toMap) {

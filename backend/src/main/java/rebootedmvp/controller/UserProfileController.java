@@ -9,10 +9,13 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import rebootedmvp.dto.NewUserDTO;
 import rebootedmvp.dto.UserProfileDTO;
+import rebootedmvp.service.JwtService;
 import rebootedmvp.service.UserProfileService;
 
 @RestController
@@ -20,12 +23,32 @@ import rebootedmvp.service.UserProfileService;
 public class UserProfileController {
 
     @Autowired
-    private UserProfileService userProfileService;
+    private final JwtService jwtService;
+    @Autowired
+    private final UserProfileService userProfileService;
+
+    // Constructor for dependency injection
+    public UserProfileController(JwtService jwtService, UserProfileService userProfileService) {
+        this.jwtService = jwtService;
+        this.userProfileService = userProfileService;
+    }
 
     @GetMapping
     public ResponseEntity<List<UserProfileDTO>> getAllUsers() {
         List<UserProfileDTO> users = userProfileService.findAll();
         return ResponseEntity.ok(users);
+    }
+
+    @PostMapping("/add")
+    public ResponseEntity<Long> createUser(
+            @RequestBody NewUserDTO newUserDTO,
+            @RequestHeader("Authorization") String authHeader) {
+        System.out.println("Incoming DTO = " + newUserDTO);
+
+        // String supabaseUserId = jwtService.extractUserId(authHeader);
+        String supabaseUserId = "test-user-id-123"; // TEMPORARY HARDCODE
+        Long userId = userProfileService.addUser(supabaseUserId, newUserDTO);
+        return ResponseEntity.ok(userId);
     }
 
     @GetMapping("/{id}")

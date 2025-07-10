@@ -8,8 +8,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import jakarta.transaction.Transactional;
+import rebootedmvp.Course;
 import rebootedmvp.User;
 import rebootedmvp.UserMapper;
+import rebootedmvp.domain.impl.UserProfileImpl;
+import rebootedmvp.dto.NewUserDTO;
 import rebootedmvp.dto.UserProfileDTO;
 import rebootedmvp.repository.UserProfileRepository;
 
@@ -163,6 +167,16 @@ public class UserProfileService {
     public UserProfileDTO save(User userProfile) {
         User saved = userProfileRepository.save(UserMapper.toEntity(userProfile));
         return convertToDTO(saved);
+    }
+
+    public Long addUser(String supabaseUserId, NewUserDTO newUserDTO) {
+        logger.debug("UserProfileService.addTeacher({}) called", newUserDTO);
+        if (newUserDTO.getUsername() == null || newUserDTO.getUserType() == null) {
+            throw new IllegalArgumentException("The user's name must be supplied in the DTO");
+        }
+        User savedUser = userProfileRepository.save(new UserProfileImpl(supabaseUserId, newUserDTO));
+
+        return savedUser.getId(); // Return Supabase UUID as the ID
     }
 
     /**

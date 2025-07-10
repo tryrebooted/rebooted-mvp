@@ -13,20 +13,20 @@ import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
 //TEMP COMMENTED OUT (authentication/validation)
-//@Component
+@Component
 public class JwtTokenValidator {
-    
+
     private static final Logger logger = LoggerFactory.getLogger(JwtTokenValidator.class);
-    
+
     @Autowired
     private SupabaseConfig supabaseConfig;
-    
+
     private SecretKey secretKey;
-    
+
     public JwtTokenValidator() {
         logger.info("JWT Token Validator initialized");
     }
-    
+
     /**
      * Initialize the secret key after Spring injection
      */
@@ -60,19 +60,19 @@ public class JwtTokenValidator {
             }
         }
     }
-    
+
     public boolean validateToken(String token) {
         logger.debug("===== VALIDATING JWT TOKEN =====");
         logger.debug("Token length: {} characters", token != null ? token.length() : 0);
-        
+
         if (token == null || token.trim().isEmpty()) {
             logger.warn("Token is null or empty");
             return false;
         }
-        
+
         try {
             logger.debug("Attempting to parse JWT token using JJWT 0.12.3 API...");
-            
+
             // Decode token header and payload for debugging
             String[] tokenParts = token.split("\\.");
             if (tokenParts.length >= 2) {
@@ -81,7 +81,7 @@ public class JwtTokenValidator {
                     String payload = new String(Base64.getUrlDecoder().decode(tokenParts[1]));
                     logger.info("JWT Header: {}", header);
                     logger.info("JWT Payload: {}", payload);
-                    
+
                     // Check if this is a Supabase user access token (has 'kid' field)
                     if (header.contains("\"kid\"")) {
                         logger.info("Detected Supabase user access token with kid field - using issuer verification");
@@ -91,23 +91,23 @@ public class JwtTokenValidator {
                     logger.info("Could not decode JWT for inspection: {}", e.getMessage());
                 }
             }
-            
+
             // For API keys and other tokens, use the static secret
             initializeSecretKey();
             if (secretKey == null) {
                 logger.error("JWT secret key not initialized");
                 return false;
             }
-            
+
             // Use JJWT 0.12.3 API directly
             Jwts.parser()
-                .verifyWith(secretKey)
-                .build()
-                .parseSignedClaims(token);
-            
+                    .verifyWith(secretKey)
+                    .build()
+                    .parseSignedClaims(token);
+
             logger.debug("Successfully validated token");
             return true;
-            
+
         } catch (ExpiredJwtException e) {
             logger.warn("JWT token is expired: {}", e.getMessage());
         } catch (UnsupportedJwtException e) {
@@ -121,53 +121,53 @@ public class JwtTokenValidator {
         } catch (Exception e) {
             logger.error("Unexpected error validating JWT token: {}", e.getMessage(), e);
         }
-        
+
         return false;
     }
-    
+
     /**
      * Validate Supabase user access tokens using issuer verification
      */
     private boolean validateSupabaseUserToken(String token) {
         try {
             logger.info("Validating Supabase user access token using issuer verification");
-            
+
             // For Supabase user tokens, we verify the issuer and basic structure
             // without signature verification for now
             Jwt<?, Claims> jwt = Jwts.parser()
-                .requireIssuer("https://snvasvzrqiordsgmfcai.supabase.co/auth/v1")
-                .build()
-                .parseClaimsJwt(token.substring(0, token.lastIndexOf('.') + 1)); // Remove signature for parsing
+                    .requireIssuer("https://snvasvzrqiordsgmfcai.supabase.co/auth/v1")
+                    .build()
+                    .parseClaimsJwt(token.substring(0, token.lastIndexOf('.') + 1)); // Remove signature for parsing
             Claims claims = jwt.getPayload();
-            
+
             // Additional validations
             if (claims.getExpiration() != null && claims.getExpiration().before(new java.util.Date())) {
                 logger.warn("Supabase token is expired");
                 return false;
             }
-            
+
             if (!"authenticated".equals(claims.get("aud"))) {
                 logger.warn("Token audience is not 'authenticated'");
                 return false;
             }
-            
+
             logger.info("Successfully validated Supabase user token for user: {}", claims.getSubject());
             return true;
-            
+
         } catch (Exception e) {
             logger.error("Error validating Supabase user token: {}", e.getMessage(), e);
             return false;
         }
     }
-    
+
     public Claims extractClaims(String token) {
         logger.debug("===== EXTRACTING JWT CLAIMS =====");
-        
+
         if (token == null || token.trim().isEmpty()) {
             logger.warn("Cannot extract claims from null/empty token");
             return null;
         }
-        
+
         try {
             // Check if this is a Supabase user access token
             String[] tokenParts = token.split("\\.");
@@ -177,33 +177,33 @@ public class JwtTokenValidator {
                     logger.debug("Extracting claims from Supabase user token");
                     // For Supabase user tokens, parse without signature verification
                     Jwt<?, Claims> jwt = Jwts.parser()
-                        .build()
-                        .parseClaimsJwt(token.substring(0, token.lastIndexOf('.') + 1)); // Remove signature
+                            .build()
+                            .parseClaimsJwt(token.substring(0, token.lastIndexOf('.') + 1)); // Remove signature
                     return jwt.getPayload();
                 }
             }
-            
+
             // For API keys and other tokens, use the static secret
             initializeSecretKey();
             if (secretKey == null) {
                 logger.error("JWT secret key not initialized");
                 return null;
             }
-            
+
             // Use JJWT 0.12.3 API directly
             Jws<Claims> jws = Jwts.parser()
-                .verifyWith(secretKey)
-                .build()
-                .parseSignedClaims(token);
-            
+                    .verifyWith(secretKey)
+                    .build()
+                    .parseSignedClaims(token);
+
             return jws.getPayload();
-            
+
         } catch (Exception e) {
             logger.error("Error extracting claims from JWT token: {}", e.getMessage(), e);
             return null;
         }
     }
-    
+
     // Alternative method that returns Claims instead of boolean (for compatibility)
     public Claims validateTokenAndGetClaims(String token) {
         if (validateToken(token)) {
@@ -211,19 +211,19 @@ public class JwtTokenValidator {
         }
         return null;
     }
-    
+
     // Method expected by other classes
     public String extractUserId(String token) {
         Claims claims = extractClaims(token);
         return claims != null ? claims.getSubject() : null;
     }
-    
-    // Method expected by other classes  
+
+    // Method expected by other classes
     public String extractUserEmail(String token) {
         Claims claims = extractClaims(token);
         return claims != null ? (String) claims.get("email") : null;
     }
-    
+
     // Method expected by other classes
     public String extractUserRole(String token) {
         Claims claims = extractClaims(token);
@@ -246,7 +246,7 @@ public class JwtTokenValidator {
         }
         return null;
     }
-    
+
     // Method expected by other classes
     public boolean isTokenValid(String token) {
         return validateToken(token);
