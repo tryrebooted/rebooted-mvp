@@ -3,21 +3,20 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { apiService } from '@/services/api';
-import { mockAuth } from '@/contexts/UserContext';
+import { useUser } from '@/contexts/UserContext';
 import { Course, Module } from '@/types/backend-api';
 import ContentBlockList from '@/components/content/ContentBlockList';
-import ContentCreator from '@/components/content/ContentCreator';
 
 export default function PreviewCoursePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const courseId = searchParams.get('id');
+  const { user, loading: authLoading } = useUser();
 
   const [course, setCourse] = useState<Course | null>(null);
   const [modules, setModules] = useState<Module[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [currentUser, setCurrentUser] = useState<any>(null);
   const [selectedModuleId, setSelectedModuleId] = useState<number | null>(null);
 
   useEffect(() => {
@@ -28,21 +27,21 @@ export default function PreviewCoursePage() {
     }
 
     loadCourseData();
-  }, [courseId]);
+  }, [courseId, user, authLoading]);
 
   const loadCourseData = async () => {
+    // Wait for auth to finish loading
+    if (authLoading) return;
+    
+    // If no user, redirect to login
+    if (!user) {
+      router.push('/login');
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
-
-      // Get current user
-      const { data: { user }, error: userError } = await mockAuth.getUser();
-      if (userError || !user) {
-        router.push('/login');
-        return;
-      }
-
-      setCurrentUser(user);
 
       // Fetch course basic info
       const courseData = await apiService.getCourseById(parseInt(courseId!));
@@ -82,7 +81,8 @@ export default function PreviewCoursePage() {
     setSelectedModuleId(selectedModuleId === moduleId ? null : moduleId);
   };
 
-  if (loading) {
+  // Show loading while auth is loading or data is loading
+  if (authLoading || loading) {
     return (
       <div style={{ 
         padding: '20px',
@@ -134,6 +134,10 @@ export default function PreviewCoursePage() {
         </div>
       </div>
     );
+  }
+
+  if (!user) {
+    return null; // Will redirect to login
   }
 
   return (
@@ -206,8 +210,8 @@ export default function PreviewCoursePage() {
               marginBottom: '20px',
               backgroundColor: '#f8f9fa'
             }}>
-              <h2 style={{ marginBottom: '10px', color: '#171717' }}>{course.name}</h2>
-              <p style={{ color: '#666', marginBottom: '20px' }}>{course.description}</p>
+                      <h2 style={{ marginBottom: '10px', color: '#171717' }}>{course.title}</h2>
+        <p style={{ color: '#666', marginBottom: '20px' }}>{course.body}</p>
               
               <div style={{
                 padding: '15px',
@@ -244,10 +248,10 @@ export default function PreviewCoursePage() {
                       >
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <div style={{ flex: 1 }}>
-                            <strong style={{ color: '#171717' }}>{index + 1}. {module.name}</strong>
-                            {module.description && (
+                            <strong style={{ color: '#171717' }}>{index + 1}. {module.title}</strong>
+                            {module.body && (
                               <p style={{ margin: '5px 0 0 0', color: '#666', fontSize: '14px' }}>
-                                {module.description}
+                                {module.body}
                               </p>
                             )}
                           </div>
@@ -277,7 +281,7 @@ export default function PreviewCoursePage() {
           {selectedModuleId ? (
             <ContentBlockList
               moduleId={selectedModuleId}
-              moduleName={modules.find(m => m.id === selectedModuleId)?.name}
+              moduleTitle={modules.find(m => m.id === selectedModuleId)?.title}
               isInteractive={true}
               onContentUpdate={loadCourseData}
             />

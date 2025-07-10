@@ -13,8 +13,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import jakarta.persistence.EntityNotFoundException;
+import rebootedmvp.Course;
 import rebootedmvp.Module;
 import rebootedmvp.dto.ModuleDTO;
 import rebootedmvp.dto.NewModuleDTO;
@@ -29,45 +32,61 @@ public class CourseController {
 
     @GetMapping
     public ResponseEntity<List<ModuleDTO>> getAllModules(@PathVariable Long courseId) {
-        List<Module> mod = courseService.getById(courseId);
-
-        return ResponseEntity.ok(mapToDTO(mod));
+        return ResponseEntity.ok(courseService.getById(courseId));
     }
 
     @GetMapping("/module/{moduleId}")
     public ResponseEntity<ModuleDTO> getModuleById(@PathVariable Long courseId, @PathVariable Long moduleId) {
-        Module mod;
         try {
-            mod = courseService.getById(courseId, moduleId);
+            return ResponseEntity.ok(courseService.getById(courseId, moduleId));
         } catch (Exception e) {
             return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.ok(new ModuleDTO(mod));
+
     }
 
     @PostMapping("/add")
     public ResponseEntity<Long> createModule(@PathVariable Long courseId, @RequestBody NewModuleDTO newModuleDTO) {
         try {
-            Long moduleId = courseService.addNew(newModuleDTO);
+            Long moduleId = courseService.addNew(courseId, newModuleDTO);
             return ResponseEntity.ok(moduleId);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().build();
         }
     }
 
-    @PutMapping("/delete/{id}")
-    public void updateModule(@PathVariable Long id, @RequestBody NewModuleDTO updateModuleDTO) {
-        courseService.update(id, updateModuleDTO);
+    @PutMapping("/update/{moduleId}")
+    public void updateModule(@PathVariable Long courseId, @PathVariable Long moduleId,
+            @RequestBody NewModuleDTO updateModuleDTO) {
+        courseService.update(courseId, moduleId, updateModuleDTO);
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteModule(@PathVariable Long id) {
-        boolean deleted = moduleService.delete(id);
+    @DeleteMapping("/{moduleId}")
+    public ResponseEntity<Void> deleteModule(@PathVariable Long courseId, @PathVariable Long moduleId) {
+        boolean deleted = courseService.delete(courseId, moduleId);
         if (deleted) {
             return ResponseEntity.noContent().build();
         } else {
             return ResponseEntity.notFound().build();
         }
+    }
+
+    @PostMapping("/addTeacher/{userId}")
+    public ResponseEntity<Void> enrollUserAsTeacher(
+            @PathVariable Long courseId,
+            @PathVariable Long userId) {
+
+        courseService.addTeacher(courseId, userId);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/addStudent/{userId}")
+    public ResponseEntity<Void> enrollUserAsStudent(
+            @PathVariable Long courseId,
+            @PathVariable Long userId) {
+
+        courseService.addStudent(courseId, userId);
+        return ResponseEntity.ok().build();
     }
 
     @ExceptionHandler(Exception.class)
@@ -76,8 +95,4 @@ public class CourseController {
                 .body("An error occurred: " + e.getMessage());
     }
 
-    private static List<ModuleDTO> mapToDTO(List<Module> toMap) {
-        return toMap.stream().map(
-                elem -> new ModuleDTO(elem)).toList();
-    }
 }

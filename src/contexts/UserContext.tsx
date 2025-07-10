@@ -1,6 +1,16 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { createClient } from '@/utils/supabase/client';
+import type { User } from '@supabase/supabase-js';
+
+export interface SupabaseUser extends User {
+  // Extend with any additional properties if needed
+}
+
+// Auth data structure matching Supabase
+export interface AuthData {
+  user: SupabaseUser | null;
 
 // Mock user type to replace Supabase user
 export interface MockUser {
@@ -19,107 +29,78 @@ export interface MockAuthData {
 }
 
 interface UserContextType {
-  user: MockUser | null;
-  signIn: (username: string, password: string) => Promise<{ data: MockAuthData; error: any }>;
+  user: SupabaseUser | null;
+  loading: boolean;
+  signInWithGoogle: () => Promise<{ data: any; error: any }>;
   signOut: () => Promise<void>;
-  getUser: () => Promise<{ data: MockAuthData; error: any }>;
+  getUser: () => Promise<{ data: AuthData; error: any }>;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
-// Test users that match backend test data
-const TEST_USERS: { [key: string]: MockUser } = {
-  'teacher1': {
-    id: 'teacher1-uuid',
-    email: 'teacher1@example.com',
-    role: 'teacher',
-    user_metadata: {
-      full_name: 'Teacher One',
-      preferred_username: 'teacher1'
-    }
-  },
-  'teacher2': {
-    id: 'teacher2-uuid',
-    email: 'teacher2@example.com',
-    role: 'teacher',
-    user_metadata: {
-      full_name: 'Teacher Two',
-      preferred_username: 'teacher2'
-    }
-  },
-  'student1': {
-    id: 'student1-uuid',
-    email: 'student1@example.com',
-    role: 'student',
-    user_metadata: {
-      full_name: 'Student One',
-      preferred_username: 'student1'
-    }
-  },
-  'student2': {
-    id: 'student2-uuid',
-    email: 'student2@example.com',
-    role: 'student',
-    user_metadata: {
-      full_name: 'Student Two',
-      preferred_username: 'student2'
-    }
-  },
-  'student3': {
-    id: 'student3-uuid',
-    email: 'student3@example.com',
-    role: 'student',
-    user_metadata: {
-      full_name: 'Student Three',
-      preferred_username: 'student3'
-    }
-  }
-};
-
 export function UserProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<MockUser | null>(null);
+  const [user, setUser] = useState<SupabaseUser | null>(null);
+  const [loading, setLoading] = useState(true);
+  const supabase = createClient();
 
-  // Load user from localStorage on mount
+  // Load user session on mount and listen for auth changes
   useEffect(() => {
-    const savedUser = localStorage.getItem('mockUser');
-    if (savedUser) {
-      try {
-        setUser(JSON.parse(savedUser));
-      } catch (error) {
-        console.error('Error parsing saved user:', error);
-        localStorage.removeItem('mockUser');
-      }
-    }
-  }, []);
+    const getSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setUser(session?.user ?? null);
+      setLoading(false);
+    };
 
-  const signIn = async (username: string, password: string): Promise<{ data: MockAuthData; error: any }> => {
-    // Simple mock authentication - any password works for test users
-    const mockUser = TEST_USERS[username.toLowerCase()];
-    
-    if (mockUser) {
-      setUser(mockUser);
-      localStorage.setItem('mockUser', JSON.stringify(mockUser));
-      return { data: { user: mockUser }, error: null };
-    } else {
-      return { 
-        data: { user: null }, 
-        error: { message: 'Invalid username. Use: teacher1, teacher2, student1, student2, or student3' }
+    getSession();
+
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log('Auth state changed:', event, session?.user?.email);
+        setUser(session?.user ?? null);
+        setLoading(false);
+      }
+    );
+
+    return () => subscription.unsubscribe();
+  }, [supabase.auth]);
+
+  const signInWithGoogle = async (): Promise<{ data: any; error: any }> => {
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`
+        }
+      });
+
+      return { data, error };
+    } catch (err) {
+      return {
+        data: null,
+        error: { message: 'Failed to sign in with Google' }
       };
     }
   };
 
   const signOut = async (): Promise<void> => {
+    await supabase.auth.signOut();
     setUser(null);
-    localStorage.removeItem('mockUser');
   };
 
-  const getUser = async (): Promise<{ data: MockAuthData; error: any }> => {
-    return { data: { user }, error: null };
+  const getUser = async (): Promise<{ data: AuthData; error: any }> => {
+    try {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      return { data: { user }, error };
+    } catch (error) {
+      return { data: { user: null }, error };
+    }
   };
 
   const value: UserContextType = {
     user,
-    signIn,
+    loading,
+    signInWithGoogle,
     signOut,
     getUser
   };
@@ -139,18 +120,15 @@ export function useUser() {
   return context;
 }
 
-// Mock auth object to replace Supabase auth
+// Keep compatibility with existing code that uses mockAuth
 export const mockAuth = {
-  getUser: async (): Promise<{ data: MockAuthData; error: any }> => {
-    const savedUser = localStorage.getItem('mockUser');
-    if (savedUser) {
-      try {
-        const user = JSON.parse(savedUser);
-        return { data: { user }, error: null };
-      } catch (error) {
-        return { data: { user: null }, error };
-      }
+  getUser: async (): Promise<{ data: AuthData; error: any }> => {
+    const supabase = createClient();
+    try {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      return { data: { user }, error };
+    } catch (error) {
+      return { data: { user: null }, error };
     }
-    return { data: { user: null }, error: null };
   }
 };

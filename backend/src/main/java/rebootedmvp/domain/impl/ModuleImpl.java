@@ -2,21 +2,22 @@ package rebootedmvp.domain.impl;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import rebootedmvp.Content;
 import rebootedmvp.Module;
 
-public class ModuleImpl implements Module {
+public class ModuleImpl extends Module {
 
     private Long id;
     private String title;
     private String body;
     private Long courseId;
-    private List<Content> content;
+    private Map<Long, Content> content;
     private double weight;
 
     // public ModuleImpl() {
-    //     this.content = new ArrayList<>();
+    // this.content = new ArrayList<>();
     // }
     public ModuleImpl(Long id, String title, String body) {
         this.id = id;
@@ -42,37 +43,24 @@ public class ModuleImpl implements Module {
     }
 
     @Override
-    public ModuleImpl create(Long id, String title, String body) {
-        return new ModuleImpl(id, title, body);
-    }
-
-    @Override
-    public List<Content> getContent() {
-        return new ArrayList<>(content);
+    public Content create(Long id, String title, String body) {
+        return new TextContentImpl(id, title, body);
     }
 
     @Override
     public void addSub(Content contentItem) {
         if (contentItem != null) {
-            this.content.add(contentItem);
+            this.content.put(contentItem.getId(), contentItem);
         }
     }
 
-    public void removeContent(Content contentItem) {
-        this.content.remove(contentItem);
-    }
-
-    public void setContent(List<Content> content) {
-        this.content = new ArrayList<>(content != null ? content : new ArrayList<>());
-    }
-
+    // public void setContent(List<Content> content) {
+    // this.content = new ArrayList<>(content != null ? content : new
+    // ArrayList<>());
+    // }
     @Override
     public Long getId() {
         return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
     }
 
     @Override
@@ -80,6 +68,7 @@ public class ModuleImpl implements Module {
         return courseId;
     }
 
+    @Override
     public void setCourseId(Long courseId) {
         this.courseId = courseId;
     }
@@ -91,7 +80,7 @@ public class ModuleImpl implements Module {
 
     @Override
     public List<Content> getAll() {
-        return new ArrayList<>(content);
+        return new ArrayList<>(content.values());
     }
 
     @Override
@@ -112,6 +101,12 @@ public class ModuleImpl implements Module {
     @Override
     public void setBody(String newBody) {
         body = newBody;
+    }
+
+    @Override
+    public boolean removeSub(Long contentId) {
+        Content elem = content.remove(contentId);
+        return elem != null;
     }
 
 }

@@ -1,49 +1,42 @@
 package rebootedmvp.domain.impl;
 
-import rebootedmvp.Content;
-
 import java.util.ArrayList;
 import java.util.List;
 
-public class QuestionContentImpl implements Content {
-    private Long id;
-    private String title;
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
+import rebootedmvp.Content;
+
+@Entity
+@DiscriminatorValue("QUESTION")
+public class QuestionContentImpl extends Content {
+
     private String questionText;
     private List<String> options;
     private String correctAnswer;
-    private String userAnswer;
-    private Long moduleId;
+    private boolean complete;
 
     public QuestionContentImpl() {
         this.options = new ArrayList<>();
     }
 
-    public QuestionContentImpl(Long id, String title, String questionText, List<String> options, 
-                              String correctAnswer, Long moduleId) {
+    public QuestionContentImpl(Long id, String title, String questionText, List<String> options,
+            String correctAnswer, Long moduleId) {
         this.id = id;
         this.title = title;
         this.questionText = questionText;
         this.options = new ArrayList<>(options);
         this.correctAnswer = correctAnswer;
         this.moduleId = moduleId;
-        this.userAnswer = null;
+        complete = false;
     }
 
     @Override
     public boolean isComplete() {
-        return userAnswer != null && userAnswer.equals(correctAnswer);
+        return complete;
     }
 
     @Override
-    public Content getContent() {
-        return this;
-    }
-
-    @Override
-    public ContentType contentType() {
-        return ContentType.Question;
-    }
-
     public Long getId() {
         return id;
     }
@@ -52,10 +45,12 @@ public class QuestionContentImpl implements Content {
         this.id = id;
     }
 
+    @Override
     public String getTitle() {
         return title;
     }
 
+    @Override
     public void setTitle(String title) {
         this.title = title;
     }
@@ -84,19 +79,33 @@ public class QuestionContentImpl implements Content {
         this.correctAnswer = correctAnswer;
     }
 
-    public String getUserAnswer() {
-        return userAnswer;
-    }
-
-    public void setUserAnswer(String userAnswer) {
-        this.userAnswer = userAnswer;
-    }
-
+    @Override
     public Long getModuleId() {
         return moduleId;
     }
 
+    @Override
     public void setModuleId(Long moduleId) {
         this.moduleId = moduleId;
+    }
+
+    @Override
+    public ContentType getType() {
+        return ContentType.Question;
+    }
+
+    @Override
+    public String getBody() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public void setBody(String newBody) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public void setComplete(boolean complete) {
+        throw new UnsupportedOperationException("Unimplemented method 'setComplete'");
     }
 }

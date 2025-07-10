@@ -5,25 +5,25 @@ import rebootedmvp.Course;
 public class CourseDTO {
 
     private Long id;
-    private String name;
-    private String description;
+    private String title;
+    private String body;
     private int teacherCount;
     private int studentCount;
     private int moduleCount;
 
     public CourseDTO(Course c) {
         id = c.getId();
-        name = c.getTitle();
-        description = c.getBody();
-        teacherCount = c.get_teachers().size();
-        studentCount = c.get_students().size();
-        moduleCount = c.get_modules().size();
+        title = c.getTitle();
+        body = c.getBody();
+        teacherCount = c.getTeachers().size();
+        studentCount = c.getStudents().size();
+        moduleCount = c.getAll().size();
     }
 
-    public CourseDTO(Long id, String name, String description, int moduleCount) {
+    public CourseDTO(Long id, String title, String body, int moduleCount) {
         this.id = id;
-        this.name = name;
-        this.description = description;
+        this.title = title;
+        this.body = body;
         this.teacherCount = 0;
         this.studentCount = 0;
         this.moduleCount = moduleCount;
@@ -37,20 +37,20 @@ public class CourseDTO {
         this.id = id;
     }
 
-    public String getName() {
-        return name;
+    public String getTitle() {
+        return title;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setTitle(String title) {
+        this.title = title;
     }
 
-    public String getDescription() {
-        return description;
+    public String getBody() {
+        return body;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
+    public void setBody(String body) {
+        this.body = body;
     }
 
     public int getTeacherCount() {

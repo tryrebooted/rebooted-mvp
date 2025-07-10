@@ -1,24 +1,76 @@
 package rebootedmvp;
 
-import java.util.List;
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 
-public interface Module extends GetAll<Content> {
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.DiscriminatorColumn;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Inheritance;
+import jakarta.persistence.InheritanceType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.MapKey;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+
+@Entity
+@Inheritance(strategy = InheritanceType.JOINED) // or JOINED, TABLE_PER_CLASS
+@Table(name = "modules")
+public abstract class Module implements InfoContainer<Content> {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    protected Long id;
+
+    @Column(name = "course_id", nullable = false)
+    protected Long courseId;
+
+    @Column(nullable = false)
+    protected String title;
+
+    @Column(columnDefinition = "TEXT")
+    protected String body;
+
+    @Column(nullable = false)
+    protected double weight = 1.0;
+
+    @Column(name = "created_at", updatable = false)
+    protected LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
+    protected LocalDateTime updatedAt;
+
+    // One-to-Many relationship with ContentEntityImpl
+    // @OneToMany
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @MapKey(name = "id") // ← use the Module’s `@Id`
+    @JoinColumn(name = "module_id") // ← foreign key in MODULE table
+    protected Map<Long, Content> contentItems = new HashMap<>();
 
     /**
      * Returns the weight of this module for user 'user'. Weight is the metric
      * by which a course must combine progress between modules
      */
-    double getWeight();
-
-    /**
-     * Returns the content in the module, in the order that it should appear to
-     * the user
-     */
-    List<Content> getContent();
+    public abstract double getWeight();
 
     /**
      * Returns the Id of the course that this module belongs to
      */
-    Long getCourseId();
+    public abstract Long getCourseId();
 
+    /**
+     * Sets the courseId that this module belongs to.
+     * Note: This should likely only be called by services looking to add/remove
+     * modules from courses.
+     */
+    public abstract void setCourseId(Long courseId);
+
+    public Map<Long, Content> getContents() {
+        return Map.copyOf(contentItems);
+    }
 }

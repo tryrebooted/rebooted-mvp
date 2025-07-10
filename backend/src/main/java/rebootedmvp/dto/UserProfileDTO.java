@@ -1,26 +1,24 @@
 package rebootedmvp.dto;
 
+import rebootedmvp.User;
+
 public class UserProfileDTO {
-    private String id;
+    private String supabaseUserId;
     private String username;
-    private String fullName;
-    private String userType;
+    private User.UserType userType;
 
-    public UserProfileDTO() {}
-
-    public UserProfileDTO(String id, String username, String fullName, String userType) {
-        this.id = id;
+    public UserProfileDTO(String id, String username, User.UserType userType) {
+        this.supabaseUserId = id;
         this.username = username;
-        this.fullName = fullName;
         this.userType = userType;
     }
 
     public String getId() {
-        return id;
+        return supabaseUserId;
     }
 
-    public void setId(String id) {
-        this.id = id;
+    public void setSupabaseUserId(String id) {
+        this.supabaseUserId = id;
     }
 
     public String getUsername() {
@@ -31,19 +29,11 @@ public class UserProfileDTO {
         this.username = username;
     }
 
-    public String getFullName() {
-        return fullName;
-    }
-
-    public void setFullName(String fullName) {
-        this.fullName = fullName;
-    }
-
-    public String getUserType() {
+    public User.UserType getUserType() {
         return userType;
     }
 
-    public void setUserType(String userType) {
+    public void setUserType(User.UserType userType) {
         this.userType = userType;
     }
 }

@@ -1,19 +1,26 @@
 package rebootedmvp.controller;
 
+import java.util.List;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import rebootedmvp.dto.CourseUserDTO;
 import rebootedmvp.dto.UserCourseDTO;
 import rebootedmvp.service.CourseMembershipService;
 
-import java.util.List;
-import java.util.Map;
-
 @RestController
 @RequestMapping("/api/course-memberships")
 public class CourseMembershipController {
-    
+
     @Autowired
     private CourseMembershipService courseMembershipService;
 
@@ -35,11 +42,11 @@ public class CourseMembershipController {
             @RequestBody Map<String, String> request) {
         String userId = request.get("userId");
         String role = request.get("role");
-        
+
         if (userId == null || role == null) {
             return ResponseEntity.badRequest().body("userId and role are required");
         }
-        
+
         boolean success = courseMembershipService.addUserToCourse(courseId, userId, role);
         if (success) {
             return ResponseEntity.ok("User added to course successfully");
@@ -53,11 +60,11 @@ public class CourseMembershipController {
             @PathVariable Long courseId,
             @RequestBody Map<String, List<String>> request) {
         List<String> usernames = request.get("usernames");
-        
+
         if (usernames == null || usernames.isEmpty()) {
             return ResponseEntity.badRequest().body("usernames are required");
         }
-        
+
         boolean success = courseMembershipService.addUsersByCourse(courseId, usernames, "teacher");
         if (success) {
             return ResponseEntity.ok("Teachers added to course successfully");
@@ -71,11 +78,11 @@ public class CourseMembershipController {
             @PathVariable Long courseId,
             @RequestBody Map<String, List<String>> request) {
         List<String> usernames = request.get("usernames");
-        
+
         if (usernames == null || usernames.isEmpty()) {
             return ResponseEntity.badRequest().body("usernames are required");
         }
-        
+
         boolean success = courseMembershipService.addUsersByCourse(courseId, usernames, "student");
         if (success) {
             return ResponseEntity.ok("Students added to course successfully");

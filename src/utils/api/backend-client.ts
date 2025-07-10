@@ -1,5 +1,5 @@
 // Backend API Client for Spring Boot Integration
-// Clean implementation with comprehensive error handling
+// Clean implementation with comprehensive error handling and Supabase auth
 
 import {
   NewCourseRequest,
@@ -10,14 +10,13 @@ import {
   UpdateContentRequest,
   Course,
   Module,
-  Content,
   ContentResponse,
   UserProfile,
   UserCourse,
   CourseUser,
-  SubmitAnswerRequest,
 } from '@/types/backend-api';
 import { getBackendConfig } from '@/utils/config/backend';
+import { createClient } from '@/utils/supabase/client';
 
 export interface ApiResponse<T = any> {
   data?: T;
@@ -35,12 +34,28 @@ export class BackendApiClient {
   private baseUrl: string;
   private timeout: number;
   private retryAttempts: number;
+  private supabase;
 
   constructor() {
     const config = getBackendConfig();
     this.baseUrl = config.baseUrl;
     this.timeout = config.timeout;
     this.retryAttempts = config.retryAttempts;
+    this.supabase = createClient();
+  }
+
+  private async getAuthHeaders(): Promise<Record<string, string>> {
+    try {
+      const { data: { session } } = await this.supabase.auth.getSession();
+      if (session?.access_token) {
+        return {
+          'Authorization': `Bearer ${session.access_token}`,
+        };
+      }
+    } catch (error) {
+      console.warn('Failed to get auth token:', error);
+    }
+    return {};
   }
 
   private async request<T>(
@@ -50,9 +65,13 @@ export class BackendApiClient {
   ): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
     
+    // Get auth headers
+    const authHeaders = await this.getAuthHeaders();
+    
     const config: RequestInit = {
       headers: {
         'Content-Type': 'application/json',
+        ...authHeaders,
         ...options.headers,
       },
       ...options,
@@ -78,6 +97,12 @@ export class BackendApiClient {
           errorMessage = errorJson.message || errorJson.error || `HTTP ${response.status}`;
         } catch {
           errorMessage = errorText || `HTTP ${response.status}: ${response.statusText}`;
+        }
+        
+        // Handle authentication errors
+        if (response.status === 401) {
+          errorMessage = 'Authentication required. Please sign in again.';
+          // You might want to trigger a re-login here
         }
         
         const apiError: ApiError = {
@@ -146,112 +171,112 @@ export class BackendApiClient {
   }
 
   // Course operations
-  async createCourse(courseData: NewCourseRequest): Promise<Course> {
-    return this.post<Course>('/courses', courseData);
+  async createCourse(courseData: NewCourseRequest): Promise<number> {
+    return this.post<number>('/api/roster/add', courseData);
   }
 
   async getCourses(): Promise<Course[]> {
-    return this.get<Course[]>('/courses');
+    return this.get<Course[]>('/api/roster');
   }
 
-  async getCourseById(id: number): Promise<Course> {
-    return this.get<Course>(`/courses/${id}`);
+  async getCourseById(_id: number): Promise<Course> {
+    throw new Error('Individual course retrieval not supported by backend API. Use getCourses() instead.');
   }
 
-  async updateCourse(id: number, courseData: UpdateCourseRequest): Promise<Course> {
-    return this.put<Course>(`/courses/${id}`, courseData);
+  async updateCourse(id: number, courseData: UpdateCourseRequest): Promise<void> {
+    return this.put<void>(`/api/roster/update/${id}`, courseData);
   }
 
   async deleteCourse(id: number): Promise<void> {
-    return this.delete<void>(`/courses/${id}`);
+    return this.delete<void>(`/api/roster/delete/${id}`);
   }
 
-  // Module operations
-  async createModule(moduleData: NewModuleRequest): Promise<Module> {
-    return this.post<Module>('/modules', moduleData);
+  // Module operations - Now require courseId context
+  async createModule(courseData: NewModuleRequest): Promise<number> {
+    return this.post<number>(`/api/courses/${courseData.courseId}/add`, courseData);
   }
 
   async getModulesByCourse(courseId: number): Promise<Module[]> {
-    return this.get<Module[]>(`/modules/course/${courseId}`);
+    return this.get<Module[]>(`/api/courses/${courseId}`);
   }
 
-  async getModuleById(id: number): Promise<Module> {
-    return this.get<Module>(`/modules/${id}`);
+  async getModuleById(courseId: number, moduleId: number): Promise<Module> {
+    return this.get<Module>(`/api/courses/${courseId}/module/${moduleId}`);
   }
 
-  async updateModule(id: number, moduleData: UpdateModuleRequest): Promise<Module> {
-    return this.put<Module>(`/modules/${id}`, moduleData);
+  async updateModule(courseId: number, id: number, moduleData: UpdateModuleRequest): Promise<void> {
+    return this.put<void>(`/api/courses/${courseId}/delete/${id}`, moduleData);
   }
 
-  async deleteModule(id: number): Promise<void> {
-    return this.delete<void>(`/modules/${id}`);
+  async deleteModule(courseId: number, id: number): Promise<void> {
+    return this.delete<void>(`/api/courses/${courseId}/${id}`);
   }
 
   // User operations
   async validateUsernames(usernames: string[]): Promise<Record<string, boolean>> {
-    return this.post<Record<string, boolean>>('/users/validate', { usernames });
+    return this.post<Record<string, boolean>>('/api/users/validate', { usernames });
   }
 
   async searchUsersByUsernames(usernames: string[]): Promise<UserProfile[]> {
-    return this.post<UserProfile[]>('/users/search', { usernames });
+    return this.post<UserProfile[]>('/api/users/search', { usernames });
   }
 
   async getUserById(id: string): Promise<UserProfile> {
-    return this.get<UserProfile>(`/users/${id}`);
+    return this.get<UserProfile>(`/api/users/${id}`);
   }
 
   async getUserByUsername(username: string): Promise<UserProfile> {
-    return this.get<UserProfile>(`/users/username/${username}`);
+    return this.get<UserProfile>(`/api/users/username/${username}`);
   }
 
   // Course membership operations
   async addTeachersToCourse(courseId: number, usernames: string[]): Promise<void> {
-    return this.post<void>(`/course-memberships/course/${courseId}/teachers`, { usernames });
+    return this.post<void>(`/api/course-memberships/course/${courseId}/teachers`, { usernames });
   }
 
   async addStudentsToCourse(courseId: number, usernames: string[]): Promise<void> {
-    return this.post<void>(`/course-memberships/course/${courseId}/students`, { usernames });
+    return this.post<void>(`/api/course-memberships/course/${courseId}/students`, { usernames });
   }
 
   async getUserCourses(userId: string): Promise<UserCourse[]> {
-    return this.get<UserCourse[]>(`/course-memberships/user/${userId}/courses`);
+    return this.get<UserCourse[]>(`/api/course-memberships/user/${userId}/courses`);
   }
 
   async getCourseUsers(courseId: number): Promise<CourseUser[]> {
-    return this.get<CourseUser[]>(`/course-memberships/course/${courseId}/users`);
+    return this.get<CourseUser[]>(`/api/course-memberships/course/${courseId}/users`);
   }
 
   async removeUserFromCourse(courseId: number, userId: string): Promise<void> {
-    return this.delete<void>(`/course-memberships/course/${courseId}/users/${userId}`);
+    return this.delete<void>(`/api/course-memberships/course/${courseId}/users/${userId}`);
   }
 
   // Content operations
   async createContent(contentData: NewContentRequest): Promise<ContentResponse> {
-    return this.post<ContentResponse>('/content', contentData);
+    return this.post<ContentResponse>('/api/content', contentData);
   }
 
   async getContentByModule(moduleId: number): Promise<ContentResponse[]> {
-    return this.get<ContentResponse[]>(`/content/module/${moduleId}`);
+    return this.get<ContentResponse[]>(`/api/content/module/${moduleId}`);
   }
 
   async getContentById(id: number): Promise<ContentResponse> {
-    return this.get<ContentResponse>(`/content/${id}`);
+    return this.get<ContentResponse>(`/api/content/${id}`);
   }
 
   async updateContent(id: number, contentData: UpdateContentRequest): Promise<ContentResponse> {
-    return this.put<ContentResponse>(`/content/${id}`, contentData);
+    return this.put<ContentResponse>(`/api/content/${id}`, contentData);
   }
 
   async deleteContent(id: number): Promise<void> {
-    return this.delete<void>(`/content/${id}`);
+    return this.delete<void>(`/api/content/${id}`);
   }
 
   async markContentComplete(id: number): Promise<ContentResponse> {
-    return this.post<ContentResponse>(`/content/${id}/complete`);
+    return this.post<ContentResponse>(`/api/content/${id}/complete`);
   }
 
   async submitAnswer(id: number, answer: string): Promise<ContentResponse> {
-    return this.post<ContentResponse>(`/content/${id}/answer`, { answer });
+    return this.post<ContentResponse>(`/api/content/${id}/answer`, { answer });
   }
 }
 

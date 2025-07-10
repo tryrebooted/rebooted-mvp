@@ -1,17 +1,20 @@
 package rebootedmvp.dto;
 
+import rebootedmvp.User;
+
 public class UserCourseDTO {
     private Long id;
-    private String name;
-    private String description;
-    private String role;
+    private String title;
+    private String body;
+    private User.UserType role;
 
-    public UserCourseDTO() {}
+    public UserCourseDTO() {
+    }
 
-    public UserCourseDTO(Long id, String name, String description, String role) {
+    public UserCourseDTO(Long id, String title, String body, User.UserType role) {
         this.id = id;
-        this.name = name;
-        this.description = description;
+        this.title = title;
+        this.body = body;
         this.role = role;
     }
 
@@ -23,27 +26,27 @@ public class UserCourseDTO {
         this.id = id;
     }
 
-    public String getName() {
-        return name;
+    public String getTitle() {
+        return title;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setTitle(String title) {
+        this.title = title;
     }
 
-    public String getDescription() {
-        return description;
+    public String getBody() {
+        return body;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
+    public void setBody(String body) {
+        this.body = body;
     }
 
-    public String getRole() {
+    public User.UserType getRole() {
         return role;
     }
 
-    public void setRole(String role) {
+    public void setRole(User.UserType role) {
         this.role = role;
     }
 }

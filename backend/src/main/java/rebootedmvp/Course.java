@@ -1,29 +1,90 @@
 package rebootedmvp;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
-public interface Course extends GetAll<Module> {
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.DiscriminatorColumn;
+import jakarta.persistence.DiscriminatorType;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Inheritance;
+import jakarta.persistence.InheritanceType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.MapKey;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+import rebootedmvp.domain.impl.ModuleEntityImpl;
+import rebootedmvp.domain.impl.UserProfileImpl;
+
+@Entity
+@Inheritance(strategy = InheritanceType.JOINED) // or JOINED, TABLE_PER_CLASS
+// @DiscriminatorColumn(name = "course_type", discriminatorType =
+// DiscriminatorType.STRING)
+@Table(name = "courses")
+public abstract class Course implements InfoContainer<Module> {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    protected Long id;
+
+    @Column(nullable = false)
+    protected String title;
+
+    @Column(columnDefinition = "TEXT")
+    protected String body;
+
+    @Column(name = "created_at", updatable = false)
+    protected LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
+    protected LocalDateTime updatedAt;
+
+    // One-to-Many relationship with ModuleEntityImpl
+    // @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval =
+    // true, fetch = FetchType.LAZY)
+
+    // @MapKey(name = "id")
+    // instead of Map<Long,Module>:
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @MapKey(name = "id") // ← use the Module’s `@Id`
+    @JoinColumn(name = "course_id") // ← foreign key in MODULE table
+    protected Map<Long, Module> modules = new HashMap<>();
+
+    // Many-to-Many relationship for teachers
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = "course_teachers", joinColumns = @JoinColumn(name = "course_id"), inverseJoinColumns = @JoinColumn(name = "supabase_user_id"))
+    protected Set<User> teachers = new HashSet<>();
+
+    // Many-to-Many relationship for students
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = "course_students", joinColumns = @JoinColumn(name = "course_id"), inverseJoinColumns = @JoinColumn(name = "supabase_user_id"))
+    protected Set<User> students = new HashSet<>();
 
     /**
      * Returns A set of all L&D users who have access to the course Note: the
      * sets returned by get_teachers() and get_students() must be disjoint and
      * their union must be allUsers
      */
-    Set<User> get_teachers();
+    public abstract Set<User> getTeachers();
 
     /**
      * Returns A set of all student users who have access to the course Note:
      * the sets returned by get_teachers() and get_students() must be disjoint
      * and their union must be allUsers
      */
-    Set<User> get_students();
-
-    /**
-     * Returns an ordered array of the modules of the course
-     */
-    List<Module> get_modules();
+    public abstract Set<User> getStudents();
 
     /**
      * Returns the progress of user 'user' through this course. It must take
@@ -35,7 +96,7 @@ public interface Course extends GetAll<Module> {
      * the course.
      *
      */
-    double getProgress(User user) throws UnknownUserException;
+    public abstract double getProgress(User user) throws UnknownUserException;
 
     /**
      * Returns an ArrayList of ArrayLists of Booleans where each Boolean
@@ -45,7 +106,7 @@ public interface Course extends GetAll<Module> {
      * content of the 0th module has been completed. Throws:
      * UnknownUserException if 'user' does not have access to the course.
      */
-    ArrayList<ArrayList<Boolean>> getCompletion(User user) throws UnknownUserException;
+    public abstract List<List<Boolean>> getCompletion(User user) throws UnknownUserException;
 
     /**
      * Adds the user 'user' as a student of this course. If user was already a
@@ -53,19 +114,19 @@ public interface Course extends GetAll<Module> {
      * student return true. Otherwise return false. Requires: user is not null
      * Note: if 'user' is a teacher, they will not be added as a student
      */
-    boolean addStudent(User user);
+    public abstract boolean addStudent(User user);
 
     /**
      * Removes student user 'user' from being a student. Returns true if done
      * successfully Returns false if 'user' is not a student of this course and
      * the student collection remains unchanged
      */
-    boolean removeStudent(User user);
+    public abstract boolean removeStudent(User user);
 
     /**
      * Returns whether or not 'user' is a student in this course
      */
-    boolean isStudent(User user);
+    public abstract boolean isStudent(User user);
 
     /**
      * Adds the user 'user' as a teacher of this course. If user was already a
@@ -73,18 +134,18 @@ public interface Course extends GetAll<Module> {
      * teacher return true. Otherwise return false. Requires: user is not null
      * Note: if 'user' is a student, they will not be added as a teacher
      */
-    boolean addTeacher(User user);
+    public abstract boolean addTeacher(User user);
 
     /**
      * Removes teacher user 'user' from being a teacher. Returns true if done
      * successfully Returns false if 'user' is not a teacher of this course and
      * the teacher collection remains unchanged
      */
-    boolean removeTeacher(User user);
+    public abstract boolean removeTeacher(User user);
 
     /**
      * Returns whether or not 'user' is a teacher in this course
      */
-    boolean isTeacher(User user);
+    public abstract boolean isTeacher(User user);
 
 }

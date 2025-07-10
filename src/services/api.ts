@@ -5,7 +5,6 @@ import { backendApiClient } from '@/utils/api/backend-client';
 import {
   Course,
   Module,
-  Content,
   ContentResponse,
   UserProfile,
   UserCourse,
@@ -21,7 +20,7 @@ export class BackendApiService {
   
   // ================ Course Operations ================
   
-  async createCourse(courseData: NewCourseRequest): Promise<Course> {
+  async createCourse(courseData: NewCourseRequest): Promise<number> {
     return backendApiClient.createCourse(courseData);
   }
 
@@ -30,10 +29,15 @@ export class BackendApiService {
   }
 
   async getCourseById(id: number): Promise<Course> {
-    return backendApiClient.getCourseById(id);
+    const allCourses = await this.getCourses();
+    const course = allCourses.find(c => c.id === id);
+    if (!course) {
+      throw new Error(`Course with id ${id} not found`);
+    }
+    return course;
   }
 
-  async updateCourse(id: number, courseData: { name: string; description: string }): Promise<Course> {
+  async updateCourse(id: number, courseData: { title: string; body: string }): Promise<void> {
     return backendApiClient.updateCourse(id, courseData);
   }
 
@@ -43,7 +47,7 @@ export class BackendApiService {
 
   // ================ Module Operations ================
   
-  async createModule(moduleData: NewModuleRequest): Promise<Module> {
+  async createModule(moduleData: NewModuleRequest): Promise<number> {
     return backendApiClient.createModule(moduleData);
   }
 
@@ -51,16 +55,16 @@ export class BackendApiService {
     return backendApiClient.getModulesByCourse(courseId);
   }
 
-  async getModuleById(id: number): Promise<Module> {
-    return backendApiClient.getModuleById(id);
+  async getModuleById(courseId: number, moduleId: number): Promise<Module> {
+    return backendApiClient.getModuleById(courseId, moduleId);
   }
 
-  async updateModule(id: number, moduleData: { name: string; description: string; courseId: number }): Promise<Module> {
-    return backendApiClient.updateModule(id, moduleData);
+  async updateModule(courseId: number, id: number, moduleData: { title: string; body: string; courseId: number }): Promise<void> {
+    return backendApiClient.updateModule(courseId, id, moduleData);
   }
 
-  async deleteModule(id: number): Promise<void> {
-    return backendApiClient.deleteModule(id);
+  async deleteModule(courseId: number, id: number): Promise<void> {
+    return backendApiClient.deleteModule(courseId, id);
   }
 
   // ================ Content Operations ================

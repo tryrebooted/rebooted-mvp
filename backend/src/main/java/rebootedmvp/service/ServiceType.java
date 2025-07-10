@@ -6,28 +6,29 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Function;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
-import rebootedmvp.GetAll;
 import rebootedmvp.HasID;
+import rebootedmvp.InfoContainer;
 import rebootedmvp.dto.NewDTO;
 
 /**
  * This is an interface for a service object. It denotes the meaningful actions
  * that can be taken from this point. 'T' should be the type of the highest
- * level of abstraction that the implementation might have to consider. For
- * example, T in CourseService should be type Course. 'R' should be the type one
- * level lower than T. For example, if T is of type Course then 'R' should be of
- * type Module. Type 'Q' is the type of the new data DTO of type 'R'. For
- * example, if type 'T' is Course and R is 'Module', then 'Q' should be
- * 'NewModuleDTO'.
+ * level of abstraction that the implementation might have to consider (now
+ * called the higher level). For example, T in CourseService should be type
+ * Course. 'K' should be the type one level lower than T (now called the lower
+ * level). For example, if T is of type Course then 'K' should be of
+ * type Module. Types 'R' and 'Q' mus be the new DTO types of 'T' and 'K'
+ * repectively.
  */
-public abstract class ServiceType<T extends GetAll<K>, K extends HasID<K>, Q extends NewDTO> {
+public abstract class ServiceType<T extends InfoContainer<K>, R extends NewDTO, K extends HasID, Q extends NewDTO> {
 
     private final Map<Long, T> datas = new ConcurrentHashMap<>();
-    private final AtomicLong idGenerator = new AtomicLong(1);
+    private final AtomicLong idGenerator = new AtomicLong(0);
 
     /**
      * Returns a list of all the elements within all of the T's. For example, in
@@ -39,8 +40,7 @@ public abstract class ServiceType<T extends GetAll<K>, K extends HasID<K>, Q ext
         return data.stream()
                 .map((var elem) -> {
                     return elem.getAll();
-                }
-                ).flatMap(List::stream).toList();
+                }).flatMap(List::stream).toList();
     }
 
     /**
@@ -71,41 +71,87 @@ public abstract class ServiceType<T extends GetAll<K>, K extends HasID<K>, Q ext
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Nothing was found with that id"));
     }
 
-    public Long addNew(Long id, Q newData) {
+    /**
+     * Adds a new lower element to the collection of higher elements given by id
+     * 'highId'
+     * 
+     * @param highId  - The id of the higher level collection to add the ew element
+     *                to
+     * @param newData - A lower level newDTO of the information to add
+     * @return - the id of the new, added element
+     */
+    public Long addNew(Long highId, Q newData) {
         if (newData.getTitle() == null || newData.getTitle().trim().isEmpty()) {
             throw new IllegalArgumentException("The title must be supplied in the DTO");
         }
 
         Long newId = idGenerator.getAndIncrement();
-        T highLevel = datas.get(id);
+        T highLevel = datas.get(highId);
 
         K smallerGroup = highLevel.create(newId, newData.getTitle(), newData.getBody());
         highLevel.addSub(smallerGroup);
 
-        return id;
+        return newId;
     }
 
-    public void update(Long id, Q updateCourseDTO) {
-        T data = datas.get(id);
-        if (data == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Nothing was found with that id");
+    /**
+     * Creates a new higher level element.
+     * 
+     * @param newData
+     * @param constructor - A constructor for the new element. typically will just
+     *                    be an implementation of the higher element's constructor
+     *                    (i.e. RosterImpl::new for RosterService)
+     * @return - the id of the created element
+     */
+    public Long addToHigh(R newData, Function<R, T> constructor) {
+        if (newData.getTitle() == null || newData.getTitle().trim().isEmpty()) {
+            throw new IllegalArgumentException("The title must be supplied in the DTO");
         }
 
-        if (updateCourseDTO.getTitle() != null && !updateCourseDTO.getTitle().trim().isEmpty()) {
-            data.setTitle(updateCourseDTO.getTitle().trim());
+        Long newId = idGenerator.getAndIncrement();
+        T newObject = constructor.apply(newData); // 👈 uses lambda to create the object
+        datas.put(newId, newObject);
+        return newId;
+    }
+
+    /**
+     * Updates the lower element with id 'lowId' that is part of the higher
+     * collection with id 'highId' using the data in 'updateDTO'. Throws an HTML
+     * NOT_FOUND exception if there is not an element in a collection labeled
+     * 'highId' with label 'lowId'(i.e. if the element being looked for does not
+     * exist).
+     * 
+     * @param highId    - The id of the higher lever collection
+     * @param lowId     - The id of the lowe level collection
+     * @param updateDTO - A lower-level DTO of the information to replace
+     */
+    public void update(Long highId, Long lowId, Q updateDTO) throws ResponseStatusException {
+        T data = datas.get(highId);
+        K toUpdate = data.getAll()
+                .stream()
+                .filter(elem -> Objects.equals(elem.getId(), lowId))
+                .findAny()
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Nothing was found with that id"));
+
+        if (updateDTO.getTitle() != null && !updateDTO.getTitle().trim().isEmpty()) {
+            toUpdate.setTitle(updateDTO.getTitle().trim());
         }
-        if (updateCourseDTO.getBody() != null) {
-            data.setBody(updateCourseDTO.getBody());
+        if (updateDTO.getBody() != null) {
+            toUpdate.setBody(updateDTO.getBody());
         }
     }
 
-    public boolean delete(Long id) {
-        return datas.remove(id) != null;
+    /**
+     * Deletes the element with id 'lowId' from the collection given by the id
+     * 'highId'
+     * 
+     * @param highId - The
+     * @param lowId
+     * @return - True if the deletion was successful (i.e. if the specified element
+     *         existed to be deleted)
+     */
+    public boolean delete(Long highId, Long lowId) {
+        T data = datas.get(highId);
+        return data.removeSub(lowId);
     }
-
-    // /**
-    //  * Creates an instance of type T with id 'id', title 'title', and
-    //  * body/metadata 'body'
-    //  */
-    // public abstract T create(Long id, String title, String body);
 }

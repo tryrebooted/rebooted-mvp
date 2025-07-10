@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { QuestionContent, isQuestionContent } from '@/types/backend-api';
+import { QuestionContent } from '@/types/backend-api';
 
 interface QuestionContentBlockProps {
   content: QuestionContent;

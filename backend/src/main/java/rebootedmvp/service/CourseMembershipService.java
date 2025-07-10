@@ -1,122 +1,259 @@
 package rebootedmvp.service;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-import rebootedmvp.dto.CourseDTO;
+import org.springframework.transaction.annotation.Transactional;
+
+import rebootedmvp.User;
+import rebootedmvp.Course;
+import rebootedmvp.CourseMapper;
+import rebootedmvp.UserMapper;
+import rebootedmvp.domain.impl.CourseEntityImpl;
+import rebootedmvp.domain.impl.UserProfileImpl;
 import rebootedmvp.dto.CourseUserDTO;
 import rebootedmvp.dto.UserCourseDTO;
 import rebootedmvp.dto.UserProfileDTO;
-
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
+import rebootedmvp.repository.CourseRepository;
+import rebootedmvp.repository.UserProfileRepository;
 
 @Service
+@Transactional
 public class CourseMembershipService {
-    
-    // courseId -> userId -> role
-    private final Map<Long, Map<String, String>> courseMemberships = new ConcurrentHashMap<>();
-    
+
+    private static final Logger logger = LoggerFactory.getLogger(CourseMembershipService.class);
+
     @Autowired
     private UserProfileService userProfileService;
-    
+
+    @Autowired
+    private CourseRepository courseRepository;
+
+    @Autowired
+    private UserProfileRepository userProfileRepository;
+
     @Autowired
     @Lazy
     private CourseService courseService;
 
     public boolean addUserToCourse(Long courseId, String userId, String role) {
-        if (userProfileService.findById(userId) == null) {
+        logger.debug("Adding user {} to course {} with role {}", userId, courseId, role);
+
+        // Find the user
+        UserProfileDTO userDTO = userProfileService.findById(userId);
+        if (userDTO == null) {
+            logger.warn("User not found with ID: {}", userId);
             return false;
         }
-        
-        courseMemberships.computeIfAbsent(courseId, k -> new ConcurrentHashMap<>())
-                         .put(userId, role);
-        return true;
+
+        // Find the UserProfileImpl entity
+        Optional<User> userOpt = userProfileRepository.findBySupabaseUserId(userDTO.getId()).map(UserMapper::toDomain);
+        if (userOpt.isEmpty()) {
+            logger.warn("UserProfileImpl not found for ID: {}", userId);
+            return false;
+        }
+        User user = userOpt.get();
+
+        // Find the course
+        Optional<Course> courseOpt = courseRepository.findById(courseId).map(CourseMapper::toDomain);
+        if (courseOpt.isEmpty()) {
+            logger.warn("Course not found with ID: {}", courseId);
+            return false;
+        }
+        Course course = courseOpt.get();
+
+        // Add user to appropriate role
+        if ("teacher".equals(role)) {
+
+            course.addTeacher(user);
+            courseRepository.save(CourseMapper.toEntity(course));
+            logger.info("Successfully added user {} to course {} as {}", userId, courseId, role);
+            return true;
+
+        } else if ("student".equals(role)) {
+            course.addStudent(user);
+            courseRepository.save(CourseMapper.toEntity(course));
+            logger.info("Successfully added user {} to course {} as {}", userId, courseId, role);
+            return true;
+        }
+        return false;
     }
 
     public boolean removeUserFromCourse(Long courseId, String userId) {
-        Map<String, String> courseUsers = courseMemberships.get(courseId);
-        if (courseUsers == null) {
+        logger.debug("Removing user {} from course {}", userId, courseId);
+
+        // Find the user
+        UserProfileDTO userDTO = userProfileService.findById(userId);
+        if (userDTO == null) {
+            logger.warn("User not found with ID: {}", userId);
             return false;
         }
-        return courseUsers.remove(userId) != null;
+
+        // Find the UserProfileImpl entity
+        Optional<User> userOpt = userProfileRepository.findBySupabaseUserId(userDTO.getId()).map(UserMapper::toDomain);
+        if (userOpt.isEmpty()) {
+            logger.warn("UserProfileImpl not found for ID: {}", userId);
+            return false;
+        }
+        User user = userOpt.get();
+
+        // Find the course
+        Optional<Course> courseOpt = courseRepository.findById(courseId).map(CourseMapper::toDomain);
+        if (courseOpt.isEmpty()) {
+            logger.warn("Course not found with ID: {}", courseId);
+            return false;
+        }
+        Course course = courseOpt.get();
+
+        // Remove user from both roles
+        boolean removedAsTeacher = course.removeTeacher(user);
+        boolean removedAsStudent = course.removeStudent(user);
+
+        if (removedAsTeacher || removedAsStudent) {
+            courseRepository.save(CourseMapper.toEntity(course));
+            logger.info("Successfully removed user {} from course {}", userId, courseId);
+            return true;
+        }
+        return false;
+
     }
 
+    @Transactional(readOnly = true)
     public List<CourseUserDTO> getCourseUsers(Long courseId) {
-        Map<String, String> courseUsers = courseMemberships.get(courseId);
-        if (courseUsers == null) {
+        logger.debug("Getting users for course {}", courseId);
+
+        Optional<Course> courseOpt = courseRepository.findById(courseId).map(CourseMapper::toDomain);
+        if (courseOpt.isEmpty()) {
+            logger.warn("Course not found with ID: {}", courseId);
             return List.of();
         }
 
-        return courseUsers.entrySet().stream()
-                .map(entry -> {
-                    String userId = entry.getKey();
-                    String role = entry.getValue();
-                    UserProfileDTO user = userProfileService.findById(userId);
-                    return new CourseUserDTO(courseId, userId, role, 
-                                           user != null ? user.getUsername() : null,
-                                           user != null ? user.getFullName() : null);
-                })
-                .collect(Collectors.toList());
+        Course course = courseOpt.get();
+
+        List<CourseUserDTO> result = Stream.concat(
+                course.getStudents().stream(),
+                course.getTeachers().stream())
+                .collect(Collectors.toSet()).stream()
+                .map(elem -> new CourseUserDTO(courseId, elem.getSupabaseUserId(), elem.getUserType(),
+                        elem.getUsername()))
+                .toList();
+
+        // Add teachers
+
+        logger.debug("Found {} users for course {}", result.size(), courseId);
+        return result;
     }
 
+    @Transactional(readOnly = true)
     public List<UserCourseDTO> getUserCourses(String userId) {
-        // Handle both username and UUID-based lookups
-        final String actualUserId;
-        
-        // Check if the provided userId is actually a username
-        UserProfileDTO userByUsername = userProfileService.findByUsername(userId);
-        if (userByUsername != null) {
-            actualUserId = userByUsername.getId();
-        } else {
-            actualUserId = userId;
+        logger.info("===== CourseMembershipService.getUserCourses() START =====");
+        logger.info("Input userId: '{}'", userId);
+
+        try {
+
+            Optional<User> userOpt = userProfileRepository.findBySupabaseUserId(userId).map(UserMapper::toDomain);
+
+            if (!userOpt.isPresent()) {
+                logger.warn("User not found: {}", userId);
+                return List.of();
+            }
+            User user = userOpt.get();
+            logger.info("User '{}' found as username, mapped to entity ID: '{}'", userId,
+                    user.getSupabaseUserId());
+            logger.debug("Step 2: Finding courses for user entity ID: '{}'", user.getSupabaseUserId());
+
+            // Find courses where user is either teacher or student
+            Stream<Course> courses = courseRepository.findCoursesByUserId(user.getSupabaseUserId())
+                    .stream()
+                    .map(CourseMapper::toDomain);
+
+            List<UserCourseDTO> courseDTOs = courses.map(elem -> new UserCourseDTO(elem.getId(), elem.getTitle(),
+                    elem.getBody(), elem.isStudent(user) ? User.UserType.EmployeeUser : User.UserType.LDUser)).toList();
+
+            logger.info("===== CourseMembershipService.getUserCourses() SUCCESS =====");
+            logger.info("Returning {} courses for user '{}'", courseDTOs.size(), userId);
+            logger.debug("Final result: {}", courseDTOs);
+
+            return courseDTOs;
+
+        } catch (Exception e) {
+            logger.error("===== CourseMembershipService.getUserCourses() ERROR =====");
+            logger.error("Error processing getUserCourses for user '{}': {}", userId, e.getMessage(), e);
+            throw e;
         }
-        
-        return courseMemberships.entrySet().stream()
-                .filter(entry -> entry.getValue().containsKey(actualUserId))
-                .map(entry -> {
-                    Long courseId = entry.getKey();
-                    String role = entry.getValue().get(actualUserId);
-                    CourseDTO course = courseService.findById(courseId);
-                    return course != null ? 
-                           new UserCourseDTO(courseId, course.getName(), course.getDescription(), role) : 
-                           null;
-                })
-                .filter(course -> course != null)
-                .collect(Collectors.toList());
     }
 
     public boolean addUsersByCourse(Long courseId, List<String> usernames, String role) {
-        List<UserProfileDTO> users = userProfileService.findByUsernames(usernames);
-        if (users.size() != usernames.size()) {
+        logger.debug("Adding {} users to course {} with role {}", usernames.size(), courseId, role);
+
+        // Find all users first
+        List<UserProfileDTO> userDTOs = userProfileService.findByUsernames(usernames);
+        if (userDTOs.size() != usernames.size()) {
+            logger.warn("Some users not found. Expected: {}, Found: {}", usernames.size(), userDTOs.size());
             return false; // Some users don't exist
         }
 
-        Map<String, String> courseUsers = courseMemberships.computeIfAbsent(courseId, k -> new ConcurrentHashMap<>());
-        users.forEach(user -> courseUsers.put(user.getId(), role));
-        
+        // Find the course
+        Optional<Course> courseOpt = courseRepository.findById(courseId).map(CourseMapper::toDomain);
+        if (courseOpt.isEmpty()) {
+            logger.warn("Course not found with ID: {}", courseId);
+            return false;
+        }
+        Course course = courseOpt.get();
+
+        // Find all User entities
+        List<User> users = new ArrayList<>();
+        for (UserProfileDTO userDTO : userDTOs) {
+            Optional<User> userOpt = userProfileRepository.findBySupabaseUserId(userDTO.getId())
+                    .map(UserMapper::toDomain);
+            if (userOpt.isEmpty()) {
+                logger.warn("User not found for ID: {}", userDTO.getId());
+                return false;
+            }
+            users.add(userOpt.get());
+        }
+
+        // Add users to appropriate role
+        for (User user : users) {
+            if ("teacher".equals(role)) {
+                course.addTeacher(user);
+            } else if ("student".equals(role)) {
+                course.addStudent(user);
+            }
+
+            courseRepository.save(CourseMapper.toEntity(course));
+            logger.info("Successfully added {} users to course {} as {}", users.size(), courseId, role);
+        }
         return true;
+
     }
-    
+
+    @Transactional(readOnly = true)
     public int getTeacherCount(Long courseId) {
-        Map<String, String> courseUsers = courseMemberships.get(courseId);
-        if (courseUsers == null) {
+        Optional<Course> courseOpt = courseRepository.findById(courseId).map(CourseMapper::toDomain);
+        if (courseOpt.isEmpty()) {
             return 0;
         }
-        return (int) courseUsers.values().stream()
-                .filter(role -> "teacher".equals(role))
-                .count();
+        return courseOpt.get().getTeachers().size();
     }
-    
+
+    @Transactional(readOnly = true)
+
     public int getStudentCount(Long courseId) {
-        Map<String, String> courseUsers = courseMemberships.get(courseId);
-        if (courseUsers == null) {
+        Optional<Course> courseOpt = courseRepository.findById(courseId).map(CourseMapper::toDomain);
+        if (courseOpt.isEmpty()) {
             return 0;
         }
-        return (int) courseUsers.values().stream()
-                .filter(role -> "student".equals(role))
-                .count();
+        return courseOpt.get().getStudents().size();
     }
 }
