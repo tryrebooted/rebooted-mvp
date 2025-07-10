@@ -17,10 +17,12 @@ import { Badge } from "@/components/ui/badge";
 import { Users, BookOpen, BarChart3, Plus, CheckCircle } from "lucide-react";
 import { Toaster } from "@/components/ui/sonner";
 import {toast} from "sonner"
+import { useRouter } from "next/navigation";
 
 const TeacherDashboard: React.FC = () => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [recentCourses, setRecentCourses] = useState<CourseFormData[]>([]);
+  const router = useRouter();
 
   const handleCourseCreated = (courseData: CourseFormData) => {
     setRecentCourses((prev) => [courseData, ...prev.slice(0, 2)]);
@@ -30,6 +32,8 @@ const TeacherDashboard: React.FC = () => {
       duration: 5000,
     });
   };
+
+
 
   return (
     <Layout>
@@ -44,10 +48,18 @@ const TeacherDashboard: React.FC = () => {
               Manage your courses and track student progress
             </p>
           </div>
-          <Button onClick={() => setIsCreateDialogOpen(true)}>
-            <Plus className="h-4 w-4 mr-2 " />
-            Create Course
-          </Button>
+          <div className="flex gap-2">
+            {/* <Button onClick={() => setIsCreateDialogOpen(true)}>
+             */}
+            <Button onClick={() => router.push('/create-course')}>
+              <Plus className="h-4 w-4 mr-2 " />
+              Create Course
+            </Button>
+            <Button onClick={() => router.push('/ai-course-generation')}>
+              <Plus className="h-4 w-4 mr-2 " />
+              AI Course Generation
+            </Button>
+          </div>
         </div>
 
         {/* Quick Stats */}
@@ -182,7 +194,8 @@ const TeacherDashboard: React.FC = () => {
                   : "Click the 'Create Course' button to design your first learning program."}
               </p>
               {recentCourses.length === 0 && (
-                <Button onClick={() => setIsCreateDialogOpen(true)}>
+                // <Button onClick={() => setIsCreateDialogOpen(true)}>
+                <Button onClick={() => router.push('create-course')}>
                   <Plus className="h-4 w-4 mr-2" />
                   Create Your First Course
                 </Button>
