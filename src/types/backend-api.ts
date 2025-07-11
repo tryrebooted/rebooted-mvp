@@ -4,24 +4,24 @@
 // ================ Request Types ================
 
 export interface NewCourseRequest {
-  title: string;
-  body: string;
+  name: string;
+  description: string;
 }
 
 export interface UpdateCourseRequest {
-  title: string;
-  body: string;
+  name: string;
+  description: string;
 }
 
 export interface NewModuleRequest {
-  title: string;
-  body: string;
+  name: string;
+  description: string;
   courseId: number;
 }
 
 export interface UpdateModuleRequest {
-  title: string;
-  body: string;
+  name: string;
+  description: string;
   courseId: number;
 }
 
@@ -65,8 +65,8 @@ export interface SubmitAnswerRequest {
 
 export interface Course {
   id: number;
-  title: string;
-  body: string;
+  name: string;
+  description: string;
   teacherCount?: number;
   studentCount?: number;
   moduleCount?: number;
@@ -76,8 +76,8 @@ export interface Course {
 
 export interface Module {
   id: number;
-  title: string;
-  body: string;
+  name: string;
+  description: string;
   courseId: number;
   progress?: number;
   contentCount?: number;
@@ -127,10 +127,11 @@ export interface UserProfile {
 
 export interface UserCourse {
   id: number;
-  title: string;
-  body: string;
+  name: string;
+  description: string;
   role: 'teacher' | 'student';
   createdAt?: string;
+  progress?: number;
 }
 
 export interface CourseUser {
@@ -148,19 +149,19 @@ export interface CourseUser {
 
 export interface LegacyCourse {
   id: string; // Supabase uses UUID strings
-  title: string;
-  body: string;
+  name: string;
+  description: string;
   created_at?: string;
   updated_at?: string;
   // Additional fields from Supabase that may exist
-  userId?: string;
-  isPublic?: boolean;
+  user_id?: string;
+  is_public?: boolean;
 }
 
 export interface LegacyModule {
   id: string; // Supabase uses UUID strings
-  title: string; // Note: Supabase uses 'title' vs backend 'title'
-  body?: string;
+  title: string; // Note: Supabase uses 'title' vs backend 'name'
+  description?: string;
   course_id: string; // Supabase foreign key
   created_at?: string;
   updated_at?: string;
@@ -170,11 +171,11 @@ export interface LegacyModule {
 export interface LegacyUser {
   id: string;
   username: string;
-  fullName?: string;
-  userType?: string;
+  full_name?: string;
+  user_type?: string;
   email?: string;
-  createdAt?: string;
-  updatedAt?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 // ================ Utility Types ================
@@ -208,8 +209,8 @@ export interface MigrationConfig {
   rollbackCreateCourse: boolean;
 }
 
-// ================ Legacy Frontend Types ================
-// These maintain compatibility with existing frontend components
+// ================ Frontend Component Types ================
+// Types specifically for frontend components during migration
 
 export interface LDUser {
   username: string;
@@ -230,14 +231,14 @@ export interface CourseModule {
   contentBlocks: ContentBlock[];
 }
 
-// ================ Migration Support Types ================
+// ================ Data Mapping Types ================
 
 export interface DataMappingConfig {
   // ID mappings (UUID strings -> numbers)
   idMappings: {
     [supabaseId: string]: number;
   };
-
+  
   // Field name mappings
   fieldMappings: {
     supabaseField: string;
@@ -247,9 +248,9 @@ export interface DataMappingConfig {
 
 // ================ Error Handling Types ================
 
-export type ApiErrorType =
+export type ApiErrorType = 
   | 'NETWORK_ERROR'
-  | 'VALIDATION_ERROR'
+  | 'VALIDATION_ERROR' 
   | 'NOT_FOUND'
   | 'UNAUTHORIZED'
   | 'SERVER_ERROR'
@@ -265,7 +266,7 @@ export interface DetailedApiError {
 
 // ================ Union Types for Type Safety ================
 
-export type BackendRequestTypes =
+export type BackendRequestTypes = 
   | NewCourseRequest
   | UpdateCourseRequest
   | NewModuleRequest
@@ -277,7 +278,7 @@ export type BackendRequestTypes =
   | AddUsersRequest
   | SubmitAnswerRequest;
 
-export type BackendResponseTypes =
+export type BackendResponseTypes = 
   | Course
   | Module
   | Content
@@ -286,7 +287,7 @@ export type BackendResponseTypes =
   | UserCourse
   | CourseUser;
 
-export type LegacySupabaseTypes =
+export type LegacySupabaseTypes = 
   | LegacyCourse
   | LegacyModule
   | LegacyUser; 

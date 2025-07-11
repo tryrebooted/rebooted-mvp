@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { apiService } from '@/services/api';
-import { useUser } from '@/contexts/UserContext';
+import { mockAuth } from '@/contexts/UserContext';
 import { Course, Module } from '@/types/backend-api';
 import ContentBlockList from '@/components/content/ContentBlockList';
 import ContentCreator from '@/components/content/ContentCreator';
@@ -12,7 +12,6 @@ export default function ModifyCoursePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const courseId = searchParams.get('id');
-  const { user, loading: authLoading } = useUser();
 
   const [course, setCourse] = useState<Course | null>(null);
   const [modules, setModules] = useState<Module[]>([]);
@@ -22,8 +21,8 @@ export default function ModifyCoursePage() {
   
   // Editing state
   const [isEditing, setIsEditing] = useState(false);
-  const [editedTitle, setEditedTitle] = useState('');
-  const [editedBody, setEditedBody] = useState('');
+  const [editedName, setEditedName] = useState('');
+  const [editedDescription, setEditedDescription] = useState('');
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
@@ -32,8 +31,8 @@ export default function ModifyCoursePage() {
 
   // Module creation state
   const [showModuleCreator, setShowModuleCreator] = useState(false);
-  const [newModuleTitle, setNewModuleTitle] = useState('');
-  const [newModuleBody, setNewModuleBody] = useState('');
+  const [newModuleName, setNewModuleName] = useState('');
+  const [newModuleDescription, setNewModuleDescription] = useState('');
   const [creatingModule, setCreatingModule] = useState(false);
   const [moduleCreationError, setModuleCreationError] = useState<string | null>(null);
 
@@ -44,58 +43,26 @@ export default function ModifyCoursePage() {
       return;
     }
 
-    const loadData = async () => {
-      // Wait for auth to finish loading
-      if (authLoading) return;
-      
-      // If no user, redirect to login
-      if (!user) {
-        router.push('/login');
-        return;
-      }
-
-      try {
-        setLoading(true);
-        setError(null);
-
-        // Fetch course basic info
-        const courseData = await apiService.getCourseById(parseInt(courseId!));
-        setCourse(courseData);
-
-        // Fetch modules for this course
-        const modulesData = await apiService.getModulesByCourseId(parseInt(courseId!));
-        setModules(modulesData);
-
-      } catch (err) {
-        console.error('Error loading course data:', err);
-        setError(err instanceof Error ? err.message : 'Failed to load course');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadData();
-  }, [courseId, user, authLoading, router]);
+    loadCourseData();
+  }, [courseId]);
 
   const loadCourseData = async () => {
-    // Wait for auth to finish loading
-    if (authLoading) return;
-    
-    // If no user, redirect to login
-    if (!user) {
-      router.push('/login');
-      return;
-    }
-
     try {
       setLoading(true);
       setError(null);
 
+      // Get current user to check permissions
+      const { data: { user }, error: userError } = await mockAuth.getUser();
+      if (userError || !user) {
+        router.push('/login');
+        return;
+      }
+
       // Fetch course basic info
       const courseData = await apiService.getCourseById(parseInt(courseId!));
       setCourse(courseData);
-      setEditedTitle(courseData.title);
-      setEditedBody(courseData.body);
+      setEditedName(courseData.name);
+      setEditedDescription(courseData.description);
 
       // Fetch modules for this course
       const modulesData = await apiService.getModulesByCourseId(parseInt(courseId!));
@@ -121,8 +88,8 @@ export default function ModifyCoursePage() {
 
   const handleCancelEdit = () => {
     if (course) {
-      setEditedTitle(course.title);
-      setEditedBody(course.body);
+      setEditedName(course.name);
+      setEditedDescription(course.description);
     }
     setIsEditing(false);
     setSaveError(null);
@@ -132,8 +99,8 @@ export default function ModifyCoursePage() {
     if (!courseId || !course) return;
 
     // Validation
-    if (!editedTitle.trim()) {
-      setSaveError('Course title is required');
+    if (!editedName.trim()) {
+      setSaveError('Course name is required');
       return;
     }
 
@@ -141,17 +108,12 @@ export default function ModifyCoursePage() {
       setSaving(true);
       setSaveError(null);
 
-      await apiService.updateCourse(parseInt(courseId), {
-        title: editedTitle.trim(),
-        body: editedBody.trim()
+      const updatedCourse = await apiService.updateCourse(parseInt(courseId), {
+        name: editedName.trim(),
+        description: editedDescription.trim()
       });
 
-      // Update the local course state with the edited values
-      setCourse(prev => prev ? {
-        ...prev,
-        title: editedTitle.trim(),
-        body: editedBody.trim()
-      } : null);
+      setCourse(updatedCourse);
       setIsEditing(false);
     } catch (err) {
       console.error('Error updating course:', err);
@@ -162,8 +124,8 @@ export default function ModifyCoursePage() {
   };
 
   const handleCreateModule = async () => {
-    if (!courseId || !newModuleTitle.trim()) {
-      setModuleCreationError('Module title is required');
+    if (!courseId || !newModuleName.trim()) {
+      setModuleCreationError('Module name is required');
       return;
     }
 
@@ -172,14 +134,14 @@ export default function ModifyCoursePage() {
       setModuleCreationError(null);
 
       await apiService.createModule({
-        title: newModuleTitle.trim(),
-        body: newModuleBody.trim(),
+        name: newModuleName.trim(),
+        description: newModuleDescription.trim(),
         courseId: parseInt(courseId)
       });
 
       // Reset form
-      setNewModuleTitle('');
-      setNewModuleBody('');
+      setNewModuleName('');
+      setNewModuleDescription('');
       setShowModuleCreator(false);
       
       // Refresh data
@@ -194,8 +156,8 @@ export default function ModifyCoursePage() {
 
   const handleCancelModuleCreation = () => {
     setShowModuleCreator(false);
-    setNewModuleTitle('');
-    setNewModuleBody('');
+    setNewModuleName('');
+    setNewModuleDescription('');
     setModuleCreationError(null);
   };
 
@@ -229,12 +191,11 @@ export default function ModifyCoursePage() {
     handleContentUpdate(); // Refresh the content list
   };
 
-  // Show loading while auth is loading or data is loading
-  if (authLoading || loading) {
+  if (loading) {
     return (
       <div style={{ 
         padding: '20px',
-        maxWidth: '800px',
+        maxWidth: '1200px',
         margin: '0 auto',
         backgroundColor: '#ffffff',
         minHeight: '100vh',
@@ -250,7 +211,7 @@ export default function ModifyCoursePage() {
     return (
       <div style={{ 
         padding: '20px',
-        maxWidth: '800px',
+        maxWidth: '1200px',
         margin: '0 auto',
         backgroundColor: '#ffffff',
         minHeight: '100vh',
@@ -284,14 +245,10 @@ export default function ModifyCoursePage() {
     );
   }
 
-  if (!user) {
-    return null; // Will redirect to login
-  }
-
   return (
     <div style={{ 
       padding: '20px',
-      maxWidth: '800px',
+      maxWidth: '1200px',
       margin: '0 auto',
       backgroundColor: '#ffffff',
       minHeight: '100vh',
@@ -351,8 +308,8 @@ export default function ModifyCoursePage() {
                 <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
                     <div style={{ flex: 1 }}>
-                      <h2 style={{ marginBottom: '10px', color: '#171717' }}>{course.title}</h2>
-                      <p style={{ color: '#666', marginBottom: '0' }}>{course.body}</p>
+                      <h2 style={{ marginBottom: '10px', color: '#171717' }}>{course.name}</h2>
+                      <p style={{ color: '#666', marginBottom: '0' }}>{course.description}</p>
                     </div>
                     <button
                       onClick={handleEditClick}
@@ -390,14 +347,14 @@ export default function ModifyCoursePage() {
                   )}
 
                   <div style={{ marginBottom: '15px' }}>
-                    <label htmlFor="courseTitle" style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', color: '#171717' }}>
-                      Course Title:
+                    <label htmlFor="courseName" style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', color: '#171717' }}>
+                      Course Name:
                     </label>
                     <input 
                       type="text" 
-                      id="courseTitle" 
-                      value={editedTitle}
-                      onChange={(e) => setEditedTitle(e.target.value)}
+                      id="courseName" 
+                      value={editedName}
+                      onChange={(e) => setEditedName(e.target.value)}
                       required
                       style={{ 
                         width: '100%',
@@ -411,13 +368,13 @@ export default function ModifyCoursePage() {
                   </div>
 
                   <div style={{ marginBottom: '20px' }}>
-                    <label htmlFor="courseBody" style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', color: '#171717' }}>
+                    <label htmlFor="courseDescription" style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', color: '#171717' }}>
                       Course Description:
                     </label>
                     <textarea 
-                      id="courseBody" 
-                      value={editedBody}
-                      onChange={(e) => setEditedBody(e.target.value)}
+                      id="courseDescription" 
+                      value={editedDescription}
+                      onChange={(e) => setEditedDescription(e.target.value)}
                       rows={4}
                       style={{ 
                         width: '100%',
@@ -434,14 +391,14 @@ export default function ModifyCoursePage() {
                   <div style={{ display: 'flex', gap: '10px' }}>
                     <button
                       onClick={handleSave}
-                      disabled={saving || !editedTitle.trim()}
+                      disabled={saving || !editedName.trim()}
                       style={{
                         padding: '10px 20px',
-                        backgroundColor: saving || !editedTitle.trim() ? '#6c757d' : '#28a745',
+                        backgroundColor: saving || !editedName.trim() ? '#6c757d' : '#28a745',
                         color: 'white',
                         border: 'none',
                         borderRadius: '4px',
-                        cursor: saving || !editedTitle.trim() ? 'not-allowed' : 'pointer'
+                        cursor: saving || !editedName.trim() ? 'not-allowed' : 'pointer'
                       }}
                     >
                       {saving ? 'Saving...' : 'Save Changes'}
@@ -511,11 +468,11 @@ export default function ModifyCoursePage() {
 
                     <input
                       type="text"
-                      placeholder="Module title"
-                      value={newModuleTitle}
-                      onChange={(e) => setNewModuleTitle(e.target.value)}
+                      placeholder="Module name"
+                      value={newModuleName}
+                      onChange={(e) => setNewModuleName(e.target.value)}
                       onKeyDown={(e) => {
-                        if (e.key === 'Enter' && newModuleTitle.trim()) {
+                        if (e.key === 'Enter' && newModuleName.trim()) {
                           handleCreateModule();
                         } else if (e.key === 'Escape') {
                           handleCancelModuleCreation();
@@ -535,8 +492,8 @@ export default function ModifyCoursePage() {
                     
                     <textarea
                       placeholder="Module description (optional)"
-                      value={newModuleBody}
-                      onChange={(e) => setNewModuleBody(e.target.value)}
+                      value={newModuleDescription}
+                      onChange={(e) => setNewModuleDescription(e.target.value)}
                       onKeyDown={(e) => {
                         if (e.key === 'Escape') {
                           handleCancelModuleCreation();
@@ -558,14 +515,14 @@ export default function ModifyCoursePage() {
                     <div style={{ display: 'flex', gap: '10px' }}>
                       <button
                         onClick={handleCreateModule}
-                        disabled={creatingModule || !newModuleTitle.trim()}
+                        disabled={creatingModule || !newModuleName.trim()}
                         style={{
                           padding: '8px 16px',
-                          backgroundColor: creatingModule || !newModuleTitle.trim() ? '#6c757d' : '#007cba',
+                          backgroundColor: creatingModule || !newModuleName.trim() ? '#6c757d' : '#007cba',
                           color: 'white',
                           border: 'none',
                           borderRadius: '4px',
-                          cursor: creatingModule || !newModuleTitle.trim() ? 'not-allowed' : 'pointer'
+                          cursor: creatingModule || !newModuleName.trim() ? 'not-allowed' : 'pointer'
                         }}
                       >
                         {creatingModule ? 'Creating...' : 'Create Module'}
@@ -604,10 +561,10 @@ export default function ModifyCoursePage() {
                       >
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <div>
-                            <strong>{index + 1}. {module.title}</strong>
-                            {module.body && (
+                            <strong>{index + 1}. {module.name}</strong>
+                            {module.description && (
                               <p style={{ margin: '5px 0 0 0', color: '#666', fontSize: '14px' }}>
-                                {module.body}
+                                {module.description}
                               </p>
                             )}
                           </div>
@@ -668,7 +625,7 @@ export default function ModifyCoursePage() {
               {/* Content Block List */}
               <ContentBlockList
                 moduleId={selectedModuleId}
-                moduleTitle={modules.find(m => m.id === selectedModuleId)?.title}
+                moduleName={modules.find(m => m.id === selectedModuleId)?.name}
                 isInteractive={true}
                 onContentUpdate={handleContentUpdate}
               />

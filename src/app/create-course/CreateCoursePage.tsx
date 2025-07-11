@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { apiService } from '@/services/api';
-import { useUser } from '@/contexts/UserContext';
+import { mockAuth } from '@/contexts/UserContext';
 
 interface ContentBlock {
   id: string;
@@ -26,7 +26,6 @@ interface LDUser {
 
 export default function CreateCoursePage() {
   const router = useRouter();
-  const { user, loading: authLoading } = useUser();
   const [courseTitle, setCourseTitle] = useState('');
   const [courseDescription, setCourseDescription] = useState('');
   const [teachers, setTeachers] = useState<LDUser[]>([]);
@@ -37,12 +36,6 @@ export default function CreateCoursePage() {
   const [newModuleTitle, setNewModuleTitle] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const validateForm = () => {
-    if (!courseTitle.trim() || !courseDescription.trim()) {
-      return false;
-    }
-    return true;
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,17 +43,15 @@ export default function CreateCoursePage() {
     setError(null);
 
     try {
-      // Wait for auth to finish loading
-      if (authLoading) return;
-      
-      // If no user, redirect to login
-      if (!user) {
-        router.push('/login');
-        return;
+      // Validate required fields
+      if (!courseTitle.trim() || !courseDescription.trim()) {
+        throw new Error('Course title and description are required');
       }
 
-      if (!validateForm()) {
-        return;
+      // Get current user
+      const { data: { user }, error: userError } = await mockAuth.getUser();
+      if (userError || !user) {
+        throw new Error('You must be logged in to create a course');
       }
 
       // Validate that all teacher/student usernames exist
@@ -75,17 +66,19 @@ export default function CreateCoursePage() {
       }
 
       // Create the course
-      const courseId = await apiService.createCourse({
-        title: courseTitle.trim(),
-        body: courseDescription.trim()
+      const courseData = await apiService.createCourse({
+        name: courseTitle.trim(),
+        description: courseDescription.trim()
       });
+
+      const courseId = courseData.id;
 
       // Create modules if any
       if (modules.length > 0) {
-        for (const moduleData of modules) {
+        for (const module of modules) {
           await apiService.createModule({
-            title: moduleData.title,
-            body: '',
+            name: module.title,
+            description: '',
             courseId: courseId
           });
         }
@@ -103,8 +96,8 @@ export default function CreateCoursePage() {
         await apiService.addStudentsToCourse(courseId, studentUsernames);
       }
 
-      // Add current user as teacher if not already added  
-      const currentUsername = user.email?.split('@')[0]; // Extract username from email
+      // Add current user as teacher if not already added
+      const currentUsername = user.user_metadata?.preferred_username;
       const currentUserIsTeacher = teachers.some(t => t.username === currentUsername);
       if (!currentUserIsTeacher && currentUsername) {
         await apiService.addTeachersToCourse(courseId, [currentUsername]);
