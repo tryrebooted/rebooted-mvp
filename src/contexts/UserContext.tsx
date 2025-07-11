@@ -11,7 +11,7 @@ export interface SupabaseUser extends User {
 // Auth data structure matching Supabase
 export interface AuthData {
   user: SupabaseUser | null;
-
+}
 // Mock user type to replace Supabase user
 export interface MockUser {
   id: string;

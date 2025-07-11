@@ -1,14 +1,23 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
 import { useUser } from '@/contexts/UserContext'
+import { apiService } from '@/services/api'
 import TeacherDashboard from './TeacherDashboard'
 import StudentDashboard from './StudentDashboard'
+import SignOutButton from './SignOutButton'
+
+interface Course {
+  id: number
+  title: string
+  body: string
+  role: 'teacher' | 'student'
+}
 
 export default function DashboardPage() {
-  const { user } = useUser()
-  const router = useRouter()
   const { user, loading: authLoading } = useUser()
+  const router = useRouter()
   const [courses, setCourses] = useState<Course[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -98,58 +107,60 @@ export default function DashboardPage() {
 
   // Show loading while auth is loading or data is loading
   if (authLoading || loading) {
-
-    if (!user) {
-      // This is a fallback for while the user context is loading.
-      // The UserProvider should redirect if the user is not authenticated.
-      return (
-        <div style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          minHeight: '100vh',
-          backgroundColor: '#ffffff'
-        }}>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{
-              border: '3px solid #f3f3f3',
-              borderTop: '3px solid #4285f4',
-              borderRadius: '50%',
-              width: '30px',
-              height: '30px',
-              animation: 'spin 1s linear infinite',
-              margin: '0 auto 20px'
-            }} />
-            <p style={{ color: '#666' }}>Loading dashboard...</p>
-          </div>
-          <style jsx>{`
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-          }
-        `}</style>
-        </div>
-      )
-    }
-
-    if (user.role === 'teacher') {
-      return <TeacherDashboard />
-    }
-
-    if (user.role === 'student') {
-      return <StudentDashboard />
-    }
-
-    // Fallback if the user has an unknown role
     return (
       <div style={{
-        padding: '20px',
-        maxWidth: '800px',
-        margin: '0 auto',
-        backgroundColor: '#ffffff',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
         minHeight: '100vh',
-        color: '#171717'
+        backgroundColor: '#ffffff'
       }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{
+            border: '3px solid #f3f3f3',
+            borderTop: '3px solid #4285f4',
+            borderRadius: '50%',
+            width: '30px',
+            height: '30px',
+            animation: 'spin 1s linear infinite',
+            margin: '0 auto 20px'
+          }} />
+          <p style={{ color: '#666' }}>Loading dashboard...</p>
+        </div>
+        <style jsx>{`
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
+      </div>
+    )
+  }
+
+  if (!user) {
+    // This is a fallback for while the user context is loading.
+    // The UserProvider should redirect if the user is not authenticated.
+    return null
+  }
+
+  if (user.role === 'teacher') {
+    return <TeacherDashboard />
+  }
+
+  if (user.role === 'student') {
+    return <StudentDashboard />
+  }
+
+  // Fallback if the user has an unknown role
+  return (
+    <div style={{
+      padding: '20px',
+      maxWidth: '800px',
+      margin: '0 auto',
+      backgroundColor: '#ffffff',
+      minHeight: '100vh',
+      color: '#171717'
+    }}>
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',
@@ -313,10 +324,6 @@ export default function DashboardPage() {
             Create New Course
           </a>
         </div>
-        <div style={{ padding: '20px', textAlign: 'center' }}>
-          <h1>Error</h1>
-          <p>Your user role is not recognized. Please contact support.</p>
-          <button onClick={() => router.push('/login')}>Go to Login</button>
-        </div>
-        )
+      </div>
+    )
 }
