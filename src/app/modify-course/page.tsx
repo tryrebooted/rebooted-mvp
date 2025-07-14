@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { apiService } from '@/services/api';
 import { mockAuth } from '@/contexts/UserContext';
-import { Course, Module } from '@/types/backend-api';
+import { Course, Module } from '@/types/backend-aliases';
 import ContentBlockList from '@/components/content/ContentBlockList';
 import ContentCreator from '@/components/content/ContentCreator';
 
@@ -18,7 +18,7 @@ export default function ModifyCoursePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedModuleId, setSelectedModuleId] = useState<number | null>(null);
-  
+
   // Editing state
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState('');
@@ -61,8 +61,8 @@ export default function ModifyCoursePage() {
       // Fetch course basic info
       const courseData = await apiService.getCourseById(parseInt(courseId!));
       setCourse(courseData);
-      setEditedName(courseData.name);
-      setEditedDescription(courseData.description);
+      setEditedName(courseData.title ?? '');
+      setEditedDescription(courseData.body ?? '');
 
       // Fetch modules for this course
       const modulesData = await apiService.getModulesByCourseId(parseInt(courseId!));
@@ -70,7 +70,7 @@ export default function ModifyCoursePage() {
 
       // Auto-select the first module if available
       if (modulesData.length > 0) {
-        setSelectedModuleId(modulesData[0].id);
+        setSelectedModuleId(modulesData[0]?.id!);
       }
 
     } catch (err) {
@@ -88,8 +88,8 @@ export default function ModifyCoursePage() {
 
   const handleCancelEdit = () => {
     if (course) {
-      setEditedName(course.name);
-      setEditedDescription(course.description);
+      setEditedName(course.title!);
+      setEditedDescription(course.body!);
     }
     setIsEditing(false);
     setSaveError(null);
@@ -109,8 +109,8 @@ export default function ModifyCoursePage() {
       setSaveError(null);
 
       const updatedCourse = await apiService.updateCourse(parseInt(courseId), {
-        name: editedName.trim(),
-        description: editedDescription.trim()
+        title: editedName.trim(),
+        body: editedDescription.trim()
       });
 
       setCourse(updatedCourse);
@@ -134,8 +134,8 @@ export default function ModifyCoursePage() {
       setModuleCreationError(null);
 
       await apiService.createModule({
-        name: newModuleName.trim(),
-        description: newModuleDescription.trim(),
+        title: newModuleName.trim(),
+        body: newModuleDescription.trim(),
         courseId: parseInt(courseId)
       });
 
@@ -143,7 +143,7 @@ export default function ModifyCoursePage() {
       setNewModuleName('');
       setNewModuleDescription('');
       setShowModuleCreator(false);
-      
+
       // Refresh data
       loadCourseData();
     } catch (err) {
@@ -193,7 +193,7 @@ export default function ModifyCoursePage() {
 
   if (loading) {
     return (
-      <div style={{ 
+      <div style={{
         padding: '20px',
         maxWidth: '1200px',
         margin: '0 auto',
@@ -209,7 +209,7 @@ export default function ModifyCoursePage() {
 
   if (error) {
     return (
-      <div style={{ 
+      <div style={{
         padding: '20px',
         maxWidth: '1200px',
         margin: '0 auto',
@@ -246,7 +246,7 @@ export default function ModifyCoursePage() {
   }
 
   return (
-    <div style={{ 
+    <div style={{
       padding: '20px',
       maxWidth: '1200px',
       margin: '0 auto',
@@ -254,11 +254,11 @@ export default function ModifyCoursePage() {
       minHeight: '100vh',
       color: '#171717'
     }}>
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        marginBottom: '20px' 
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '20px'
       }}>
         <h1>Modify Course</h1>
         <div style={{ display: 'flex', gap: '10px' }}>
@@ -308,8 +308,8 @@ export default function ModifyCoursePage() {
                 <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
                     <div style={{ flex: 1 }}>
-                      <h2 style={{ marginBottom: '10px', color: '#171717' }}>{course.name}</h2>
-                      <p style={{ color: '#666', marginBottom: '0' }}>{course.description}</p>
+                      <h2 style={{ marginBottom: '10px', color: '#171717' }}>{course.title}</h2>
+                      <p style={{ color: '#666', marginBottom: '0' }}>{course.body}</p>
                     </div>
                     <button
                       onClick={handleEditClick}
@@ -331,7 +331,7 @@ export default function ModifyCoursePage() {
                 // Edit Mode
                 <div>
                   <h3 style={{ marginBottom: '20px', color: '#171717' }}>Edit Course Details</h3>
-                  
+
                   {/* Save Error Display */}
                   {saveError && (
                     <div style={{
@@ -350,13 +350,13 @@ export default function ModifyCoursePage() {
                     <label htmlFor="courseName" style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', color: '#171717' }}>
                       Course Name:
                     </label>
-                    <input 
-                      type="text" 
-                      id="courseName" 
+                    <input
+                      type="text"
+                      id="courseName"
                       value={editedName}
                       onChange={(e) => setEditedName(e.target.value)}
                       required
-                      style={{ 
+                      style={{
                         width: '100%',
                         padding: '8px',
                         border: '1px solid #ccc',
@@ -371,12 +371,12 @@ export default function ModifyCoursePage() {
                     <label htmlFor="courseDescription" style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', color: '#171717' }}>
                       Course Description:
                     </label>
-                    <textarea 
-                      id="courseDescription" 
+                    <textarea
+                      id="courseDescription"
                       value={editedDescription}
                       onChange={(e) => setEditedDescription(e.target.value)}
                       rows={4}
-                      style={{ 
+                      style={{
                         width: '100%',
                         padding: '8px',
                         border: '1px solid #ccc',
@@ -420,7 +420,7 @@ export default function ModifyCoursePage() {
                   </div>
                 </div>
               )}
-              
+
               {/* Modules Section */}
               <div style={{ marginTop: '30px', paddingTop: '20px', borderTop: '1px solid #dee2e6' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
@@ -452,7 +452,7 @@ export default function ModifyCoursePage() {
                     backgroundColor: '#f0f8ff'
                   }}>
                     <h4 style={{ marginBottom: '15px', color: '#171717' }}>Create New Module</h4>
-                    
+
                     {moduleCreationError && (
                       <div style={{
                         marginBottom: '15px',
@@ -489,7 +489,7 @@ export default function ModifyCoursePage() {
                       }}
                       autoFocus
                     />
-                    
+
                     <textarea
                       placeholder="Module description (optional)"
                       value={newModuleDescription}
@@ -511,7 +511,7 @@ export default function ModifyCoursePage() {
                         color: '#171717'
                       }}
                     />
-                    
+
                     <div style={{ display: 'flex', gap: '10px' }}>
                       <button
                         onClick={handleCreateModule}
@@ -557,14 +557,14 @@ export default function ModifyCoursePage() {
                         cursor: 'pointer',
                         transition: 'all 0.2s ease'
                       }}
-                      onClick={() => handleModuleClick(module.id)}
+                        onClick={() => handleModuleClick(module.id!)}
                       >
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <div>
-                            <strong>{index + 1}. {module.name}</strong>
-                            {module.description && (
+                            <strong>{index + 1}. {module.title}</strong>
+                            {module.body && (
                               <p style={{ margin: '5px 0 0 0', color: '#666', fontSize: '14px' }}>
-                                {module.description}
+                                {module.body}
                               </p>
                             )}
                           </div>
@@ -625,7 +625,7 @@ export default function ModifyCoursePage() {
               {/* Content Block List */}
               <ContentBlockList
                 moduleId={selectedModuleId}
-                moduleName={modules.find(m => m.id === selectedModuleId)?.name}
+                moduleName={modules.find(m => m.id === selectedModuleId)?.title}
                 isInteractive={true}
                 onContentUpdate={handleContentUpdate}
               />

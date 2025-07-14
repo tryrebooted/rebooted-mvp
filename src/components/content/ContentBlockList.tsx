@@ -13,11 +13,11 @@ interface ContentBlockListProps {
   onContentUpdate?: () => void;
 }
 
-export default function ContentBlockList({ 
-  moduleId, 
-  moduleName, 
-  isInteractive = true, 
-  onContentUpdate 
+export default function ContentBlockList({
+  moduleId,
+  moduleName,
+  isInteractive = true,
+  onContentUpdate
 }: ContentBlockListProps) {
   const [content, setContent] = useState<ContentResponse[]>([]);
   const [loading, setLoading] = useState(true);
@@ -44,14 +44,14 @@ export default function ContentBlockList({
   const handleComplete = async (contentId: number) => {
     try {
       const updatedContent = await apiService.markContentComplete(contentId);
-      
+
       // Update the content in our local state
-      setContent(prevContent => 
-        prevContent.map(item => 
+      setContent(prevContent =>
+        prevContent.map(item =>
           item.id === contentId ? updatedContent : item
         )
       );
-      
+
       // Notify parent component of the update
       if (onContentUpdate) {
         onContentUpdate();
@@ -65,14 +65,14 @@ export default function ContentBlockList({
   const handleSubmitAnswer = async (contentId: number, answer: string) => {
     try {
       const updatedContent = await apiService.submitAnswer(contentId, answer);
-      
+
       // Update the content in our local state
-      setContent(prevContent => 
-        prevContent.map(item => 
+      setContent(prevContent =>
+        prevContent.map(item =>
           item.id === contentId ? updatedContent : item
         )
       );
-      
+
       // Notify parent component of the update
       if (onContentUpdate) {
         onContentUpdate();
@@ -85,7 +85,7 @@ export default function ContentBlockList({
 
   const calculateProgress = () => {
     if (content.length === 0) return 0;
-    
+
     const completedCount = content.filter(item => {
       if (isQuestionContent(item)) {
         return item.userAnswer !== undefined && item.userAnswer !== null;
@@ -93,7 +93,7 @@ export default function ContentBlockList({
         return item.isComplete === true;
       }
     }).length;
-    
+
     return Math.round((completedCount / content.length) * 100);
   };
 
@@ -181,11 +181,11 @@ export default function ContentBlockList({
             {progress}% Complete
           </span>
         </div>
-        
-        <div style={{ 
-          width: '100%', 
-          height: '8px', 
-          backgroundColor: '#e9ecef', 
+
+        <div style={{
+          width: '100%',
+          height: '8px',
+          backgroundColor: '#e9ecef',
           borderRadius: '4px',
           overflow: 'hidden'
         }}>
@@ -196,7 +196,7 @@ export default function ContentBlockList({
             transition: 'width 0.3s ease'
           }} />
         </div>
-        
+
         <div style={{ marginTop: '8px', fontSize: '14px', color: '#6c757d' }}>
           {content.filter(item => {
             if (isQuestionContent(item)) {

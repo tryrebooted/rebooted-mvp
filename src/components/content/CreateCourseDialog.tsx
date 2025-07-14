@@ -21,6 +21,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { BookOpen, Clock, Users, Target, X, Plus, Loader2 } from "lucide-react";
+// const [dialogOpen, setDialogOpen] = useState(true); // open by default for now
+// const [dialogOpen, setDialogOpen] = useState(true); // open by default for now
 import { apiService } from "@/services/api";
 
 interface CreateCourseDialogProps {
@@ -280,4 +282,11 @@ const CreateCourseDialog: React.FC<CreateCourseDialogProps> = ({
   );
 };
 
+const handleCourseCreated = (data: CourseFormData) => {
+  console.log("Course created:", data);
+  // Optionally you can:
+  // - redirect
+  // - populate form fields
+  // - call backend
+};
 export default CreateCourseDialog;

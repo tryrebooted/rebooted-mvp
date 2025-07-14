@@ -8,11 +8,11 @@ export interface GenerateCourseRequest {
 }
 
 export interface GeneratedContentBlock {
-  id?: number;
+  id: number;
   title: string;
   body: string;
   type: 'Text' | 'Question';
-  moduleId?: number;
+  moduleId: number;
   isComplete: boolean;
   options?: string[];
   correctAnswer?: string;
@@ -20,10 +20,10 @@ export interface GeneratedContentBlock {
 }
 
 export interface GeneratedModule {
-  id?: number;
-  title: string;
-  body: string;
-  courseId?: number;
+  id: number;
+  name: string;
+  description: string;
+  courseId: number;
   contentBlocks: GeneratedContentBlock[];
 }
 

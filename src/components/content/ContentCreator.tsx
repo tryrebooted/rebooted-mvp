@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { NewContentRequest } from '@/types/backend-api';
+import { NewContentRequest } from '@/types/backend-aliases';
 import { apiService } from '@/services/api';
 
 interface ContentCreatorProps {
@@ -21,13 +21,13 @@ export default function ContentCreator({ moduleId, onContentCreated, onCancel }:
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validation
     if (!title.trim()) {
       setError('Title is required');
       return;
     }
-    
+
     if (!body.trim()) {
       setError(contentType === 'Text' ? 'Content is required' : 'Question text is required');
       return;
@@ -65,14 +65,14 @@ export default function ContentCreator({ moduleId, onContentCreated, onCancel }:
       };
 
       await apiService.createContent(contentData);
-      
+
       // Reset form
       setTitle('');
       setBody('');
       setOptions(['', '', '', '']);
       setCorrectAnswer('');
       setContentType('Text');
-      
+
       onContentCreated();
     } catch (err) {
       console.error('Error creating content:', err);
@@ -86,7 +86,7 @@ export default function ContentCreator({ moduleId, onContentCreated, onCancel }:
     const newOptions = [...options];
     newOptions[index] = value;
     setOptions(newOptions);
-    
+
     // Update correct answer if it matches the old value
     if (correctAnswer === options[index]) {
       setCorrectAnswer(value);
@@ -103,7 +103,7 @@ export default function ContentCreator({ moduleId, onContentCreated, onCancel }:
     if (options.length > 2) {
       const newOptions = options.filter((_, i) => i !== index);
       setOptions(newOptions);
-      
+
       // Clear correct answer if it was the removed option
       if (correctAnswer === options[index]) {
         setCorrectAnswer('');
@@ -218,13 +218,13 @@ export default function ContentCreator({ moduleId, onContentCreated, onCancel }:
             <label style={{ display: 'block', marginBottom: '10px', fontWeight: 'bold', color: '#171717' }}>
               Answer Options:
             </label>
-            
+
             {options.map((option, index) => (
               <div key={index} style={{ display: 'flex', gap: '10px', marginBottom: '8px', alignItems: 'center' }}>
-                <span style={{ 
-                  minWidth: '20px', 
-                  fontWeight: 'bold', 
-                  color: '#6c757d' 
+                <span style={{
+                  minWidth: '20px',
+                  fontWeight: 'bold',
+                  color: '#6c757d'
                 }}>
                   {String.fromCharCode(65 + index)}.
                 </span>
@@ -261,7 +261,7 @@ export default function ContentCreator({ moduleId, onContentCreated, onCancel }:
                 )}
               </div>
             ))}
-            
+
             {options.length < 6 && (
               <button
                 type="button"

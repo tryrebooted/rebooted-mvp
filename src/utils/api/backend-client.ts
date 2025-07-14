@@ -1,6 +1,3 @@
-// Backend API Client for Spring Boot Integration
-// Clean implementation with comprehensive error handling
-
 import {
   NewCourseRequest,
   UpdateCourseRequest,
@@ -15,8 +12,8 @@ import {
   UserProfile,
   UserCourse,
   CourseUser,
-  SubmitAnswerRequest,
-} from '@/types/backend-api';
+  // SubmitAnswerRequest,
+} from '@/types/backend-aliases';
 import { getBackendConfig } from '@/utils/config/backend';
 
 export interface ApiResponse<T = any> {
@@ -44,12 +41,12 @@ export class BackendApiClient {
   }
 
   private async request<T>(
-    endpoint: string, 
+    endpoint: string,
     options: RequestInit = {},
     attempt: number = 1
   ): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
-    
+
     const config: RequestInit = {
       headers: {
         'Content-Type': 'application/json',
@@ -61,33 +58,33 @@ export class BackendApiClient {
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), this.timeout);
-      
+
       const response = await fetch(url, {
         ...config,
         signal: controller.signal,
       });
-      
+
       clearTimeout(timeoutId);
-      
+
       if (!response.ok) {
         const errorText = await response.text();
         let errorMessage: string;
-        
+
         try {
           const errorJson = JSON.parse(errorText);
           errorMessage = errorJson.message || errorJson.error || `HTTP ${response.status}`;
         } catch {
           errorMessage = errorText || `HTTP ${response.status}: ${response.statusText}`;
         }
-        
+
         const apiError: ApiError = {
           message: errorMessage,
           status: response.status,
         };
-        
+
         throw apiError;
       }
-      
+
       // Handle empty responses (like DELETE operations)
       const contentType = response.headers.get('content-type');
       if (contentType && contentType.includes('application/json')) {
@@ -102,15 +99,15 @@ export class BackendApiClient {
         await this.delay(1000 * attempt); // Exponential backoff
         return this.request<T>(endpoint, options, attempt + 1);
       }
-      
+
       if (error instanceof Error && error.name === 'AbortError') {
         throw new Error('Request timeout - please check your connection');
       }
-      
+
       if ((error as ApiError).status) {
         throw error; // Re-throw API errors with status
       }
-      
+
       throw new Error(`Network error: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }

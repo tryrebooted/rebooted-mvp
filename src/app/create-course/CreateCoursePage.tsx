@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { apiService } from '@/services/api';
 import { mockAuth } from '@/contexts/UserContext';
+import { title } from 'process';
 
 interface ContentBlock {
   id: string;
@@ -59,16 +60,17 @@ export default function CreateCoursePage() {
       if (allUsernames.length > 0) {
         const validationResult = await apiService.validateUsernames(allUsernames);
         const missingUsers = allUsernames.filter(username => !validationResult[username]);
-        
+
         if (missingUsers.length > 0) {
           throw new Error(`These users don't exist: ${missingUsers.join(', ')}`);
         }
       }
 
       // Create the course
+      console.log('Creating course with:', { title: courseTitle, body: courseDescription });
       const courseData = await apiService.createCourse({
-        name: courseTitle.trim(),
-        description: courseDescription.trim()
+        title: courseTitle,
+        body: courseDescription,
       });
 
       const courseId = courseData.id;
@@ -77,8 +79,8 @@ export default function CreateCoursePage() {
       if (modules.length > 0) {
         for (const module of modules) {
           await apiService.createModule({
-            name: module.title,
-            description: '',
+            title: module.title,
+            body: '',
             courseId: courseId
           });
         }
@@ -87,20 +89,20 @@ export default function CreateCoursePage() {
       // Add teachers to the course
       if (teachers.length > 0) {
         const teacherUsernames = teachers.map(t => t.username);
-        await apiService.addTeachersToCourse(courseId, teacherUsernames);
+        await apiService.addTeachersToCourse(courseId!, teacherUsernames);
       }
 
       // Add students to the course
       if (students.length > 0) {
         const studentUsernames = students.map(s => s.username);
-        await apiService.addStudentsToCourse(courseId, studentUsernames);
+        await apiService.addStudentsToCourse(courseId!, studentUsernames);
       }
 
       // Add current user as teacher if not already added
       const currentUsername = user.user_metadata?.preferred_username;
       const currentUserIsTeacher = teachers.some(t => t.username === currentUsername);
       if (!currentUserIsTeacher && currentUsername) {
-        await apiService.addTeachersToCourse(courseId, [currentUsername]);
+        await apiService.addTeachersToCourse(courseId!, [currentUsername]);
       }
 
       // Success! Redirect to the new course
@@ -161,7 +163,7 @@ export default function CreateCoursePage() {
   };
 
   return (
-    <div style={{ 
+    <div style={{
       padding: '20px',
       maxWidth: '800px',
       margin: '0 auto',
@@ -170,7 +172,7 @@ export default function CreateCoursePage() {
       color: '#171717'
     }}>
       <h1 style={{ marginBottom: '20px', color: '#171717' }}>Create New Course</h1>
-      
+
       <form onSubmit={handleSubmit} style={{
         border: '1px solid #ccc',
         borderRadius: '4px',
@@ -182,13 +184,13 @@ export default function CreateCoursePage() {
           <label htmlFor="title" style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', color: '#171717' }}>
             Course Title:
           </label>
-          <input 
-            type="text" 
-            id="title" 
+          <input
+            type="text"
+            id="title"
             value={courseTitle}
             onChange={(e) => setCourseTitle(e.target.value)}
             required
-            style={{ 
+            style={{
               width: '100%',
               padding: '8px',
               border: '1px solid #ccc',
@@ -203,13 +205,13 @@ export default function CreateCoursePage() {
           <label htmlFor="description" style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', color: '#171717' }}>
             Course Description:
           </label>
-          <textarea 
-            id="description" 
+          <textarea
+            id="description"
             value={courseDescription}
             onChange={(e) => setCourseDescription(e.target.value)}
             required
             rows={3}
-            style={{ 
+            style={{
               width: '100%',
               padding: '8px',
               border: '1px solid #ccc',
@@ -227,12 +229,12 @@ export default function CreateCoursePage() {
             Teachers (L&D Users):
           </label>
           <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
-            <input 
-              type="text" 
+            <input
+              type="text"
               value={newTeacherUsername}
               onChange={(e) => setNewTeacherUsername(e.target.value)}
               placeholder="Enter teacher username"
-              style={{ 
+              style={{
                 flex: 1,
                 padding: '8px',
                 border: '1px solid #ccc',
@@ -241,7 +243,7 @@ export default function CreateCoursePage() {
                 color: '#171717'
               }}
             />
-            <button 
+            <button
               type="button"
               onClick={addTeacher}
               style={{
@@ -260,7 +262,7 @@ export default function CreateCoursePage() {
             {teachers.map((teacher, index) => (
               <div key={index} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '5px', backgroundColor: '#e3f2fd', margin: '2px 0', borderRadius: '3px' }}>
                 <span>{teacher.username} ({teacher.userType})</span>
-                <button 
+                <button
                   type="button"
                   onClick={() => removeTeacher(index)}
                   style={{ backgroundColor: '#dc3545', color: 'white', border: 'none', borderRadius: '3px', padding: '2px 8px', cursor: 'pointer' }}
@@ -278,12 +280,12 @@ export default function CreateCoursePage() {
             Students (Employee Users):
           </label>
           <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
-            <input 
-              type="text" 
+            <input
+              type="text"
               value={newStudentUsername}
               onChange={(e) => setNewStudentUsername(e.target.value)}
               placeholder="Enter student username"
-              style={{ 
+              style={{
                 flex: 1,
                 padding: '8px',
                 border: '1px solid #ccc',
@@ -292,7 +294,7 @@ export default function CreateCoursePage() {
                 color: '#171717'
               }}
             />
-            <button 
+            <button
               type="button"
               onClick={addStudent}
               style={{
@@ -311,7 +313,7 @@ export default function CreateCoursePage() {
             {students.map((student, index) => (
               <div key={index} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '5px', backgroundColor: '#e8f5e8', margin: '2px 0', borderRadius: '3px' }}>
                 <span>{student.username} ({student.userType})</span>
-                <button 
+                <button
                   type="button"
                   onClick={() => removeStudent(index)}
                   style={{ backgroundColor: '#dc3545', color: 'white', border: 'none', borderRadius: '3px', padding: '2px 8px', cursor: 'pointer' }}
@@ -329,12 +331,12 @@ export default function CreateCoursePage() {
             Course Modules:
           </label>
           <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
-            <input 
-              type="text" 
+            <input
+              type="text"
               value={newModuleTitle}
               onChange={(e) => setNewModuleTitle(e.target.value)}
               placeholder="Enter module title"
-              style={{ 
+              style={{
                 flex: 1,
                 padding: '8px',
                 border: '1px solid #ccc',
@@ -343,7 +345,7 @@ export default function CreateCoursePage() {
                 color: '#171717'
               }}
             />
-            <button 
+            <button
               type="button"
               onClick={addModule}
               style={{
@@ -367,7 +369,7 @@ export default function CreateCoursePage() {
                     ({module.contentBlocks.length} content blocks)
                   </span>
                 </div>
-                <button 
+                <button
                   type="button"
                   onClick={() => removeModule(index)}
                   style={{ backgroundColor: '#dc3545', color: 'white', border: 'none', borderRadius: '3px', padding: '4px 8px', cursor: 'pointer' }}
@@ -399,7 +401,7 @@ export default function CreateCoursePage() {
         )}
 
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-          <button 
+          <button
             type="submit"
             disabled={isSubmitting}
             style={{
@@ -413,7 +415,7 @@ export default function CreateCoursePage() {
           >
             {isSubmitting ? 'Creating...' : 'Create Course'}
           </button>
-          <button 
+          <button
             type="button"
             onClick={handlePreview}
             style={{
@@ -427,7 +429,7 @@ export default function CreateCoursePage() {
           >
             Preview Course
           </button>
-          <button 
+          <button
             type="button"
             onClick={handleCancel}
             style={{

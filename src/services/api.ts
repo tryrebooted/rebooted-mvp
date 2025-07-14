@@ -13,14 +13,14 @@ import {
   NewCourseRequest,
   NewModuleRequest,
   NewContentRequest,
-} from '@/types/backend-api';
+} from '@/types/backend-aliases';
 
 
 
 export class BackendApiService {
-  
+
   // ================ Course Operations ================
-  
+
   async createCourse(courseData: NewCourseRequest): Promise<Course> {
     return backendApiClient.createCourse(courseData);
   }
@@ -42,7 +42,7 @@ export class BackendApiService {
   }
 
   // ================ Module Operations ================
-  
+
   async createModule(moduleData: NewModuleRequest): Promise<Module> {
     return backendApiClient.createModule(moduleData);
   }
@@ -64,7 +64,7 @@ export class BackendApiService {
   }
 
   // ================ Content Operations ================
-  
+
   async createContent(contentData: NewContentRequest): Promise<ContentResponse> {
     return backendApiClient.createContent(contentData);
   }
@@ -94,7 +94,7 @@ export class BackendApiService {
   }
 
   // ================ User Operations ================
-  
+
   async validateUsernames(usernames: string[]): Promise<Record<string, boolean>> {
     return backendApiClient.validateUsernames(usernames);
   }
@@ -112,7 +112,7 @@ export class BackendApiService {
   }
 
   // ================ Course Membership Operations ================
-  
+
   async addTeachersToCourse(courseId: number, usernames: string[]): Promise<void> {
     return backendApiClient.addTeachersToCourse(courseId, usernames);
   }
