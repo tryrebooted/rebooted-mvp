@@ -147,23 +147,27 @@ export class BackendApiClient {
 
   // Course operations
   async createCourse(courseData: NewCourseRequest): Promise<Course> {
-    return this.post<Course>('/courses', courseData);
+    const courseId = await this.post<number>('/roster/add', courseData);
+    // Fetch the full course data after creation
+    return this.getCourseById(courseId);
   }
 
   async getCourses(): Promise<Course[]> {
-    return this.get<Course[]>('/courses');
+    return this.get<Course[]>('/roster');
   }
 
   async getCourseById(id: number): Promise<Course> {
-    return this.get<Course>(`/courses/${id}`);
+    return this.get<Course>(`/roster/${id}`);
   }
 
   async updateCourse(id: number, courseData: UpdateCourseRequest): Promise<Course> {
-    return this.put<Course>(`/courses/${id}`, courseData);
+    await this.put<void>(`/roster/update/${id}`, courseData);
+    // Fetch the updated course data
+    return this.getCourseById(id);
   }
 
   async deleteCourse(id: number): Promise<void> {
-    return this.delete<void>(`/courses/${id}`);
+    return this.delete<void>(`/roster/delete/${id}`);
   }
 
   // Module operations

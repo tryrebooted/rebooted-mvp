@@ -21,6 +21,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { BookOpen, Clock, Users, Target, X, Plus, Loader2 } from "lucide-react";
+import { apiService } from "@/services/api";
 
 interface CreateCourseDialogProps {
   open: boolean;
@@ -31,12 +32,9 @@ interface CreateCourseDialogProps {
 export interface CourseFormData {
   title: string;
   description: string;
-  category: string;
-  duration: string;
   difficulty: string;
   maxStudents: number;
   tags: string[];
-  objectives: string[];
   prerequisites: string;
 }
 
@@ -48,44 +46,17 @@ const CreateCourseDialog: React.FC<CreateCourseDialogProps> = ({
   const [formData, setFormData] = useState<CourseFormData>({
     title: "",
     description: "",
-    category: "",
-    duration: "",
     difficulty: "",
     maxStudents: 50,
     tags: [],
-    objectives: [],
     prerequisites: "",
   });
 
   const [newTag, setNewTag] = useState("");
-  const [newObjective, setNewObjective] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const categories = [
-    "Technology",
-    "Marketing",
-    "Leadership",
-    "Management",
-    "Analytics",
-    "Design",
-    "Sales",
-    "HR",
-    "Finance",
-    "Operations",
-  ];
-
   const difficulties = ["Beginner", "Intermediate", "Advanced"];
-
-  const durations = [
-    "1 week",
-    "2 weeks",
-    "3 weeks",
-    "4 weeks",
-    "6 weeks",
-    "8 weeks",
-    "12 weeks",
-  ];
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -98,14 +69,6 @@ const CreateCourseDialog: React.FC<CreateCourseDialogProps> = ({
       newErrors.description = "Course description is required";
     }
 
-    if (!formData.category) {
-      newErrors.category = "Please select a category";
-    }
-
-    if (!formData.duration) {
-      newErrors.duration = "Please select a duration";
-    }
-
     // if (!formData.difficulty) {
     //   newErrors.difficulty = "Please select a difficulty level";
     // }
@@ -113,10 +76,6 @@ const CreateCourseDialog: React.FC<CreateCourseDialogProps> = ({
     // if (formData.maxStudents < 1 || formData.maxStudents > 500) {
     //   newErrors.maxStudents = "Max students must be between 1 and 500";
     // }
-
-    if (formData.objectives.length === 0) {
-      newErrors.objectives = "Please add at least one learning objective";
-    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -132,8 +91,11 @@ const CreateCourseDialog: React.FC<CreateCourseDialogProps> = ({
     setIsSubmitting(true);
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Call actual API
+      const courseData = await apiService.createCourse({
+        title: formData.title,
+        body: formData.description // Map description to body
+      });
 
       // Call the callback with the course data
       onCourseCreated?.(formData);
@@ -142,19 +104,18 @@ const CreateCourseDialog: React.FC<CreateCourseDialogProps> = ({
       setFormData({
         title: "",
         description: "",
-        category: "",
-        duration: "",
         difficulty: "",
         maxStudents: 50,
         tags: [],
-        objectives: [],
         prerequisites: "",
       });
 
       // Close dialog
       onOpenChange(false);
     } catch (error) {
-      setErrors({ submit: "Failed to create course. Please try again." });
+      console.error('Error creating course:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to create course. Please try again.';
+      setErrors({ submit: errorMessage });
     } finally {
       setIsSubmitting(false);
     }
@@ -174,31 +135,6 @@ const CreateCourseDialog: React.FC<CreateCourseDialogProps> = ({
     setFormData({
       ...formData,
       tags: formData.tags.filter((tag) => tag !== tagToRemove),
-    });
-  };
-
-  const addObjective = () => {
-    if (
-      newObjective.trim() &&
-      !formData.objectives.includes(newObjective.trim())
-    ) {
-      setFormData({
-        ...formData,
-        objectives: [...formData.objectives, newObjective.trim()],
-      });
-      setNewObjective("");
-      if (errors.objectives) {
-        setErrors({ ...errors, objectives: "" });
-      }
-    }
-  };
-
-  const removeObjective = (objectiveToRemove: string) => {
-    setFormData({
-      ...formData,
-      objectives: formData.objectives.filter(
-        (obj) => obj !== objectiveToRemove,
-      ),
     });
   };
 
@@ -254,163 +190,7 @@ const CreateCourseDialog: React.FC<CreateCourseDialogProps> = ({
             </div>
           </div>
 
-          {/* Course Details */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium">Course Details</h3>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Category *</Label>
-                <Select
-                  value={formData.category}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, category: value })
-                  }
-                >
-                  <SelectTrigger
-                    className={errors.category ? "border-destructive" : ""}
-                  >
-                    <SelectValue placeholder="Select category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map((category) => (
-                      <SelectItem key={category} value={category}>
-                        {category}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {errors.category && (
-                  <p className="text-sm text-destructive">{errors.category}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label>Duration *</Label>
-                <Select
-                  value={formData.duration}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, duration: value })
-                  }
-                >
-                  <SelectTrigger
-                    className={errors.duration ? "border-destructive" : ""}
-                  >
-                    <SelectValue placeholder="Select duration" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {durations.map((duration) => (
-                      <SelectItem key={duration} value={duration}>
-                        <div className="flex items-center gap-2">
-                          {/* <Clock className="h-4 w-4" /> */}
-                          {duration}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {errors.duration && (
-                  <p className="text-sm text-destructive">{errors.duration}</p>
-                )}
-              </div>
-
-              {/* <div className="space-y-2">
-                <Label>Difficulty Level *</Label>
-                <Select
-                  value={formData.difficulty}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, difficulty: value })
-                  }
-                >
-                  <SelectTrigger
-                    className={errors.difficulty ? "border-destructive" : ""}
-                  >
-                    <SelectValue placeholder="Select difficulty" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {difficulties.map((difficulty) => (
-                      <SelectItem key={difficulty} value={difficulty}>
-                        <div className="flex items-center gap-2">
-                          <Target className="h-4 w-4" />
-                          {difficulty}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {errors.difficulty && (
-                  <p className="text-sm text-destructive">
-                    {errors.difficulty}
-                  </p>
-                )}
-              </div> */}
-
-              {/* <div className="space-y-2">
-                <Label htmlFor="maxStudents">Max Students *</Label>
-                <Input
-                  id="maxStudents"
-                  type="number"
-                  min="1"
-                  max="500"
-                  value={formData.maxStudents}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      maxStudents: parseInt(e.target.value) || 0,
-                    })
-                  }
-                  className={errors.maxStudents ? "border-destructive" : ""}
-                />
-                {errors.maxStudents && (
-                  <p className="text-sm text-destructive">
-                    {errors.maxStudents}
-                  </p>
-                )}
-              </div> */}
-            </div>
-          </div>
-
-          {/* Learning Objectives */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium">Learning Objectives *</h3>
-            <div className="space-y-2">
-              <div className="flex gap-2">
-                <Input
-                  value={newObjective}
-                  onChange={(e) => setNewObjective(e.target.value)}
-                  placeholder="Add a learning objective..."
-                  onKeyPress={(e) =>
-                    e.key === "Enter" && (e.preventDefault(), addObjective())
-                  }
-                />
-                <Button type="button" onClick={addObjective} size="sm">
-                  {/* <Plus className="h-4 w-4" /> */}
-                  <p>+</p>
-                </Button>
-              </div>
-              {errors.objectives && (
-                <p className="text-sm text-destructive">{errors.objectives}</p>
-              )}
-              <div className="flex flex-wrap gap-2">
-                {formData.objectives.map((objective) => (
-                  <Badge
-                    key={objective}
-                    variant="secondary"
-                    className="text-sm"
-                  >
-                    {objective}
-                    <button
-                      type="button"
-                      onClick={() => removeObjective(objective)}
-                      className="ml-2 hover:text-destructive"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          </div>
 
           {/* Tags */}
           {/* <div className="space-y-4">
