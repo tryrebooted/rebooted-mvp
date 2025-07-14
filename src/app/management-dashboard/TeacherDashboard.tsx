@@ -36,7 +36,7 @@ const TeacherDashboard: React.FC = () => {
         // Sort by creation date (most recent first) and take the first 3
         const sortedCourses = courses.sort((a, b) =>
           new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
-        ).slice(0, 3);
+        ).slice(0, 5);
         setRecentCourses(sortedCourses);
       } catch (err) {
         console.error('Error fetching courses:', err);
@@ -195,9 +195,9 @@ const TeacherDashboard: React.FC = () => {
                       className="mt-2"
                       variant="outline"
                       size="sm"
-                      onClick={() => router.push(`/modify-course?id=${course.id}`)}
+                      onClick={() => router.push(`/add-modules?id=${course.id}`)}
                     >
-                      Add Content
+                      Modules
                     </Button>
                   </div>
                 ))}

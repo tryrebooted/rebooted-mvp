@@ -170,25 +170,27 @@ export class BackendApiClient {
     return this.delete<void>(`/roster/delete/${id}`);
   }
 
-  // Module operations
-  async createModule(moduleData: NewModuleRequest): Promise<Module> {
-    return this.post<Module>('/modules', moduleData);
+  // Module operations (nested under courses)
+  async createModule(moduleData: NewModuleRequest): Promise<{ id: number }> {
+    // Backend returns just the ID, so we need to handle this differently
+    const response = await this.post<number>(`/courses/${moduleData.courseId}/add`, moduleData);
+    return { id: response };
   }
 
   async getModulesByCourse(courseId: number): Promise<Module[]> {
-    return this.get<Module[]>(`/modules/course/${courseId}`);
+    return this.get<Module[]>(`/courses/${courseId}`);
   }
 
-  async getModuleById(id: number): Promise<Module> {
-    return this.get<Module>(`/modules/${id}`);
+  async getModuleById(courseId: number, moduleId: number): Promise<Module> {
+    return this.get<Module>(`/courses/${courseId}/module/${moduleId}`);
   }
 
-  async updateModule(id: number, moduleData: UpdateModuleRequest): Promise<Module> {
-    return this.put<Module>(`/modules/${id}`, moduleData);
+  async updateModule(courseId: number, moduleId: number, moduleData: UpdateModuleRequest): Promise<void> {
+    return this.put<void>(`/courses/${courseId}/update/${moduleId}`, moduleData);
   }
 
-  async deleteModule(id: number): Promise<void> {
-    return this.delete<void>(`/modules/${id}`);
+  async deleteModule(courseId: number, moduleId: number): Promise<void> {
+    return this.delete<void>(`/courses/${courseId}/${moduleId}`);
   }
 
   // User operations

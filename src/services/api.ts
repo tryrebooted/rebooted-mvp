@@ -44,23 +44,27 @@ export class BackendApiService {
   // ================ Module Operations ================
   
   async createModule(moduleData: NewModuleRequest): Promise<Module> {
-    return backendApiClient.createModule(moduleData);
+    const response = await backendApiClient.createModule(moduleData);
+    // Since backend only returns ID, we need to fetch the full module data
+    return this.getModuleById(moduleData.courseId, response.id);
   }
 
   async getModulesByCourseId(courseId: number): Promise<Module[]> {
     return backendApiClient.getModulesByCourse(courseId);
   }
 
-  async getModuleById(id: number): Promise<Module> {
-    return backendApiClient.getModuleById(id);
+  async getModuleById(courseId: number, moduleId: number): Promise<Module> {
+    return backendApiClient.getModuleById(courseId, moduleId);
   }
 
-  async updateModule(id: number, moduleData: { title: string; body: string; courseId: number }): Promise<Module> {
-    return backendApiClient.updateModule(id, moduleData);
+  async updateModule(courseId: number, moduleId: number, moduleData: { title: string; body: string; courseId: number }): Promise<Module> {
+    await backendApiClient.updateModule(courseId, moduleId, moduleData);
+    // Since backend doesn't return the updated module, fetch it
+    return this.getModuleById(courseId, moduleId);
   }
 
-  async deleteModule(id: number): Promise<void> {
-    return backendApiClient.deleteModule(id);
+  async deleteModule(courseId: number, moduleId: number): Promise<void> {
+    return backendApiClient.deleteModule(courseId, moduleId);
   }
 
   // ================ Content Operations ================
