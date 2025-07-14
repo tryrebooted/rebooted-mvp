@@ -21,8 +21,8 @@ export interface GeneratedContentBlock {
 
 export interface GeneratedModule {
   id?: number;
-  name: string;
-  description: string;
+  title: string;
+  body: string;
   courseId?: number;
   contentBlocks: GeneratedContentBlock[];
 }

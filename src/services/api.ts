@@ -33,7 +33,7 @@ export class BackendApiService {
     return backendApiClient.getCourseById(id);
   }
 
-  async updateCourse(id: number, courseData: { name: string; description: string }): Promise<Course> {
+  async updateCourse(id: number, courseData: { title: string; body: string }): Promise<Course> {
     return backendApiClient.updateCourse(id, courseData);
   }
 
@@ -55,7 +55,7 @@ export class BackendApiService {
     return backendApiClient.getModuleById(id);
   }
 
-  async updateModule(id: number, moduleData: { name: string; description: string; courseId: number }): Promise<Module> {
+  async updateModule(id: number, moduleData: { title: string; body: string; courseId: number }): Promise<Module> {
     return backendApiClient.updateModule(id, moduleData);
   }
 

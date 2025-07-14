@@ -4,24 +4,24 @@
 // ================ Request Types ================
 
 export interface NewCourseRequest {
-  name: string;
-  description: string;
+  title: string;
+  body: string;
 }
 
 export interface UpdateCourseRequest {
-  name: string;
-  description: string;
+  title: string;
+  body: string;
 }
 
 export interface NewModuleRequest {
-  name: string;
-  description: string;
+  title: string;
+  body: string;
   courseId: number;
 }
 
 export interface UpdateModuleRequest {
-  name: string;
-  description: string;
+  title: string;
+  body: string;
   courseId: number;
 }
 
@@ -65,8 +65,8 @@ export interface SubmitAnswerRequest {
 
 export interface Course {
   id: number;
-  name: string;
-  description: string;
+  title: string;
+  body: string;
   teacherCount?: number;
   studentCount?: number;
   moduleCount?: number;
@@ -76,8 +76,8 @@ export interface Course {
 
 export interface Module {
   id: number;
-  name: string;
-  description: string;
+  title: string;
+  body: string;
   courseId: number;
   progress?: number;
   contentCount?: number;
@@ -127,8 +127,8 @@ export interface UserProfile {
 
 export interface UserCourse {
   id: number;
-  name: string;
-  description: string;
+  title: string;
+  body: string;
   role: 'teacher' | 'student';
   createdAt?: string;
   progress?: number;
@@ -149,8 +149,8 @@ export interface CourseUser {
 
 export interface LegacyCourse {
   id: string; // Supabase uses UUID strings
-  name: string;
-  description: string;
+  title: string;
+  body: string;
   created_at?: string;
   updated_at?: string;
   // Additional fields from Supabase that may exist

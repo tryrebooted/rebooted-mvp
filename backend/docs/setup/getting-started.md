@@ -103,7 +103,7 @@ See examples in the [Course API documentation](../api/courses.md).
 # Create a course
 curl -X POST http://localhost:8080/api/courses \
   -H "Content-Type: application/json" \
-  -d '{"name": "Test Course", "description": "A test course"}'
+  -d '{"title": "Test Course", "body": "A test course"}'
 
 # Get all courses
 curl http://localhost:8080/api/courses
@@ -114,7 +114,7 @@ curl http://localhost:8080/api/courses/1
 # Update course
 curl -X PUT http://localhost:8080/api/courses/1 \
   -H "Content-Type: application/json" \
-  -d '{"name": "Updated Course", "description": "Updated description"}'
+  -d '{"title": "Updated Course", "body": "Updated description"}'
 
 # Delete course
 curl -X DELETE http://localhost:8080/api/courses/1

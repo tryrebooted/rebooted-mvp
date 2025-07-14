@@ -4,7 +4,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
 //TEMP COMMENTED OUT (authentication/validation)
-@Configuration
+//@Configuration
 @ConfigurationProperties(prefix = "supabase")
 public class SupabaseConfig {
 

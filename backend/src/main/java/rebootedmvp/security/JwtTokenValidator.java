@@ -13,7 +13,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
 //TEMP COMMENTED OUT (authentication/validation)
-@Component
+//@Component
 public class JwtTokenValidator {
 
     private static final Logger logger = LoggerFactory.getLogger(JwtTokenValidator.class);

@@ -8,8 +8,8 @@ Represents a course in API responses.
 ```json
 {
   "id": 1,
-  "name": "string",
-  "description": "string",
+  "title": "string",
+  "body": "string",
   "teacherCount": 0,
   "studentCount": 0,
   "moduleCount": 0
@@ -18,8 +18,8 @@ Represents a course in API responses.
 
 **Fields:**
 - `id` (Long) - Unique identifier for the course
-- `name` (String) - Course name
-- `description` (String) - Course description
+- `title` (String) - Course title
+- `body` (String) - Course description
 - `teacherCount` (Integer) - Number of teachers assigned to the course
 - `studentCount` (Integer) - Number of students enrolled in the course
 - `moduleCount` (Integer) - Number of modules in the course
@@ -29,18 +29,18 @@ Used for creating and updating courses.
 
 ```json
 {
-  "name": "string",
-  "description": "string"
+  "title": "string",
+  "body": "string"
 }
 ```
 
 **Fields:**
-- `name` (String, required) - Course name. Cannot be empty or null.
-- `description` (String, optional) - Course description
+- `title` (String, required) - Course title. Cannot be empty or null.
+- `body` (String, optional) - Course description
 
 **Validation Rules:**
-- `name` is required and cannot be empty or contain only whitespace
-- `description` is optional and can be null
+- `title` is required and cannot be empty or contain only whitespace
+- `body` is optional and can be null
 
 ## Domain Objects
 
@@ -51,7 +51,7 @@ The core course interface that defines course behavior.
 - `get_teachers()` - Returns Set<LDUser> of teachers
 - `get_students()` - Returns Set<LDUser> of students  
 - `get_modules()` - Returns List<Module> of course modules
-- `getDescription()` - Returns course description
+- `getBody()` - Returns course description
 - `getProgress(User user)` - Returns progress for a specific user
 
 ### CourseImpl
@@ -59,8 +59,8 @@ Concrete implementation of the Course interface.
 
 **Fields:**
 - `id` (Long) - Course identifier
-- `name` (String) - Course name
-- `description` (String) - Course description
+- `title` (String) - Course title
+- `body` (String) - Course description
 - `teachers` (Set<LDUser>) - Set of teacher users
 - `students` (Set<LDUser>) - Set of student users
 - `modules` (List<Module>) - List of course modules
@@ -71,8 +71,8 @@ Concrete implementation of the Course interface.
 ```json
 {
   "id": 1,
-  "name": "Java Fundamentals",
-  "description": "Introduction to Java programming language",
+  "title": "Java Fundamentals",
+  "body": "Introduction to Java programming language",
   "teacherCount": 2,
   "studentCount": 15,
   "moduleCount": 8
@@ -84,16 +84,16 @@ Concrete implementation of the Course interface.
 [
   {
     "id": 1,
-    "name": "Java Fundamentals",
-    "description": "Introduction to Java programming",
+    "title": "Java Fundamentals",
+    "body": "Introduction to Java programming",
     "teacherCount": 2,
     "studentCount": 15,
     "moduleCount": 8
   },
   {
     "id": 2,
-    "name": "Spring Boot Basics",
-    "description": "Learn Spring Boot framework",
+    "title": "Spring Boot Basics",
+    "body": "Learn Spring Boot framework",
     "teacherCount": 1,
     "studentCount": 12,
     "moduleCount": 6
@@ -104,7 +104,7 @@ Concrete implementation of the Course interface.
 ### Error Response
 ```json
 {
-  "error": "Course name cannot be empty"
+  "error": "Course title cannot be empty"
 }
 ```
 
@@ -114,8 +114,8 @@ Represents a module in API responses.
 ```json
 {
   "id": 1,
-  "name": "string",
-  "description": "string",
+  "title": "string",
+  "body": "string",
   "progress": 0.5,
   "courseId": 1,
   "contentCount": 5
@@ -124,8 +124,8 @@ Represents a module in API responses.
 
 **Fields:**
 - `id` (Long) - Unique identifier for the module
-- `name` (String) - Module name
-- `description` (String) - Module description
+- `title` (String) - Module title
+- `body` (String) - Module description
 - `progress` (Double) - Progress percentage (0.0 to 1.0)
 - `courseId` (Long) - ID of the course this module belongs to
 - `contentCount` (Integer) - Number of content blocks in the module
@@ -135,15 +135,15 @@ Used for creating and updating modules.
 
 ```json
 {
-  "name": "string",
-  "description": "string",
+  "title": "string",
+  "body": "string",
   "courseId": 1
 }
 ```
 
 **Fields:**
-- `name` (String, required) - Module name. Cannot be empty or null.
-- `description` (String, optional) - Module description
+- `title` (String, required) - Module title. Cannot be empty or null.
+- `body` (String, optional) - Module description
 - `courseId` (Long, required) - ID of the course this module belongs to
 
 ### ContentDTO
