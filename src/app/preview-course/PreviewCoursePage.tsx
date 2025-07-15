@@ -66,7 +66,7 @@ export default function PreviewCoursePage() {
   };
 
   const handleBackToEdit = () => {
-    router.push(`/modify-course?id=${courseId}`);
+    router.push(`/add-modules?id=${courseId}`);
   };
 
   const handlePublishCourse = () => {

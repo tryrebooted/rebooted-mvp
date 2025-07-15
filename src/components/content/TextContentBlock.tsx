@@ -74,11 +74,17 @@ export default function TextContentBlock({ content, onComplete, isInteractive = 
         lineHeight: '1.6',
         marginBottom: '16px'
       }}>
-        {content.body.split('\n').map((paragraph, index) => (
-          <p key={index} style={{ margin: '0 0 12px 0' }}>
-            {paragraph}
+        {content.body ? (
+          content.body.split('\n').map((paragraph, index) => (
+            <p key={index} style={{ margin: '0 0 12px 0' }}>
+              {paragraph}
+            </p>
+          ))
+        ) : (
+          <p style={{ margin: '0 0 12px 0', fontStyle: 'italic', color: '#9CA3AF' }}>
+            No content body provided.
           </p>
-        ))}
+        )}
       </div>
 
       {error && (

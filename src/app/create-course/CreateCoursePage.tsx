@@ -103,8 +103,8 @@ export default function CreateCoursePage() {
         await apiService.addTeachersToCourse(courseId, [currentUsername]);
       }
 
-      // Success! Redirect to the new course
-      router.push(`/modify-course?id=${courseId}`);
+      // Success! Redirect to add modules for the new course
+      router.push(`/add-modules?id=${courseId}`);
 
     } catch (err) {
       console.error('Error creating course:', err);

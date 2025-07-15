@@ -27,7 +27,7 @@ export interface UpdateModuleRequest {
 
 export interface NewContentRequest {
   title: string;
-  body: string;
+  body: string | null;
   type: 'Text' | 'Question';
   moduleId: number;
   // Question-specific fields (only required when type is 'Question')
@@ -36,10 +36,10 @@ export interface NewContentRequest {
 }
 
 export interface UpdateContentRequest {
-  title: string;
-  body: string;
-  type: 'Text' | 'Question';
-  moduleId: number;
+  title?: string;
+  body?: string | null;
+  type?: 'Text' | 'Question';
+  moduleId?: number;
   // Question-specific fields (only required when type is 'Question')
   options?: string[];
   correctAnswer?: string;
@@ -90,7 +90,7 @@ export interface Module {
 export interface Content {
   id: number;
   title: string;
-  body: string;
+  body: string | null;
   type: 'Text' | 'Question';
   moduleId: number;
   position: number;

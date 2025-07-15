@@ -161,6 +161,7 @@ public class ModuleService {
                 if (updateDTO.getBody() != null) {
                     content.setBody(updateDTO.getBody());
                 }
+                break;
             case Question:
                 QuestionContentImpl questionContent = (QuestionContentImpl) content;
                 if (updateDTO.getBody() != null) {
@@ -172,6 +173,7 @@ public class ModuleService {
                 if (updateDTO.getCorrectAnswer() != null) {
                     questionContent.setCorrectAnswer(updateDTO.getCorrectAnswer());
                 }
+                break;
         }
         contentRepository.save(ContentMapper.toEntity(content));
         logger.info("Updated content with ID: {} in module: {}", contentId, moduleId);

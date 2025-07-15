@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { ContentResponse, isQuestionContent } from '@/types/backend-api';
 import { apiService } from '@/services/api';
 import TextContentBlock from './TextContentBlock';
@@ -11,13 +11,15 @@ interface ContentBlockListProps {
   moduleName?: string;
   isInteractive?: boolean;
   onContentUpdate?: () => void;
+  onAddContent?: (addContentFn: (newContent: ContentResponse) => void) => void;
 }
 
-export default function ContentBlockList({ 
-  moduleId, 
-  moduleName, 
-  isInteractive = true, 
-  onContentUpdate 
+export default function ContentBlockList({
+  moduleId,
+  moduleName,
+  isInteractive = true,
+  onContentUpdate,
+  onAddContent
 }: ContentBlockListProps) {
   const [content, setContent] = useState<ContentResponse[]>([]);
   const [loading, setLoading] = useState(true);
@@ -40,6 +42,16 @@ export default function ContentBlockList({
   useEffect(() => {
     loadContent();
   }, [moduleId]);
+
+  const addContent = useCallback((newContent: ContentResponse) => {
+    setContent(prevContent => [...prevContent, newContent]);
+  }, []);
+
+  useEffect(() => {
+    if (onAddContent) {
+      onAddContent(addContent);
+    }
+  }, [onAddContent, addContent]);
 
   const handleComplete = async (contentId: number) => {
     try {

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { QuestionContent, isQuestionContent } from '@/types/backend-api';
+import { QuestionContent } from '@/types/backend-api';
 
 interface QuestionContentBlockProps {
   content: QuestionContent;
@@ -78,9 +78,17 @@ export default function QuestionContentBlock({ content, onSubmitAnswer, isIntera
         lineHeight: '1.6',
         marginBottom: '20px'
       }}>
-        <p style={{ margin: '0 0 16px 0', fontWeight: '500' }}>
-          {content.body}
-        </p>
+        {content.body ? (
+          content.body.split('\n').map((paragraph, index) => (
+            <p key={index} style={{ margin: '0 0 12px 0', fontWeight: index === 0 ? '500' : '400' }}>
+              {paragraph}
+            </p>
+          ))
+        ) : (
+          <p style={{ margin: '0 0 16px 0', fontWeight: '500' }}>
+            No question description provided.
+          </p>
+        )}
       </div>
 
       {content.options && content.options.length > 0 && (

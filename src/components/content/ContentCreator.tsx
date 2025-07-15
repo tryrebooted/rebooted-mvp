@@ -1,12 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { NewContentRequest } from '@/types/backend-api';
+import { NewContentRequest, ContentResponse } from '@/types/backend-api';
 import { apiService } from '@/services/api';
 
 interface ContentCreatorProps {
   moduleId: number;
-  onContentCreated: () => void;
+  onContentCreated: (newContent: ContentResponse) => void;
   onCancel: () => void;
 }
 
@@ -27,11 +27,8 @@ export default function ContentCreator({ moduleId, onContentCreated, onCancel }:
       setError('Title is required');
       return;
     }
-    
-    if (!body.trim()) {
-      setError(contentType === 'Text' ? 'Content is required' : 'Question text is required');
-      return;
-    }
+
+    // Body is optional, so we don't validate it as required
 
     if (contentType === 'Question') {
       const nonEmptyOptions = options.filter(opt => opt.trim());
@@ -53,9 +50,29 @@ export default function ContentCreator({ moduleId, onContentCreated, onCancel }:
       setCreating(true);
       setError(null);
 
+      let contentBody = body.trim() || null;
+
+      // For Question type, format the body to include options and correct answer
+      if (contentType === 'Question') {
+        const filteredOptions = options.filter(opt => opt.trim());
+        const optionsText = filteredOptions.map((option, index) =>
+          `${String.fromCharCode(65 + index)}. ${option}`
+        ).join('\n');
+
+        const bodyParts = [];
+        if (contentBody) {
+          bodyParts.push(contentBody);
+        }
+        bodyParts.push('\nOptions:');
+        bodyParts.push(optionsText);
+        bodyParts.push(`\nCorrect Answer: ${correctAnswer.trim()}`);
+
+        contentBody = bodyParts.join('\n');
+      }
+
       const contentData: NewContentRequest = {
         title: title.trim(),
-        body: body.trim(),
+        body: contentBody,
         type: contentType,
         moduleId,
         ...(contentType === 'Question' && {
@@ -64,16 +81,16 @@ export default function ContentCreator({ moduleId, onContentCreated, onCancel }:
         })
       };
 
-      await apiService.createContent(contentData);
-      
+      const createdContent = await apiService.createContent(contentData);
+
       // Reset form
       setTitle('');
       setBody('');
       setOptions(['', '', '', '']);
       setCorrectAnswer('');
       setContentType('Text');
-      
-      onContentCreated();
+
+      onContentCreated(createdContent);
     } catch (err) {
       console.error('Error creating content:', err);
       setError(err instanceof Error ? err.message : 'Failed to create content');
