@@ -30,6 +30,7 @@ export default function ContentBlockList({
       setLoading(true);
       setError(null);
       const contentData = await apiService.getContentByModuleId(moduleId);
+      console.log('Content data:', contentData);
       setContent(contentData);
     } catch (err) {
       console.error('Error loading content:', err);

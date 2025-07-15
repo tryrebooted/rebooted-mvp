@@ -195,9 +195,9 @@ const TeacherDashboard: React.FC = () => {
                       className="mt-2"
                       variant="outline"
                       size="sm"
-                      onClick={() => router.push(`/add-modules?id=${course.id}`)}
+                      onClick={() => router.push(`/modify-course?id=${course.id}`)}
                     >
-                      Modules
+                      Manage Course
                     </Button>
                   </div>
                 ))}

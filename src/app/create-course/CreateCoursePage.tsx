@@ -77,8 +77,8 @@ export default function CreateCoursePage() {
       if (modules.length > 0) {
         for (const module of modules) {
           await apiService.createModule({
-            name: module.title,
-            description: '',
+            title: module.title,
+            body: '',
             courseId: courseId
           });
         }
@@ -103,8 +103,8 @@ export default function CreateCoursePage() {
         await apiService.addTeachersToCourse(courseId, [currentUsername]);
       }
 
-      // Success! Redirect to add modules for the new course
-      router.push(`/add-modules?id=${courseId}`);
+      // Success! Redirect to modify course page for the new course
+      router.push(`/modify-course?id=${courseId}`);
 
     } catch (err) {
       console.error('Error creating course:', err);
