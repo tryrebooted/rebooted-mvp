@@ -4,19 +4,11 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.DiscriminatorColumn;
-import jakarta.persistence.DiscriminatorValue;
-import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
-import jakarta.persistence.Inheritance;
-import jakarta.persistence.JoinColumn;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import rebootedmvp.Content;
 import rebootedmvp.Module;
-import jakarta.persistence.InheritanceType;
-import jakarta.persistence.DiscriminatorType;
 
 /**
  * JPA Entity implementation of Content interface for database persistence.
@@ -119,6 +111,7 @@ public class ContentEntityImpl extends Content {
         this.id = id;
     }
 
+    @Override
     public void setComplete(boolean complete) {
         this.isComplete = complete;
     }
@@ -141,6 +134,7 @@ public class ContentEntityImpl extends Content {
         this.questionText = questionText;
     }
 
+    @Override
     public List<String> getOptions() {
         return new ArrayList<>(optionText);
     }
@@ -149,6 +143,7 @@ public class ContentEntityImpl extends Content {
         this.optionText = new ArrayList<>(options != null ? options : new ArrayList<>());
     }
 
+    @Override
     public String getCorrectAnswer() {
         return correctAnswer;
     }

@@ -20,6 +20,8 @@ import rebootedmvp.domain.impl.QuestionContentImpl;
 import rebootedmvp.domain.impl.TextContentImpl;
 import rebootedmvp.dto.ContentDTO;
 import rebootedmvp.dto.NewContentDTO;
+import rebootedmvp.dto.QuestionContentDTO;
+import rebootedmvp.dto.TextContentDTO;
 import rebootedmvp.repository.ContentRepository;
 import rebootedmvp.repository.ModuleRepository;
 
@@ -83,7 +85,7 @@ public class ModuleService {
                     "Content " + contentId + " does not belong to module " + moduleId);
         }
 
-        return new ContentDTO(content);
+        return convertToDTO(content);
     }
 
     /**
@@ -156,13 +158,13 @@ public class ModuleService {
         }
 
         switch (content.getType()) {
-            case Text:
+            case Text -> {
                 content = (TextContentImpl) content;
                 if (updateDTO.getBody() != null) {
                     content.setBody(updateDTO.getBody());
                 }
-                break;
-            case Question:
+            }
+            case Question -> {
                 QuestionContentImpl questionContent = (QuestionContentImpl) content;
                 if (updateDTO.getBody() != null) {
                     questionContent.setQuestionText(updateDTO.getBody());
@@ -173,7 +175,7 @@ public class ModuleService {
                 if (updateDTO.getCorrectAnswer() != null) {
                     questionContent.setCorrectAnswer(updateDTO.getCorrectAnswer());
                 }
-                break;
+            }
         }
         contentRepository.save(ContentMapper.toEntity(content));
         logger.info("Updated content with ID: {} in module: {}", contentId, moduleId);
@@ -206,7 +208,27 @@ public class ModuleService {
 
     private static List<ContentDTO> mapToDTO(List<Content> toMap) {
         return toMap.stream().map(
-                elem -> new ContentDTO(elem)).toList();
+                elem -> convertToDTO(elem)).toList();
     }
 
+    private static ContentDTO convertToDTO(Content content) {
+        if (content.getType() == Content.ContentType.Text) {
+            return new TextContentDTO(
+                    content.getId(),
+                    content.getTitle(),
+                    content.getBody(),
+                    content.isComplete(),
+                    content.getModuleId());
+        } else if (content.getType() == Content.ContentType.Question) {
+            return new QuestionContentDTO(
+                    content.getId(),
+                    content.getTitle(),
+                    ((QuestionContentImpl) content).getQuestionText(),
+                    content.isComplete(),
+                    content.getModuleId(),
+                    ((QuestionContentImpl) content).getOptions(),
+                    ((QuestionContentImpl) content).getCorrectAnswer());
+        }
+        return null;
+    }
 }

@@ -19,6 +19,7 @@ import rebootedmvp.domain.impl.QuestionContentImpl;
 import rebootedmvp.dto.ContentDTO;
 import rebootedmvp.dto.NewContentDTO;
 import rebootedmvp.dto.QuestionContentDTO;
+import rebootedmvp.dto.TextContentDTO;
 import rebootedmvp.repository.ContentRepository;
 import rebootedmvp.repository.ModuleRepository;
 
@@ -198,9 +199,8 @@ public class ContentService {
 
     private ContentDTO convertToDTO(Content content) {
         if (content.getType() == Content.ContentType.Text) {
-            return new ContentDTO(
+            return new TextContentDTO(
                     content.getId(),
-                    Content.ContentType.Text,
                     content.getTitle(),
                     content.getBody(),
                     content.isComplete(),

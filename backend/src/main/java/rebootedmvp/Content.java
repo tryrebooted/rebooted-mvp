@@ -27,6 +27,9 @@ public abstract class Content implements HasID {
     @Column(columnDefinition = "TEXT")
     protected String body;
 
+    @Column(columnDefinition = "type")
+    protected Content.ContentType contentType;
+
     @Column(name = "is_complete")
     protected boolean isComplete = false;
 
@@ -67,8 +70,6 @@ public abstract class Content implements HasID {
         Text,
         Question,
     }
-
-
 
     /**
      * Returns whether the task/object/question is complete or not

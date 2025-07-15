@@ -2,10 +2,10 @@ package rebootedmvp.dto;
 
 import rebootedmvp.Content;
 
-public class ContentDTO {
+public abstract class ContentDTO {
 
     private Long id;
-    private Content.ContentType type;
+    protected Content.ContentType type;
     private String title;
     private String body;
     private boolean isComplete;
